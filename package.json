@@ -1,0 +1,30 @@
+{
+  "name": "suzy",
+  "version": "1.0.0",
+  "description": "Suzy's Therapy Website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Lewy Blue",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.4.0",
+    "babel-loader": "^6.2.1",
+    "babel-preset-es2015": "^6.3.13",
+    "jquery": "^2.1.4",
+    "node-sass": "^3.4.2",
+    "sass-loader": "^3.1.2",
+    "webpack": "^1.12.10",
+    "webpack-dev-server": "^1.14.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/looeee/webpack-test.git"
+  },
+  "bugs": {
+    "url": "https://github.com/looeee/webpack-test/issues"
+  },
+  "homepage": "https://github.com/looeee/webpack-test#readme"
+}
