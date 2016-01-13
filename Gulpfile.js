@@ -1,0 +1,57 @@
+'use strict';
+
+var projectname = 'canvas-test',
+  template_path = '',
+  scss_path = template_path + 'scss/**/*.scss',
+  es2015_path = template_path + 'es2015/**/*.js',
+  styles_path = template_path + 'styles/',
+  scripts_path = template_path + 'scripts/',
+  gulp = require('gulp'),
+  sass = require('gulp-sass'),
+  watch = require('gulp-watch'),
+  autoprefixer = require('gulp-autoprefixer'),
+  babelify = require('babelify'),
+  through2 = require('through2'),
+  browserify = require('browserify'),
+  livereload = require('gulp-livereload');
+  //concat = require('gulp-concat');
+
+//Put all css/scss tasks here
+gulp.task('css', function() {
+  return gulp.src(scss_path)
+    .pipe(sass()) //.on('error', sass.logError))
+    .pipe(autoprefixer({
+      browsers: ['last 3 version', 'ie 9'],
+      cascade: true,
+    }))
+    .pipe(gulp.dest(styles_path))
+    .pipe(livereload());;
+});
+
+//Put all javascript tasks here
+gulp.task('js', function() {
+  return gulp.src(es2015_path)
+    //.pipe(concat({path: es2015_path + 'main.js'}))
+    .pipe(through2.obj(function(file, enc, next) {
+      browserify(file.path)
+        .transform(babelify, {
+          presets: ['es2015']
+        })
+        .bundle(function(err, res) {
+          if (err) {
+            return next(err);
+          }
+          file.contents = res;
+          next(null, file);
+        })
+    }))
+    .pipe(gulp.dest(scripts_path))
+    .pipe(livereload());
+});
+
+//default task
+gulp.task('default', ['css', 'js'], function() {
+  livereload.listen();
+  gulp.watch(scss_path, ['css']);
+  gulp.watch(es2015_path, ['js']);
+});
