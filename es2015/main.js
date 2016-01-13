@@ -114,7 +114,7 @@ $(document).ready(() => {
       this.radius = (dims.windowWidth < dims.windowHeight) ? (dims.windowWidth / 2) - 5 : (dims.windowHeight / 2) - 5;
 
       //smaller circle for testing
-      //this.radius = this.radius / 2;
+      this.radius = this.radius / 2;
 
       this.color = 'black';
 
@@ -155,7 +155,12 @@ $(document).ready(() => {
       elems.ctx.fill();
     }
 
-    //Draw an arc (hyperbolic line) between two points on the disk
+    //draw a hyperbolic line between two points
+    drawLine(p1, p2, colour) {
+      let c = colour || 'black';
+    }
+
+    //Draw an arc (hyperbolic line segment) between two points on the disk
     drawArc(p1, p2) {
       let p1Inverse = this.inverse(p1);
       let p2Inverse = this.inverse(p2);
@@ -170,21 +175,31 @@ $(document).ready(() => {
       let intersect = this.intersection(m, m1, n, m2);
       let radius = this.distance(intersect, p1);
 
+      let alpha = this.arcLength(p1, p2, radius);
+
+      //how far around the circle that start of the arc is
+      let perPoint = {
+        x: intersect.x + radius,
+        y: intersect.y
+      }
+      let alphaOffset = this.arcLength(p1, perPoint, radius);
+
       //draw the arch
       elems.ctx.beginPath();
-      elems.ctx.arc(intersect.x, intersect.y, radius, 0, Math.PI * 2, true);
-      elems.ctx.closePath();
+      elems.ctx.arc(intersect.x, intersect.y, radius, -alphaOffset, alpha - alphaOffset, false);
       elems.ctx.strokeStyle = this.color;
       elems.ctx.stroke();
+    }
+
+    //calculate the angle from two points,the centre and radius of a circle in rads
+    arcLength(p1, p2, r) {
+      return 2 * Math.asin(0.5 * this.distance(p1, p2) / r);
     }
 
     //get the inverse of a point with respect to the circular
     //boundary of the disk
     inverse(point) {
-      let alpha = (this.radius * this.radius)
-                  / (Math.pow(point.x -this.centre.x, 2)
-                  + Math.pow(point.y -this.centre.y, 2)
-                );
+      let alpha = (this.radius * this.radius) / (Math.pow(point.x - this.centre.x, 2) + Math.pow(point.y - this.centre.y, 2));
       let inversePoint = {
         x: alpha * (point.x - this.centre.x) + this.centre.x,
         y: alpha * (point.y - this.centre.y) + this.centre.y
@@ -194,7 +209,7 @@ $(document).ready(() => {
 
     //distance between two points
     distance(p1, p2) {
-      return Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+      return Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
     }
 
     //midpoint of the line segment connecting two points
@@ -212,18 +227,18 @@ $(document).ready(() => {
 
     //slope of line perpendicular to a line defined by p1,p2
     perpendicularSlope(p1, p2) {
-      return -1/(Math.pow(this.slope(p1, p2), -1));
+      return -1 / (Math.pow(this.slope(p1, p2), -1));
     }
 
     //intersection point of two lines defined by p1,m1 and q1,m2
     intersection(p1, m1, p2, m2) {
       //y intercept of first line
-      let c1 = p1.y-m1*p1.x;
+      let c1 = p1.y - m1 * p1.x;
       //y intercept of second line
-      let c2 = p2.y-m2*p2.x;
+      let c2 = p2.y - m2 * p2.x;
 
-      let x = (c2-c1)/(m1-m2);
-      let y = m1*x+c1;
+      let x = (c2 - c1) / (m1 - m2);
+      let y = m1 * x + c1;
       return {
         x: x,
         y: y
@@ -231,13 +246,28 @@ $(document).ready(() => {
     }
 
     //draw a (euclidean) line between two points
-    drawLine(p1, p2, colour) {
+    drawEuclideanLine(p1, p2, colour) {
       let c = colour || 'black';
       elems.ctx.beginPath();
       elems.ctx.moveTo(p1.x, p1.y);
       elems.ctx.lineTo(p2.x, p2.y);
       elems.ctx.strokeStyle = c;
       elems.ctx.stroke()
+    }
+  }
+
+  const disk = new Disk();
+
+  // * ***********************************************************************
+  // *
+  // *   ARC CLASS
+  // *   draw an arc on the Poincare disk
+  // *   TODO : implement, currently part of Disk class
+  // *
+  // *************************************************************************
+  class Arc {
+    constructor(p1, p2, disk) {
+
     }
   }
 
@@ -248,9 +278,7 @@ $(document).ready(() => {
   // *
   // *************************************************************************
   class Canvas {
-    constructor() {
-      this.disk = new Disk();
-    }
+    constructor() {}
 
     draw() {
 
@@ -262,5 +290,4 @@ $(document).ready(() => {
   }
 
   const canvas = new Canvas();
-
 });

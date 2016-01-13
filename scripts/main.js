@@ -133,7 +133,7 @@ $(document).ready(function () {
       this.radius = dims.windowWidth < dims.windowHeight ? dims.windowWidth / 2 - 5 : dims.windowHeight / 2 - 5;
 
       //smaller circle for testing
-      //this.radius = this.radius / 2;
+      this.radius = this.radius / 2;
 
       this.color = 'black';
 
@@ -179,7 +179,15 @@ $(document).ready(function () {
         elems.ctx.fill();
       }
 
-      //Draw an arc (hyperbolic line) between two points on the disk
+      //draw a hyperbolic line between two points
+
+    }, {
+      key: 'drawLine',
+      value: function drawLine(p1, p2, colour) {
+        var c = colour || 'black';
+      }
+
+      //Draw an arc (hyperbolic line segment) between two points on the disk
 
     }, {
       key: 'drawArc',
@@ -197,12 +205,28 @@ $(document).ready(function () {
         var intersect = this.intersection(m, m1, n, m2);
         var radius = this.distance(intersect, p1);
 
+        var alpha = this.arcLength(p1, p2, radius);
+
+        //how far around the circle that start of the arc is
+        var perPoint = {
+          x: intersect.x + radius,
+          y: intersect.y
+        };
+        var alphaOffset = this.arcLength(p1, perPoint, radius);
+
         //draw the arch
         elems.ctx.beginPath();
-        elems.ctx.arc(intersect.x, intersect.y, radius, 0, Math.PI * 2, true);
-        elems.ctx.closePath();
+        elems.ctx.arc(intersect.x, intersect.y, radius, -alphaOffset, alpha - alphaOffset, false);
         elems.ctx.strokeStyle = this.color;
         elems.ctx.stroke();
+      }
+
+      //calculate the angle from two points,the centre and radius of a circle in rads
+
+    }, {
+      key: 'arcLength',
+      value: function arcLength(p1, p2, r) {
+        return 2 * Math.asin(0.5 * this.distance(p1, p2) / r);
       }
 
       //get the inverse of a point with respect to the circular
@@ -224,7 +248,7 @@ $(document).ready(function () {
     }, {
       key: 'distance',
       value: function distance(p1, p2) {
-        return Math.sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
+        return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
       }
 
       //midpoint of the line segment connecting two points
@@ -275,8 +299,8 @@ $(document).ready(function () {
       //draw a (euclidean) line between two points
 
     }, {
-      key: 'drawLine',
-      value: function drawLine(p1, p2, colour) {
+      key: 'drawEuclideanLine',
+      value: function drawEuclideanLine(p1, p2, colour) {
         var c = colour || 'black';
         elems.ctx.beginPath();
         elems.ctx.moveTo(p1.x, p1.y);
@@ -289,6 +313,20 @@ $(document).ready(function () {
     return Disk;
   }();
 
+  var disk = new Disk();
+
+  // * ***********************************************************************
+  // *
+  // *   ARC CLASS
+  // *   draw an arc on the Poincare disk
+  // *   TODO : implement, currently part of Disk class
+  // *
+  // *************************************************************************
+
+  var Arc = function Arc(p1, p2, disk) {
+    _classCallCheck(this, Arc);
+  };
+
   // * ***********************************************************************
   // *
   // *   CANVAS CLASS
@@ -299,8 +337,6 @@ $(document).ready(function () {
   var Canvas = function () {
     function Canvas() {
       _classCallCheck(this, Canvas);
-
-      this.disk = new Disk();
     }
 
     _createClass(Canvas, [{
