@@ -28,9 +28,122 @@ document.write('<canvas id="canvas" width="' + window.innerWidth + '" height="' 
 // *   define any global helper functions here
 // *
 // *************************************************************************
+//solve quadratic eq based -b^2... formula
+var quadratic = function quadratic(a, b, c) {
+  if (c === 0) return 0;
+  var body = b * b - 4 * a * c;
+  if (body < 0) return 0;
+
+  var pos = (-b + Math.sqrt(body)) / (2 * c);
+  var neg = (-b - Math.sqrt(body)) / (2 * c);
+
+  return {
+    pos: pos,
+    neg: neg
+  };
+};
+
+//distance between two points
+var distance = function distance(p1, p2) {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+};
+
+//midpoint of the line segment connecting two points
+var midpoint = function midpoint(p1, p2) {
+  return {
+    x: (p1.x + p2.x) / 2,
+    y: (p1.y + p2.y) / 2
+  };
+};
+
+//slope of line through p1, p2
+var slope = function slope(p1, p2) {
+  return (p2.x - p1.x) / (p2.y - p1.y);
+};
+
+//slope of line perpendicular to a line defined by p1,p2
+var perpendicularSlope = function perpendicularSlope(p1, p2) {
+  return -1 / Math.pow(slope(p1, p2), -1);
+};
+
+//intersection point of two lines defined by p1,m1 and q1,m2
+var intersection = function intersection(p1, m1, p2, m2) {
+  //y intercept of first line
+  var c1 = p1.y - m1 * p1.x;
+  //y intercept of second line
+  var c2 = p2.y - m2 * p2.x;
+
+  var x = (c2 - c1) / (m1 - m2);
+  var y = m1 * x + c1;
+  return {
+    x: x,
+    y: y
+  };
+};
 
 var radians = function radians(degrees) {
   return Math.PI / 180 * degrees;
+};
+
+//get the inverse of a point p with respect a circle radius r centre c
+var inverse = function inverse(p, r, c) {
+  var alpha = r * r / (Math.pow(p.x - c.x, 2) + Math.pow(p.y - c.y, 2));
+  return {
+    x: alpha * (p.x - c.x) + c.x,
+    y: alpha * (p.y - c.y) + c.y
+  };
+};
+
+//calculate the radius and centre of the circle required to draw a line between
+//two points in the hyperbolic plane defined by the circle r, c
+var greatCircle = function greatCircle(p1, p2, r, c) {
+  var p1Inverse = inverse(p1, r, c);
+  var p2Inverse = inverse(p2, r, c);
+
+  var m = midpoint(p1, p1Inverse);
+  var n = midpoint(p2, p2Inverse);
+
+  var m1 = perpendicularSlope(m, p1Inverse);
+  var m2 = perpendicularSlope(n, p2Inverse);
+
+  //centre is the centrepoint of the circle out of which the arc is made
+  var centre = intersection(m, m1, n, m2);
+  var radius = distance(centre, p1);
+
+  return { centre: centre, radius: radius };
+};
+
+//intersection of two circles with equations:
+//(x-a)^2 +(y-a)^2 = r0^2
+//(x-b)^2 +(y-c)^2 = r1^2
+var circleIntersect = function circleIntersect(c0, c1, r0, r1) {
+  var a = c0.x;
+  var b = c0.y;
+  var c = c1.x;
+  var d = c1.y;
+  var dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
+
+  var del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
+
+  var xPartial = (a + c) / 2 + (c - a) * (r0 * r0 - r1 * r1) / (2 * dist * dist);
+  var x1 = xPartial + 2 * del * (b - d) / (dist * dist);
+  var x2 = xPartial - 2 * del * (b - d) / (dist * dist);
+
+  var yPartial = (b + d) / 2 + (d - b) * (r0 * r0 - r1 * r1) / (2 * dist * dist);
+  var y1 = yPartial + 2 * del * (a - c) / (dist * dist);
+  var y2 = yPartial - 2 * del * (a - c) / (dist * dist);
+
+  var p1 = {
+    x: x1,
+    y: y1
+  };
+
+  var p2 = {
+    x: x2,
+    y: y2
+  };
+
+  return { p1: p1, p2: p2 };
 };
 
 // * ***********************************************************************
@@ -136,23 +249,6 @@ $(document).ready(function () {
       this.radius = this.radius / 2;
 
       this.color = 'black';
-
-      this.drawOuterCircle();
-      this.drawPoint(this.centre);
-
-      var p1 = {
-        x: -60,
-        y: -40
-      };
-
-      var p2 = {
-        x: -60,
-        y: 100
-      };
-      this.drawPoint(p1);
-      this.drawPoint(p2);
-
-      this.drawArc(p1, p2);
     }
 
     _createClass(Disk, [{
@@ -160,7 +256,14 @@ $(document).ready(function () {
       value: function drawOuterCircle() {
         elems.ctx.beginPath();
         elems.ctx.arc(this.centre.x, this.centre.y, this.radius, 0, Math.PI * 2);
-        elems.ctx.closePath();
+        elems.ctx.strokeStyle = this.color;
+        elems.ctx.stroke();
+      }
+    }, {
+      key: 'drawCircle',
+      value: function drawCircle(c, r) {
+        elems.ctx.beginPath();
+        elems.ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
         elems.ctx.strokeStyle = this.color;
         elems.ctx.stroke();
       }
@@ -174,7 +277,6 @@ $(document).ready(function () {
         var r = radius || 2;
         elems.ctx.beginPath();
         elems.ctx.arc(point.x, point.y, r, 0, Math.PI * 2, true);
-        elems.ctx.closePath();
         elems.ctx.fillStyle = c;
         elems.ctx.fill();
       }
@@ -183,8 +285,15 @@ $(document).ready(function () {
 
     }, {
       key: 'drawLine',
-      value: function drawLine(p1, p2, colour) {
-        var c = colour || 'black';
+      value: function drawLine(p1, p2) {
+        var c = greatCircle(p1, p2, this.radius, this.centre);
+        this.drawCircle(c.centre, c.radius);
+        var points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
+        this.drawPoint(points.p1);
+        this.drawPoint(points.p2);
+        this.drawPoint(c.centre);
+
+        this.drawArc(points.p2, points.p1);
       }
 
       //Draw an arc (hyperbolic line segment) between two points on the disk
@@ -192,108 +301,79 @@ $(document).ready(function () {
     }, {
       key: 'drawArc',
       value: function drawArc(p1, p2) {
-        var p1Inverse = this.inverse(p1);
-        var p2Inverse = this.inverse(p2);
-
-        var m = this.midpoint(p1, p1Inverse);
-        var n = this.midpoint(p2, p2Inverse);
-
-        var m1 = this.perpendicularSlope(m, p1Inverse);
-        var m2 = this.perpendicularSlope(n, p2Inverse);
-
-        //intersect is the centrepoint of the circle out of which the arc is made
-        var intersect = this.intersection(m, m1, n, m2);
-        var radius = this.distance(intersect, p1);
-
-        var alpha = this.arcLength(p1, p2, radius);
-
-        //how far around the circle that start of the arc is
-        var perPoint = {
-          x: intersect.x + radius,
-          y: intersect.y
+        var arcLength = function arcLength(p1, p2, r) {
+          return 2 * Math.asin(0.5 * distance(p1, p2) / r);
         };
-        var alphaOffset = this.arcLength(p1, perPoint, radius);
+        var c = greatCircle(p1, p2, this.radius, this.centre);
+        var alpha = arcLength(p1, p2, c.radius);
 
-        //draw the arch
+        //a point at 0 radians on the circle
+        var point = {
+          x: c.centre.x + c.radius,
+          y: c.centre.y
+        };
+        //how far around the circle that start of the arc is
+        var alphaOffset = arcLength(p1, point, c.radius);
+
+        //draw the arc
         elems.ctx.beginPath();
-        elems.ctx.arc(intersect.x, intersect.y, radius, -alphaOffset, alpha - alphaOffset, false);
+        elems.ctx.arc(c.centre.x, c.centre.y, c.radius, -alphaOffset, alpha - alphaOffset);
         elems.ctx.strokeStyle = this.color;
         elems.ctx.stroke();
       }
+    }]);
 
-      //calculate the angle from two points,the centre and radius of a circle in rads
+    return Disk;
+  }();
 
-    }, {
-      key: 'arcLength',
-      value: function arcLength(p1, p2, r) {
-        return 2 * Math.asin(0.5 * this.distance(p1, p2) / r);
-      }
+  var disk = new Disk();
 
-      //get the inverse of a point with respect to the circular
-      //boundary of the disk
+  // * ***********************************************************************
+  // *
+  // *   CANVAS CLASS
+  // *
+  // *
+  // *************************************************************************
 
-    }, {
-      key: 'inverse',
-      value: function inverse(point) {
-        var alpha = this.radius * this.radius / (Math.pow(point.x - this.centre.x, 2) + Math.pow(point.y - this.centre.y, 2));
-        var inversePoint = {
-          x: alpha * (point.x - this.centre.x) + this.centre.x,
-          y: alpha * (point.y - this.centre.y) + this.centre.y
+  var Canvas = function () {
+    function Canvas() {
+      _classCallCheck(this, Canvas);
+
+      this.draw();
+      $(window).resize(function () {
+        //this.clear();
+        //this.draw();
+      });
+    }
+
+    _createClass(Canvas, [{
+      key: 'draw',
+      value: function draw() {
+        disk.drawOuterCircle();
+        disk.drawPoint(disk.centre);
+
+        var p1 = {
+          x: -60,
+          y: -40
         };
-        return inversePoint;
-      }
 
-      //distance between two points
-
-    }, {
-      key: 'distance',
-      value: function distance(p1, p2) {
-        return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-      }
-
-      //midpoint of the line segment connecting two points
-
-    }, {
-      key: 'midpoint',
-      value: function midpoint(p1, p2) {
-        return {
-          x: (p1.x + p2.x) / 2,
-          y: (p1.y + p2.y) / 2
+        var p2 = {
+          x: -60,
+          y: 100
         };
+        disk.drawPoint(p1);
+        disk.drawPoint(p2);
+
+        disk.drawLine(p1, p2);
       }
 
-      //slope of line through p1, p2
+      //the canvas has been translated to the centre of the disk so need to
+      //use an offset to clear it. NOT WORKING
 
     }, {
-      key: 'slope',
-      value: function slope(p1, p2) {
-        return (p2.x - p1.x) / (p2.y - p1.y);
-      }
-
-      //slope of line perpendicular to a line defined by p1,p2
-
-    }, {
-      key: 'perpendicularSlope',
-      value: function perpendicularSlope(p1, p2) {
-        return -1 / Math.pow(this.slope(p1, p2), -1);
-      }
-
-      //intersection point of two lines defined by p1,m1 and q1,m2
-
-    }, {
-      key: 'intersection',
-      value: function intersection(p1, m1, p2, m2) {
-        //y intercept of first line
-        var c1 = p1.y - m1 * p1.x;
-        //y intercept of second line
-        var c2 = p2.y - m2 * p2.x;
-
-        var x = (c2 - c1) / (m1 - m2);
-        var y = m1 * x + c1;
-        return {
-          x: x,
-          y: y
-        };
+      key: 'clear',
+      value: function clear() {
+        elems.ctx.clearRect(-dims.windowWidth / 2, -dims.windowHeight / 2, dims.windowWidth, dims.windowHeight);
       }
 
       //draw a (euclidean) line between two points
@@ -308,43 +388,6 @@ $(document).ready(function () {
         elems.ctx.strokeStyle = c;
         elems.ctx.stroke();
       }
-    }]);
-
-    return Disk;
-  }();
-
-  var disk = new Disk();
-
-  // * ***********************************************************************
-  // *
-  // *   ARC CLASS
-  // *   draw an arc on the Poincare disk
-  // *   TODO : implement, currently part of Disk class
-  // *
-  // *************************************************************************
-
-  var Arc = function Arc(p1, p2, disk) {
-    _classCallCheck(this, Arc);
-  };
-
-  // * ***********************************************************************
-  // *
-  // *   CANVAS CLASS
-  // *
-  // *
-  // *************************************************************************
-
-  var Canvas = function () {
-    function Canvas() {
-      _classCallCheck(this, Canvas);
-    }
-
-    _createClass(Canvas, [{
-      key: 'draw',
-      value: function draw() {}
-    }, {
-      key: 'clear',
-      value: function clear() {}
     }]);
 
     return Canvas;
