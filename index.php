@@ -19,12 +19,11 @@
 
   <script src="scripts/main.js"></script>
 
-
 </head>
 
 <body>
 
-  
+
 </body>
 
 </html>

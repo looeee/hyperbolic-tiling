@@ -28,20 +28,6 @@ document.write('<canvas id="canvas" width="' + window.innerWidth + '" height="' 
 // *   define any global helper functions here
 // *
 // *************************************************************************
-//solve quadratic eq based -b^2... formula
-var quadratic = function quadratic(a, b, c) {
-  if (c === 0) return 0;
-  var body = b * b - 4 * a * c;
-  if (body < 0) return 0;
-
-  var pos = (-b + Math.sqrt(body)) / (2 * c);
-  var neg = (-b - Math.sqrt(body)) / (2 * c);
-
-  return {
-    pos: pos,
-    neg: neg
-  };
-};
 
 //distance between two points
 var distance = function distance(p1, p2) {
@@ -110,7 +96,10 @@ var greatCircle = function greatCircle(p1, p2, r, c) {
   var centre = intersection(m, m1, n, m2);
   var radius = distance(centre, p1);
 
-  return { centre: centre, radius: radius };
+  return {
+    centre: centre,
+    radius: radius
+  };
 };
 
 //intersection of two circles with equations:
@@ -144,7 +133,10 @@ var circleIntersect = function circleIntersect(c0, c1, r0, r1) {
     y: y2
   };
 
-  return { p1: p1, p2: p2 };
+  return {
+    p1: p1,
+    p2: p2
+  };
 };
 
 //angle at centre of circle radius r give two points on circumferece
@@ -252,7 +244,7 @@ $(document).ready(function () {
       this.radius = dims.windowWidth < dims.windowHeight ? dims.windowWidth / 2 - 5 : dims.windowHeight / 2 - 5;
 
       //smaller circle for testing
-      this.radius = this.radius / 2;
+      //this.radius = this.radius / 2;
 
       this.color = 'black';
     }
@@ -330,13 +322,12 @@ $(document).ready(function () {
     }, {
       key: 'polygon',
       value: function polygon(pointsArray, colour) {
-        console.log(pointsArray);
         var l = pointsArray.length;
         for (var i = 0; i < l - 1; i++) {
-          this.arc(pointsArray[i], pointsArray[i + 1], colour);
+          this.line(pointsArray[i], pointsArray[i + 1], colour);
         }
         //close the polygon
-        this.arc(pointsArray[0], pointsArray[l - 1], colour);
+        this.line(pointsArray[0], pointsArray[l - 1], colour);
       }
 
       //calculate the offset (position around the circle from which to start the
@@ -346,13 +337,12 @@ $(document).ready(function () {
     }, {
       key: 'alphaOffset',
       value: function alphaOffset(p1, p2, circle) {
+        var offset = undefined;
         //a point at 0 radians on the circle
-        //let temp = (c.centre.x < 0)? c.centre.x + c.radius : c.centre.x - c.radius;
         var p = {
           x: circle.centre.x + circle.radius,
           y: circle.centre.y
         };
-        var offset = undefined;
 
         if (p1.y < 0 && p2.y < 0) {
           offset = -arcLength(p2, p, circle.radius);
@@ -401,6 +391,164 @@ $(document).ready(function () {
 
   // * ***********************************************************************
   // *
+  // *    TESSELATE CLASS
+  // *    A regular (for now) tesselation of the given Poincare Disk
+  // *    p: sides of polygon
+  // *    q: number of p-gons meeting at each vertex
+  // *    scale: distance from the centre to point on layer 1 p-gon
+  // *    Exposure: of a polygon in layer k is it's relation to layer k+1
+  // *    (number of edges shared with lower layer)
+  // *
+  // *    minExp: Least amount of edges shared (p-3)
+  // *    maxExp: Greatest amount of edges shared (p-2)
+  // *
+  // *    edgeTran[]: an array of transformations detailing how the p-gonal
+  // *    transforms across each of the p-gon edges with:
+  // *    edgeTran[i].m: transformation matrix
+  // *    edgeTran[i].pPosition: index of the edge across which the last
+  // *    transformation was made, i.e. the edge that matched edge i in the tiling
+  // *************************************************************************
+
+  var Tesselate = function () {
+    function Tesselate(disk, p, q, scale) {
+      _classCallCheck(this, Tesselate);
+
+      this.p = p;
+      this.q = q;
+      this.scale = scale;
+      this.disk = disk;
+      this.minExp = p - 3;
+      this.maxExp = p - 2;
+
+      this.replicate();
+    }
+
+    //calculate the vertices of the p-gon as an array of points then call
+    //disk.polygon method
+
+    _createClass(Tesselate, [{
+      key: 'drawPolygon',
+      value: function drawPolygon() {
+        var s = this.scale;
+
+        var pointsArray = [{ x: s, y: 0 }];
+        this.disk.point(pointsArray[0]);
+
+        var cos = Math.cos(Math.PI / this.p);
+        var sin2 = Math.sin(Math.PI / (2 * this.p));
+        sin2 = sin2 * sin2;
+
+        var nextPoint = function nextPoint(p, angle) {
+
+          return { x: x, y: y };
+        };
+
+        //create one point per edge, the final edge will join back to the first point
+        for (var i = 0; i < this.p; i++) {
+          var angle = 2 * (i + 1) * Math.PI / this.p;
+          var _y = s * Math.sin(angle);
+          var _x5 = s * Math.cos(angle);
+          var _p = { x: _x5, y: _y };
+          this.disk.point(_p);
+          pointsArray.push(_p);
+        }
+        console.table(pointsArray);
+        disk.polygon(pointsArray);
+      }
+    }, {
+      key: 'replicate',
+      value: function replicate() {
+        var edgeTransformations = [];
+        this.drawPolygon();
+
+        for (var i = 1; i <= 5; i++) {
+          // Iterate over each vertex
+          //qtran is presumably the transformation for this vertex
+          var _qTran = 0; //edgeTran[i­-1];
+
+          for (var j = 1; j < this.q - 1; j++) {
+            // Iterate around a vertex
+            var exposure = j == 1 ? this.minExp : this.maxExp;
+            //recursiveRep(motif, qTran, 2, exposure);
+            _qTran = this.addToTran(_qTran, -1); //­-1 anticlockwise
+          }
+        }
+      }
+
+      //shift denotes direction, -1 for anticlockwise
+
+    }, {
+      key: 'addToTran',
+      value: function addToTran(tran, shift) {
+        if (shift % 2 === 0) return tran;
+        //else return this.computeTran(tran, shift);
+      }
+
+      //compute the next transformation
+
+    }, {
+      key: 'computeTran',
+      value: function computeTran(tran, shift) {
+        newEdge = (tran.pPosition + tran.orientation * shift) % p;
+        return this.tranMult(tran, edgeTran[newEdge]);
+      }
+
+      //Multiplies matrices and orientations, sets pPosition to t2.pPosition
+      //and returns result
+
+    }, {
+      key: 'tranMult',
+      value: function tranMult(t1, t2) {
+        //IMPLEMENT?
+        var result = 0;
+        return result;
+      }
+
+      //draw layers recursively
+      //pShift:
+    }, {
+      key: 'recursiveRep',
+      value: function (_recursiveRep) {
+        function recursiveRep(_x, _x2, _x3, _x4) {
+          return _recursiveRep.apply(this, arguments);
+        }
+
+        recursiveRep.toString = function () {
+          return _recursiveRep.toString();
+        };
+
+        return recursiveRep;
+      }(function (motif, initialTran, layer, exposure) {
+        DrawPgon(motif, initialTran); // Draw the p­gon pattern
+        if (layer < maxLayer) {
+          // If any more layers
+          pShift = exposure == this.minExp ? 1 : 0; //????
+          verticesToDo = exposure == this.minExp ? this.minExp : this.maxExp;
+          for (var i = 1; i <= verticesToDo; i++) {
+            // Iterate over vertices
+            pTran = this.computeTran(initialTran, pShift);
+            qSkip = i == 1 ? 1 : 0; //??
+            qTran = this.addToTran(pTran, qSkip);
+            pgonsToDo = i == 1 ? this.q - 3 : this.q - 2;
+            for (var j = 1; j <= pgonsToDo; j++) {
+              // Iterate about a vertex
+              newExposure = i == 1 ? this.minExp : this.maxExp;
+              recursiveRep(motif, qTran, layer + 1, newExposure);
+              qTran = addToTran(qTran, 1);
+            }
+            pShift = (pShift + 1) % this.p; // Advance to next vertex
+          }
+        }
+      })
+    }]);
+
+    return Tesselate;
+  }();
+
+  var tesselation = new Tesselate(disk, 5, 3, 50);
+
+  // * ***********************************************************************
+  // *
   // *   CANVAS CLASS
   // *
   // *
@@ -443,13 +591,6 @@ $(document).ready(function () {
         //this.testPoints(-60,0,60,0, 'green', 'red');
         //through centre, vertical
         //this.testPoints(-0,-100,0,100, 'green', 'red');
-
-        var p1 = { x: -60, y: -100 };
-        var p2 = { x: -60, y: 120 };
-        var p3 = { x: 60, y: 100 };
-        var p4 = { x: 60, y: -120 };
-
-        disk.polygon([p1, p2, p3, p4]);
       }
     }, {
       key: 'testPoints',

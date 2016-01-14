@@ -22,20 +22,6 @@ document.write('<canvas id="canvas" width="' + (window.innerWidth) + '" height="
 // *   define any global helper functions here
 // *
 // *************************************************************************
-//solve quadratic eq based -b^2... formula
-const quadratic = (a, b, c) => {
-  if(c === 0) return 0;
-  let body = b*b -4*a*c;
-  if( body < 0 ) return 0;
-
-  let pos = (-b + Math.sqrt(body))/(2*c);
-  let neg = (-b - Math.sqrt(body))/(2*c);
-
-  return {
-    pos: pos,
-    neg: neg
-  }
-}
 
 //distance between two points
 const distance = (p1, p2) => Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
@@ -96,7 +82,10 @@ const greatCircle = (p1, p2, r, c) => {
   let centre = intersection(m, m1, n, m2);
   let radius = distance(centre, p1);
 
-  return { centre: centre, radius: radius };
+  return {
+    centre: centre,
+    radius: radius
+  };
 }
 
 //intersection of two circles with equations:
@@ -108,17 +97,17 @@ const circleIntersect = (c0, c1, r0, r1) => {
   let b = c0.y;
   let c = c1.x;
   let d = c1.y;
-  let dist = Math.sqrt((c-a)*(c-a) +(d-b)*(d-b));
+  let dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
 
-  let del = Math.sqrt((dist+r0+r1)*(dist+r0-r1)*(dist-r0+r1)*(-dist+r0+r1)) / 4;
+  let del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
 
-  let xPartial = (a+c)/2 +((c-a)*(r0*r0-r1*r1))/(2*dist*dist);
-  let x1 = xPartial - 2*del*(b-d)/(dist*dist);
-  let x2 = xPartial + 2*del*(b-d)/(dist*dist);
+  let xPartial = (a + c) / 2 + ((c - a) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
+  let x1 = xPartial - 2 * del * (b - d) / (dist * dist);
+  let x2 = xPartial + 2 * del * (b - d) / (dist * dist);
 
-  let yPartial = (b+d)/2 +((d-b)*(r0*r0-r1*r1))/(2*dist*dist);
-  let y1 = yPartial + 2*del*(a-c)/(dist*dist);
-  let y2 = yPartial - 2*del*(a-c)/(dist*dist);
+  let yPartial = (b + d) / 2 + ((d - b) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
+  let y1 = yPartial + 2 * del * (a - c) / (dist * dist);
+  let y2 = yPartial - 2 * del * (a - c) / (dist * dist);
 
   let p1 = {
     x: x1,
@@ -127,14 +116,17 @@ const circleIntersect = (c0, c1, r0, r1) => {
 
   let p2 = {
     x: x2,
-    y:y2
+    y: y2
   }
 
-  return {p1:p1, p2:p2};
+  return {
+    p1: p1,
+    p2: p2
+  };
 }
 
 //angle at centre of circle radius r give two points on circumferece
-const arcLength = ( p1, p2, r ) => 2 * Math.asin(0.5 * distance(p1, p2) / r);
+const arcLength = (p1, p2, r) => 2 * Math.asin(0.5 * distance(p1, p2) / r);
 
 // * ***********************************************************************
 // *
@@ -225,7 +217,7 @@ $(document).ready(() => {
       this.radius = (dims.windowWidth < dims.windowHeight) ? (dims.windowWidth / 2) - 5 : (dims.windowHeight / 2) - 5;
 
       //smaller circle for testing
-      this.radius = this.radius / 2;
+      //this.radius = this.radius / 2;
 
       this.color = 'black';
     }
@@ -257,7 +249,9 @@ $(document).ready(() => {
 
     //draw a hyperbolic line between two points
     line(p1, p2, colour) {
-      if(this.checkPoint(p1) || this.checkPoint(p2)) { return; }
+      if (this.checkPoint(p1) || this.checkPoint(p2)) {
+        return;
+      }
       let col = colour || 'black';
       let c = greatCircle(p1, p2, this.radius, this.centre);
 
@@ -275,7 +269,9 @@ $(document).ready(() => {
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
     arc(p1, p2, colour) {
-      if(this.checkPoint(p1) || this.checkPoint(p2)) { return; }
+      if (this.checkPoint(p1) || this.checkPoint(p2)) {
+        return;
+      }
       let col = colour || 'black';
       let c = greatCircle(p1, p2, this.radius, this.centre);
 
@@ -286,37 +282,34 @@ $(document).ready(() => {
     }
 
     polygon(pointsArray, colour) {
-      console.log(pointsArray);
       let l = pointsArray.length;
-      for(let i = 0; i< l-1; i++){
-        this.arc(pointsArray[i], pointsArray[i+1], colour);
+      for (let i = 0; i < l - 1; i++) {
+        this.line(pointsArray[i], pointsArray[i + 1], colour);
       }
       //close the polygon
-      this.arc(pointsArray[0], pointsArray[l-1], colour);
+      this.line(pointsArray[0], pointsArray[l - 1], colour);
     }
 
     //calculate the offset (position around the circle from which to start the
     //line or arc). As canvas draws arcs clockwise by default this will change
     //depending on where the arc is relative to the origin
     alphaOffset(p1, p2, circle) {
+      let offset;
       //a point at 0 radians on the circle
-      //let temp = (c.centre.x < 0)? c.centre.x + c.radius : c.centre.x - c.radius;
       let p = {
         x: circle.centre.x + circle.radius,
         y: circle.centre.y
       }
-      let offset;
 
-      if(p1.y < 0 && p2.y < 0){
+      if (p1.y < 0 && p2.y < 0) {
         offset = -arcLength(p2, p, circle.radius);
-        if(p2.x > 0 ){
-          offset = - offset;
+        if (p2.x > 0) {
+          offset = -offset;
         }
-      }
-      else{
+      } else {
         offset = -arcLength(p1, p, circle.radius);
-        if(p1.x > 0 ){
-          offset = - offset;
+        if (p1.x > 0) {
+          offset = -offset;
         }
       }
 
@@ -334,8 +327,8 @@ $(document).ready(() => {
     //is the point in the disk?
     checkPoint(p) {
       let r = this.radius;
-      if(distance(p, this.centre) > r){
-        console.error('Error! Point (' + p.x +', ' + p.y + ') lies outside the plane!');
+      if (distance(p, this.centre) > r) {
+        console.error('Error! Point (' + p.x + ', ' + p.y + ') lies outside the plane!');
         return true;
       }
       return false;
@@ -343,6 +336,129 @@ $(document).ready(() => {
   }
 
   const disk = new Disk();
+
+  // * ***********************************************************************
+  // *
+  // *    TESSELATE CLASS
+  // *    A regular (for now) tesselation of the given Poincare Disk
+  // *    p: sides of polygon
+  // *    q: number of p-gons meeting at each vertex
+  // *    scale: distance from the centre to point on layer 1 p-gon
+  // *    Exposure: of a polygon in layer k is it's relation to layer k+1
+  // *    (number of edges shared with lower layer)
+  // *
+  // *    minExp: Least amount of edges shared (p-3)
+  // *    maxExp: Greatest amount of edges shared (p-2)
+  // *
+  // *    edgeTran[]: an array of transformations detailing how the p-gonal
+  // *    transforms across each of the p-gon edges with:
+  // *    edgeTran[i].m: transformation matrix
+  // *    edgeTran[i].pPosition: index of the edge across which the last
+  // *    transformation was made, i.e. the edge that matched edge i in the tiling
+  // *************************************************************************
+  class Tesselate {
+    constructor(disk, p, q, scale) {
+      this.p = p;
+      this.q = q;
+      this.scale = scale;
+      this.disk = disk;
+      this.minExp = p-3;
+      this.maxExp = p-2;
+
+      this.replicate();
+    }
+
+    //calculate the vertices of the p-gon as an array of points then call
+    //disk.polygon method
+    drawPolygon(){
+      let s = this.scale;
+
+      let pointsArray = [{x: s, y: 0}];
+      this.disk.point(pointsArray[0]);
+
+      let cos = Math.cos(Math.PI/this.p);
+      let sin2 = Math.sin(Math.PI/(2*this.p));
+      sin2 = sin2*sin2;
+
+      let nextPoint = (p, angle) => {
+
+        return {x: x, y: y};
+      }
+
+      //create one point per edge, the final edge will join back to the first point
+      for(let i = 0; i < this.p; i++){
+        let angle =  2*(i+1)*Math.PI/this.p;
+        let y =  s * Math.sin( angle );
+        let x =  s * Math.cos( angle );
+        let p = {x: x, y: y};
+        this.disk.point(p);
+        pointsArray.push(p);
+      }
+      console.table(pointsArray);
+      disk.polygon(pointsArray);
+    }
+
+    replicate() {
+      let edgeTransformations = [];
+      this.drawPolygon();
+
+      for (let i = 1; i <= 5; i++) { // Iterate over each vertex
+        //qtran is presumably the transformation for this vertex
+        let qTran = 0; //edgeTran[i­-1];
+
+        for (let j = 1; j < this.q-1; j++) { // Iterate around a vertex
+          let exposure = (j == 1) ? this.minExp : this.maxExp;
+          //recursiveRep(motif, qTran, 2, exposure);
+          qTran = this.addToTran(qTran, -1); //­-1 anticlockwise
+        }
+      }
+    }
+
+    //shift denotes direction, -1 for anticlockwise
+    addToTran(tran, shift) {
+      if (shift % 2 === 0) return tran;
+      //else return this.computeTran(tran, shift);
+    }
+
+    //compute the next transformation
+    computeTran(tran, shift) {
+      newEdge = (tran.pPosition + tran.orientation * shift) % p;
+      return this.tranMult(tran, edgeTran[newEdge]);
+    }
+
+    //Multiplies matrices and orientations, sets pPosition to t2.pPosition
+    //and returns result
+    tranMult(t1, t2){
+      //IMPLEMENT?
+      let result = 0;
+      return result
+    }
+
+    //draw layers recursively
+    //pShift:
+    recursiveRep(motif, initialTran, layer, exposure) {
+      DrawPgon(motif, initialTran); // Draw the p­gon pattern
+      if (layer < maxLayer) { // If any more layers
+        pShift = (exposure == this.minExp) ? 1 : 0; //????
+        verticesToDo = (exposure == this.minExp) ? this.minExp : this.maxExp;
+        for (let i = 1; i <= verticesToDo; i++) { // Iterate over vertices
+          pTran = this.computeTran(initialTran, pShift);
+          qSkip = (i == 1) ?1 : 0; //??
+          qTran = this.addToTran(pTran, qSkip);
+          pgonsToDo = (i == 1) ? this.q-3 : this.q-2;
+          for (let j = 1; j<= pgonsToDo; j++) { // Iterate about a vertex
+            newExposure = (i == 1) ? this.minExp : this.maxExp;
+            recursiveRep(motif, qTran, layer + 1, newExposure);
+            qTran = addToTran(qTran, 1);
+          }
+          pShift = (pShift + 1) % this.p; // Advance to next vertex
+        }
+      }
+    }
+
+  }
+
+  const tesselation = new Tesselate(disk, 5, 3, 50);
 
   // * ***********************************************************************
   // *
@@ -384,15 +500,9 @@ $(document).ready(() => {
       //through centre, vertical
       //this.testPoints(-0,-100,0,100, 'green', 'red');
 
-      let p1 = {x: -60, y: -100};
-      let p2 = {x: -60, y: 120};
-      let p3 = {x: 60, y: 100};
-      let p4 = {x: 60, y: -120};
-
-      disk.polygon([p1,p2,p3,p4]);
     }
 
-    testPoints(x1,y1,x2,y2, col1, col2){
+    testPoints(x1, y1, x2, y2, col1, col2) {
       let p1 = {
         x: x1,
         y: y1
@@ -410,7 +520,7 @@ $(document).ready(() => {
     }
 
     //the canvas has been translated to the centre of the disk so need to
-  //use an offset to clear it. NOT WORKING
+    //use an offset to clear it. NOT WORKING
     clear() {
       elems.ctx.clearRect(-dims.windowWidth / 2, -dims.windowHeight / 2, dims.windowWidth, dims.windowHeight);
     }
