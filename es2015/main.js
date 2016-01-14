@@ -102,6 +102,7 @@ const greatCircle = (p1, p2, r, c) => {
 //intersection of two circles with equations:
 //(x-a)^2 +(y-a)^2 = r0^2
 //(x-b)^2 +(y-c)^2 = r1^2
+//NOTE assumes the two circles DO intersect!
 const circleIntersect = (c0, c1, r0, r1) => {
   let a = c0.x;
   let b = c0.y;
@@ -112,8 +113,8 @@ const circleIntersect = (c0, c1, r0, r1) => {
   let del = Math.sqrt((dist+r0+r1)*(dist+r0-r1)*(dist-r0+r1)*(-dist+r0+r1)) / 4;
 
   let xPartial = (a+c)/2 +((c-a)*(r0*r0-r1*r1))/(2*dist*dist);
-  let x1 = xPartial + 2*del*(b-d)/(dist*dist);
-  let x2 = xPartial - 2*del*(b-d)/(dist*dist);
+  let x1 = xPartial - 2*del*(b-d)/(dist*dist);
+  let x2 = xPartial + 2*del*(b-d)/(dist*dist);
 
   let yPartial = (b+d)/2 +((d-b)*(r0*r0-r1*r1))/(2*dist*dist);
   let y1 = yPartial + 2*del*(a-c)/(dist*dist);
@@ -132,7 +133,8 @@ const circleIntersect = (c0, c1, r0, r1) => {
   return {p1:p1, p2:p2};
 }
 
-
+//angle at centre of circle radius r give two points on circumferece
+const arcLength = ( p1, p2, r ) => 2 * Math.asin(0.5 * distance(p1, p2) / r);
 
 // * ***********************************************************************
 // *
@@ -228,22 +230,23 @@ $(document).ready(() => {
       this.color = 'black';
     }
 
-    drawOuterCircle() {
+    outerCircle() {
       elems.ctx.beginPath();
       elems.ctx.arc(this.centre.x, this.centre.y, this.radius, 0, Math.PI * 2);
       elems.ctx.strokeStyle = this.color;
       elems.ctx.stroke();
     }
 
-    drawCircle(c, r) {
+    circle(c, r, colour) {
+      let col = colour || 'black';
       elems.ctx.beginPath();
       elems.ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-      elems.ctx.strokeStyle = this.color;
+      elems.ctx.strokeStyle = col;
       elems.ctx.stroke();
     }
 
     //draw a point on the disk, optional radius and colour
-    drawPoint(point, radius, colour) {
+    point(point, radius, colour) {
       let c = colour || 'black';
       let r = radius || 2;
       elems.ctx.beginPath();
@@ -253,36 +256,89 @@ $(document).ready(() => {
     }
 
     //draw a hyperbolic line between two points
-    drawLine(p1, p2) {
+    line(p1, p2, colour) {
+      if(this.checkPoint(p1) || this.checkPoint(p2)) { return; }
+      let col = colour || 'black';
       let c = greatCircle(p1, p2, this.radius, this.centre);
-      this.drawCircle(c.centre, c.radius);
-      let points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
-      this.drawPoint(points.p1);
-      this.drawPoint(points.p2);
-      this.drawPoint(c.centre);
 
-      this.drawArc(points.p2, points.p1);
+      let points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
+
+      this.point(points.p1);
+      this.point(points.p2);
+
+      //angle subtended by the arc
+      let alpha = arcLength(points.p1, points.p2, c.radius);
+
+      let offset = this.alphaOffset(points.p2, points.p2, c);
+      this.drawSegment(c, alpha, offset, col);
     }
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
-    drawArc(p1, p2) {
-      let arcLength = ( p1, p2, r ) => 2 * Math.asin(0.5 * distance(p1, p2) / r);
+    arc(p1, p2, colour) {
+      if(this.checkPoint(p1) || this.checkPoint(p2)) { return; }
+      let col = colour || 'black';
       let c = greatCircle(p1, p2, this.radius, this.centre);
+
       let alpha = arcLength(p1, p2, c.radius);
 
-      //a point at 0 radians on the circle
-      let point = {
-        x: c.centre.x + c.radius,
-        y: c.centre.y
-      }
-      //how far around the circle that start of the arc is
-      let alphaOffset = arcLength(p1, point, c.radius);
+      let offset = this.alphaOffset(p1, p2, c);
+      this.drawSegment(c, alpha, offset, col);
+    }
 
-      //draw the arc
+    polygon(pointsArray, colour) {
+      console.log(pointsArray);
+      let l = pointsArray.length;
+      for(let i = 0; i< l-1; i++){
+        this.arc(pointsArray[i], pointsArray[i+1], colour);
+      }
+      //close the polygon
+      this.arc(pointsArray[0], pointsArray[l-1], colour);
+    }
+
+    //calculate the offset (position around the circle from which to start the
+    //line or arc). As canvas draws arcs clockwise by default this will change
+    //depending on where the arc is relative to the origin
+    alphaOffset(p1, p2, circle) {
+      //a point at 0 radians on the circle
+      //let temp = (c.centre.x < 0)? c.centre.x + c.radius : c.centre.x - c.radius;
+      let p = {
+        x: circle.centre.x + circle.radius,
+        y: circle.centre.y
+      }
+      let offset;
+
+      if(p1.y < 0 && p2.y < 0){
+        offset = -arcLength(p2, p, circle.radius);
+        if(p2.x > 0 ){
+          offset = - offset;
+        }
+      }
+      else{
+        offset = -arcLength(p1, p, circle.radius);
+        if(p1.x > 0 ){
+          offset = - offset;
+        }
+      }
+
+      return offset;
+    }
+
+    //draw a hyperbolic line segment using calculations from line() or arc()
+    drawSegment(c, alpha, alphaOffset, colour) {
       elems.ctx.beginPath();
-      elems.ctx.arc(c.centre.x, c.centre.y, c.radius, -alphaOffset, alpha - alphaOffset);
-      elems.ctx.strokeStyle = this.color;
+      elems.ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
+      elems.ctx.strokeStyle = colour || 'black';
       elems.ctx.stroke();
+    }
+
+    //is the point in the disk?
+    checkPoint(p) {
+      let r = this.radius;
+      if(distance(p, this.centre) > r){
+        console.error('Error! Point (' + p.x +', ' + p.y + ') lies outside the plane!');
+        return true;
+      }
+      return false;
     }
   }
 
@@ -304,22 +360,53 @@ $(document).ready(() => {
     }
 
     draw() {
-      disk.drawOuterCircle();
-      disk.drawPoint(disk.centre);
+      disk.outerCircle();
+      disk.point(disk.centre);
 
+      //left of centre, vertical
+      //this.testPoints(-60,-100,-60,120, 'green', 'red');
+      //right of centre, vertical
+      //this.testPoints(60,-100,60,120, 'green', 'red');
+      //above centre, horizontal
+      //this.testPoints(-90,-100,100,-100, 'green', 'red');
+      //below centre, horizontal
+      //this.testPoints(-120,100,120,100, 'green', 'red');
+      //bottom right to top left
+      //this.testPoints(120,100,-120,-120, 'green', 'red');
+
+      //bottom left to top right
+      //this.testPoints(-120,100,120,-120, 'green', 'red');
+      //top left to bottom right
+      //this.testPoints(-60,-60,100,60, 'green', 'red');
+
+      //through centre, horizontal
+      //this.testPoints(-60,0,60,0, 'green', 'red');
+      //through centre, vertical
+      //this.testPoints(-0,-100,0,100, 'green', 'red');
+
+      let p1 = {x: -60, y: -100};
+      let p2 = {x: -60, y: 120};
+      let p3 = {x: 60, y: 100};
+      let p4 = {x: 60, y: -120};
+
+      disk.polygon([p1,p2,p3,p4]);
+    }
+
+    testPoints(x1,y1,x2,y2, col1, col2){
       let p1 = {
-        x: -60,
-        y: -40
+        x: x1,
+        y: y1
       }
 
       let p2 = {
-        x: -60,
-        y: 100
+        x: x2,
+        y: y2
       }
-      disk.drawPoint(p1);
-      disk.drawPoint(p2);
+      disk.point(p1);
+      disk.point(p2);
 
-      disk.drawLine(p1, p2);
+      disk.line(p1, p2, col1);
+      disk.arc(p1, p2, col2);
     }
 
     //the canvas has been translated to the centre of the disk so need to
