@@ -46,11 +46,11 @@ const intersection = (p1, m1, p2, m2) => {
   //CODE TO DEAL WITH m1 or m2 == inf
   if(m1 === Infinity){
     x = p1.x;
-    y = (m2*(p1.x-p2.x))/p2.y;
+    y = (m2)*(p1.x-p2.x) + p2.y;
   }
   else if(m2 === Infinity){
     x = p2.x;
-    y = (m1*(p2.x-p1.x))/p1.y;
+    y = (m1*(p2.x-p1.x)) + p1.y;
   }
   else{
     //y intercept of first line
@@ -90,14 +90,10 @@ const greatCircle = (p1, p2, r, c) => {
   let m1 = perpendicularSlope(m, p1Inverse);
   let m2 = perpendicularSlope(n, p2Inverse);
 
-  let centre;
-
   //centre is the centrepoint of the circle out of which the arc is made
-  centre = intersection(m, m1, n, m2);
+  let centre = intersection(m, m1, n, m2);
 
   let radius = distance(centre, p1);
-
-  //console.log(centre,radius);
 
   return {
     centre: centre,
@@ -205,6 +201,24 @@ const euclideanLine = (p1, p2, colour) => {
   elems.ctx.stroke()
 }
 
+//draw a point on the disk, optional radius and colour
+const drawPoint = (point, radius, colour) => {
+  let col = colour || 'black';
+  let r = radius || 2;
+  elems.ctx.beginPath();
+  elems.ctx.arc(point.x, point.y, r, 0, Math.PI * 2, true);
+  elems.ctx.fillStyle = col;
+  elems.ctx.fill();
+}
+
+const drawCircle = (c, r, colour) => {
+  let col = colour || 'black';
+  elems.ctx.beginPath();
+  elems.ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+  elems.ctx.strokeStyle = col;
+  elems.ctx.stroke();
+}
+
 // * ***********************************************************************
 // *
 // *   DOCUMENT READY
@@ -280,34 +294,13 @@ $(document).ready(() => {
       this.radius = (dims.windowWidth < dims.windowHeight) ? (dims.windowWidth / 2) - 5 : (dims.windowHeight / 2) - 5;
 
       //smaller circle for testing
-      //this.radius = this.radius / 2;
+      // /this.radius = this.radius / 3;
 
       this.color = 'black';
     }
 
     outerCircle() {
-      elems.ctx.beginPath();
-      elems.ctx.arc(this.centre.x, this.centre.y, this.radius, 0, Math.PI * 2);
-      elems.ctx.strokeStyle = this.color;
-      elems.ctx.stroke();
-    }
-
-    circle(c, r, colour) {
-      let col = colour || 'black';
-      elems.ctx.beginPath();
-      elems.ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-      elems.ctx.strokeStyle = col;
-      elems.ctx.stroke();
-    }
-
-    //draw a point on the disk, optional radius and colour
-    point(point, radius, colour) {
-      let c = colour || 'black';
-      let r = radius || 2;
-      elems.ctx.beginPath();
-      elems.ctx.arc(point.x, point.y, r, 0, Math.PI * 2, true);
-      elems.ctx.fillStyle = c;
-      elems.ctx.fill();
+      drawCircle({x: this.centre.x, y: this.centre.y}, this.radius);
     }
 
     //draw a hyperbolic line between two points
@@ -331,21 +324,20 @@ $(document).ready(() => {
           }
         }
         euclideanLine(points.p1,points.p2, col);
-        return;
       }
       else{
         c = greatCircle(p1, p2, this.radius, this.centre);
         points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
+        //draw points for testing
+        drawPoint(points.p1);
+        drawPoint(points.p2);
+
+        //angle subtended by the arc
+        let alpha = arcLength(points.p1, points.p2, c.radius);
+
+        let offset = this.alphaOffset(points.p2, points.p2, c);
+        drawSegment(c, alpha, offset, col);
       }
-      //draw points for testing
-      this.point(points.p1);
-      this.point(points.p2);
-
-      //angle subtended by the arc
-      let alpha = arcLength(points.p1, points.p2, c.radius);
-
-      let offset = this.alphaOffset(points.p2, points.p2, c);
-      drawSegment(c, alpha, offset, col);
     }
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
@@ -474,7 +466,7 @@ $(document).ready(() => {
         let y =  s * Math.sin( angle + this.rotation);
         let x =  s * Math.cos( angle + this.rotation);
         let p = {x: x, y: y};
-        this.disk.point(p);
+        drawPoint(p);
         pointsArray.push(p);
       }
       disk.polygon(pointsArray);
@@ -485,7 +477,7 @@ $(document).ready(() => {
     }
   }
 
-  const tesselation = new Tesselate(disk, 5, 3, 80, Math.PI);
+  //const tesselation = new Tesselate(disk, 5, 3, 80, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -504,7 +496,7 @@ $(document).ready(() => {
 
     draw() {
       disk.outerCircle();
-      disk.point(disk.centre);
+      drawPoint(disk.centre);
 
       //left of centre, vertical
       //this.testPoints(-60,-100,-60,120, 'green', 'red');
@@ -522,17 +514,17 @@ $(document).ready(() => {
       //this.testPoints(-0,-100,0,100, 'green', 'red');
 
       //bottom left to top right
-      //this.testPoints(-80,0,30,-10, 'green', 'red');
-      //disk.point({x:-236.9140625, y: 13.372957123630071})
+      this.testPoints(-80,0,30,-10, 'green', 'red');
+
       //top left to bottom right
-      //this.testPoints(-60,-60,100,60, 'green', 'red');
+      this.testPoints(-60,-60,100,60, 'green', 'red');
 
 
 
       //let p1 = {x:-50 , y:50};
-      //disk.point(p1);
+      //drawPoint(p1);
       //let p2 = {x:50 , y:-50};
-      //disk.point(p2)
+      //drawPoint(p2)
       //disk.arc(p1,p2, 'red');
       //disk.line(p1,p2, 'green');
     }
@@ -547,10 +539,10 @@ $(document).ready(() => {
         x: x2,
         y: y2
       }
-      disk.point(p1);
-      disk.point(p2);
+      drawPoint(p1);
+      drawPoint(p2);
 
-      disk.line(p1, p2, col1);
+      //disk.line(p1, p2, col1);
       disk.arc(p1, p2, col2);
     }
 
