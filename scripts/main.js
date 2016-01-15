@@ -396,10 +396,10 @@ $(document).ready(function () {
       value: function polygon(pointsArray, colour) {
         var l = pointsArray.length;
         for (var i = 0; i < l - 1; i++) {
-          this.line(pointsArray[i], pointsArray[i + 1], colour);
+          this.arc(pointsArray[i], pointsArray[i + 1], colour);
         }
         //close the polygon
-        this.line(pointsArray[0], pointsArray[l - 1], colour);
+        this.arc(pointsArray[0], pointsArray[l - 1], colour);
       }
 
       //calculate the offset (position around the circle from which to start the
@@ -409,6 +409,7 @@ $(document).ready(function () {
     }, {
       key: 'alphaOffset',
       value: function alphaOffset(p1, p2, circle) {
+        console.log(p1, p2);
         var offset = undefined;
         //a point at 0 radians on the circle
         var p = {
@@ -416,23 +417,24 @@ $(document).ready(function () {
           y: circle.centre.y
         };
 
-        //line above centre
+        //the following cases have been calculated experimentally
         if (p1.y < 0 && p2.y < 0) {
           offset = -arcLength(p2, p, circle.radius);
           if (p2.x > 0) {
             offset = -offset;
           }
         } else if (p1.x < p2.x && p1.y < p2.y || p1.x < p2.x && p1.y > p2.y) {
-          console.log('test');
           offset = arcLength(p2, p, circle.radius);
-        }
-        //line below centre
-        else {
-            offset = -arcLength(p1, p, circle.radius);
-            if (p1.x > 0) {
-              offset = -offset;
-            }
+        } else if (p1.y > 0 && p2.y > 0) {
+          offset = -arcLength(p2, p, circle.radius);
+        } else if (p1.y < 0 && p2.y > 0) {
+          offset = arcLength(p1, p, circle.radius);
+        } else {
+          offset = -arcLength(p1, p, circle.radius);
+          if (p1.x > 0) {
+            offset = -offset;
           }
+        }
 
         return offset;
       }
@@ -511,7 +513,6 @@ $(document).ready(function () {
         var s = this.scale;
 
         var pointsArray = [];
-
         var cos = Math.cos(Math.PI / this.p);
         var sin2 = Math.sin(Math.PI / (2 * this.p));
         sin2 = sin2 * sin2;
@@ -525,6 +526,7 @@ $(document).ready(function () {
           drawPoint(p);
           pointsArray.push(p);
         }
+        console.table(pointsArray);
         disk.polygon(pointsArray);
       }
     }, {
@@ -537,7 +539,7 @@ $(document).ready(function () {
     return Tesselate;
   }();
 
-  //const tesselation = new Tesselate(disk, 3, 3, 80, Math.PI);
+  var tesselation = new Tesselate(disk, 4, 3, 80, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -563,6 +565,9 @@ $(document).ready(function () {
         disk.outerCircle();
         drawPoint(disk.centre);
 
+        //let pointsArray = [{x:40 , y:-70}, {x:40 , y:-70}, {x:-80 , y:3}]
+        //disk.polygon(pointsArray);
+
         //left of centre, vertical
         //this.testPoints(-60,-100,-60,120, 'green', 'red');
         //right of centre, vertical
@@ -582,7 +587,18 @@ $(document).ready(function () {
         //this.testPoints(30,-10,-80,10, 'green', 'red');
 
         //top left to bottom right
-        this.testPoints(100, 60, -60, -60, 'green', 'red');
+        //this.testPoints(100,60,-60,-60, 'green', 'red');
+
+        var p1 = { x: 80, y: -2 };
+        var p2 = { x: 40, y: 69.3 };
+        //let p3 = {x: 2.45, y: 80};
+        //let p4 = {x: -80, y: 2.94};
+
+        //drawPoint(p1);
+        //drawPoint(p2);
+        //drawPoint(p3);
+        //drawPoint(p4);
+        //disk.arc(p1,p2);
 
         //let p1 = {x:-50 , y:50};
         //drawPoint(p1);

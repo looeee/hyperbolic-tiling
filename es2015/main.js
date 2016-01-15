@@ -361,16 +361,17 @@ $(document).ready(() => {
     polygon(pointsArray, colour) {
       let l = pointsArray.length;
       for (let i = 0; i < l - 1; i++) {
-        this.line(pointsArray[i], pointsArray[i + 1], colour);
+        this.arc(pointsArray[i], pointsArray[i + 1], colour);
       }
       //close the polygon
-      this.line(pointsArray[0], pointsArray[l - 1], colour);
+      this.arc(pointsArray[0], pointsArray[l - 1], colour);
     }
 
     //calculate the offset (position around the circle from which to start the
     //line or arc). As canvas draws arcs clockwise by default this will change
     //depending on where the arc is relative to the origin
     alphaOffset(p1, p2, circle) {
+      console.log(p1,p2);
       let offset;
       //a point at 0 radians on the circle
       let p = {
@@ -378,18 +379,24 @@ $(document).ready(() => {
         y: circle.centre.y
       }
 
-      //line above centre
+      //the following cases have been calculated experimentally
       if (p1.y < 0 && p2.y < 0) {
         offset = -arcLength(p2, p, circle.radius);
         if (p2.x > 0) {
           offset = -offset;
         }
       }
-      else if((p1.x < p2.x && p1.y < p2.y) || (p1.x< p2.x && p1.y > p2.y)){
-        console.log('test');
+      else if((p1.x < p2.x && p1.y < p2.y)
+           || (p1.x< p2.x && p1.y > p2.y)){
         offset = arcLength(p2, p, circle.radius);
       }
-      //line below centre
+      else if(p1.y > 0 && p2.y > 0){
+        offset = -arcLength(p2, p, circle.radius);
+      }
+      else if(p1.y < 0 && p2.y > 0){
+        offset = arcLength(p1, p, circle.radius);
+      }
+
       else {
         offset = -arcLength(p1, p, circle.radius);
         if (p1.x > 0) {
@@ -462,7 +469,6 @@ $(document).ready(() => {
       let s = this.scale;
 
       let pointsArray = [];
-
       let cos = Math.cos(Math.PI/this.p);
       let sin2 = Math.sin(Math.PI/(2*this.p));
       sin2 = sin2*sin2;
@@ -476,6 +482,7 @@ $(document).ready(() => {
         drawPoint(p);
         pointsArray.push(p);
       }
+      console.table(pointsArray);
       disk.polygon(pointsArray);
     }
 
@@ -484,7 +491,7 @@ $(document).ready(() => {
     }
   }
 
-  //const tesselation = new Tesselate(disk, 3, 3, 80, Math.PI);
+  const tesselation = new Tesselate(disk, 4, 3, 80, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -505,6 +512,9 @@ $(document).ready(() => {
       disk.outerCircle();
       drawPoint(disk.centre);
 
+      //let pointsArray = [{x:40 , y:-70}, {x:40 , y:-70}, {x:-80 , y:3}]
+      //disk.polygon(pointsArray);
+
       //left of centre, vertical
       //this.testPoints(-60,-100,-60,120, 'green', 'red');
       //right of centre, vertical
@@ -524,9 +534,19 @@ $(document).ready(() => {
       //this.testPoints(30,-10,-80,10, 'green', 'red');
 
       //top left to bottom right
-      this.testPoints(100,60,-60,-60, 'green', 'red');
+      //this.testPoints(100,60,-60,-60, 'green', 'red');
 
 
+      let p1 = {x: 80, y: -2}
+      let p2 = {x: 40, y: 69.3}
+      //let p3 = {x: 2.45, y: 80};
+      //let p4 = {x: -80, y: 2.94};
+
+      //drawPoint(p1);
+      //drawPoint(p2);
+      //drawPoint(p3);
+      //drawPoint(p4);
+      //disk.arc(p1,p2);
 
       //let p1 = {x:-50 , y:50};
       //drawPoint(p1);
