@@ -58,11 +58,11 @@ var intersection = function intersection(p1, m1, p2, m2) {
       c2 = undefined,
       x = undefined,
       y = undefined;
-  //CODE TO DEAL WITH m1 or m2 == inf
-  if (m1 === Infinity) {
+  //CODE TO DEAL WITH m1 or m2 == inf (or very large number due to rounding error)
+  if (m1 > 5000 || m1 === Infinity) {
     x = p1.x;
     y = m2 * (p1.x - p2.x) + p2.y;
-  } else if (m2 === Infinity) {
+  } else if (m2 > 5000 || m1 === Infinity) {
     x = p2.x;
     y = m1 * (p2.x - p1.x) + p1.y;
   } else {
@@ -94,8 +94,9 @@ var inverse = function inverse(p, r, c) {
 };
 
 //calculate the radius and centre of the circle required to draw a line between
-//two points in the hyperbolic plane defined by the circle r, c
+//two points in the hyperbolic plane defined by the disk (r, c)
 var greatCircle = function greatCircle(p1, p2, r, c) {
+  //console.log(p1, p2, r, c);
   var p1Inverse = inverse(p1, r, c);
   var p2Inverse = inverse(p2, r, c);
 
@@ -107,9 +108,7 @@ var greatCircle = function greatCircle(p1, p2, r, c) {
 
   //centre is the centrepoint of the circle out of which the arc is made
   var centre = intersection(m, m1, n, m2);
-
   var radius = distance(centre, p1);
-
   return {
     centre: centre,
     radius: radius
@@ -320,7 +319,7 @@ $(document).ready(function () {
       this.radius = dims.windowWidth < dims.windowHeight ? dims.windowWidth / 2 - 5 : dims.windowHeight / 2 - 5;
 
       //smaller circle for testing
-      // /this.radius = this.radius / 3;
+      this.radius = this.radius / 3;
 
       this.color = 'black';
     }
@@ -336,9 +335,9 @@ $(document).ready(function () {
     }, {
       key: 'line',
       value: function line(p1, p2, colour) {
-        if (this.checkPoint(p1) || this.checkPoint(p2)) {
-          return;
-        }
+        var pts = this.prepPoints(p1, p2);
+        p1 = pts.p1;
+        p2 = pts.p2;
         var col = colour || 'black';
         var c = undefined,
             points = undefined;
@@ -376,30 +375,61 @@ $(document).ready(function () {
     }, {
       key: 'arc',
       value: function arc(p1, p2, colour) {
-        if (this.checkPoint(p1) || this.checkPoint(p2)) {
-          return;
-        }
+        var pts = this.prepPoints(p1, p2);
+        p1 = pts.p1;
+        p2 = pts.p2;
         if (throughOrigin(p1, p2)) {
           euclideanLine(p1, p2, colour);
           return;
         }
         var col = colour || 'black';
         var c = greatCircle(p1, p2, this.radius, this.centre);
+        //length of the arc
         var alpha = arcLength(p1, p2, c.radius);
 
+        //how far around the greatCircle to start drawing the arc
         var offset = this.alphaOffset(p1, p2, c);
-
         drawSegment(c, alpha, offset, col);
       }
     }, {
       key: 'polygon',
       value: function polygon(pointsArray, colour) {
         var l = pointsArray.length;
+        console.table(pointsArray);
+        drawPoint(pointsArray[0], 5, 'red');
+
         for (var i = 0; i < l - 1; i++) {
           this.arc(pointsArray[i], pointsArray[i + 1], colour);
         }
+
+        var r = 1;
+        var q = 2;
+
+        //this.arc(pointsArray[r], pointsArray[q], colour);
+        //this.arc(pointsArray[2], pointsArray[3], 'red');
         //close the polygon
         this.arc(pointsArray[0], pointsArray[l - 1], colour);
+      }
+
+      //before drawing a line or arc check the points are on the disk and
+      //put them in clockwise order
+
+    }, {
+      key: 'prepPoints',
+      value: function prepPoints(p1, p2) {
+        if (this.checkPoint(p1) || this.checkPoint(p2)) {
+          return;
+        }
+        if (p1.x === p2.x) {
+          return { p1: p1, p2: p2 };
+        }
+        //swap the points if they are not in clockwise order
+        else if (p1.x > p2.x) {
+            var temp = p1;
+            p1 = p2;
+            p2 = temp;
+          }
+        return { p1: p1, p2: p2 };
       }
 
       //calculate the offset (position around the circle from which to start the
@@ -408,33 +438,50 @@ $(document).ready(function () {
 
     }, {
       key: 'alphaOffset',
-      value: function alphaOffset(p1, p2, circle) {
-        console.log(p1, p2);
+      value: function alphaOffset(p1, p2, c) {
         var offset = undefined;
         //a point at 0 radians on the circle
         var p = {
-          x: circle.centre.x + circle.radius,
-          y: circle.centre.y
+          x: c.centre.x + c.radius,
+          y: c.centre.y
         };
 
         //the following cases have been calculated experimentally
+        /*
         if (p1.y < 0 && p2.y < 0) {
-          offset = -arcLength(p2, p, circle.radius);
+          offset = -arcLength(p2, p, c.radius);
           if (p2.x > 0) {
             offset = -offset;
           }
-        } else if (p1.x < p2.x && p1.y < p2.y || p1.x < p2.x && p1.y > p2.y) {
-          offset = arcLength(p2, p, circle.radius);
-        } else if (p1.y > 0 && p2.y > 0) {
-          offset = -arcLength(p2, p, circle.radius);
-        } else if (p1.y < 0 && p2.y > 0) {
-          offset = arcLength(p1, p, circle.radius);
-        } else {
-          offset = -arcLength(p1, p, circle.radius);
+        }
+        else if((p1.x < p2.x && p1.y < p2.y)
+             || (p1.x< p2.x && p1.y > p2.y)){
+          offset = arcLength(p2, p, c.radius);
+        }
+        else if(p1.y > 0 && p2.y > 0){
+          offset = -arcLength(p2, p, c.radius);
+        }
+        else if(p1.y < 0 && p2.y > 0){
+          offset = arcLength(p1, p, c.radius);
+        }
+         else {
+          offset = -arcLength(p1, p, c.radius);
           if (p1.x > 0) {
             offset = -offset;
           }
         }
+        */
+        var t = { x: distance(this.centre, c.centre), y: 0 };
+        //console.log(t);
+        var beta = arcLength(t, c.centre, -t.x);
+        //console.log(p1, p2, beta);
+
+        //if(true){
+        offset = -arcLength(p2, p, c.radius) + 2 * Math.PI / 3;
+        //}
+        //else{
+        //  offset = arcLength(p2, p, c.radius);
+        //  }
 
         return offset;
       }
@@ -465,17 +512,7 @@ $(document).ready(function () {
   // *    p: sides of polygon
   // *    q: number of p-gons meeting at each vertex
   // *    scale: distance from the centre to point on layer 1 p-gon
-  // *    Exposure: of a polygon in layer k is it's relation to layer k+1
-  // *    (number of edges shared with lower layer)
   // *
-  // *    minExp: Least amount of edges shared (p-3)
-  // *    maxExp: Greatest amount of edges shared (p-2)
-  // *
-  // *    edgeTran[]: an array of transformations detailing how the p-gonal
-  // *    transforms across each of the p-gon edges with:
-  // *    edgeTran[i].m: transformation matrix
-  // *    edgeTran[i].pPosition: index of the edge across which the last
-  // *    transformation was made, i.e. the edge that matched edge i in the tiling
   // *************************************************************************
 
   var Tesselate = function () {
@@ -504,12 +541,13 @@ $(document).ready(function () {
       this.replicate();
     }
 
-    //calculate the vertices of the p-gon as an array of points then call
-    //disk.polygon method
+    //calculate the vertices of a regular p-gon as an array of points
+    //centroid at (0,0)
+    //or vertex 1 at centroid NOT IMPLEMENTED
 
     _createClass(Tesselate, [{
-      key: 'drawPolygon',
-      value: function drawPolygon() {
+      key: 'calculatePoints',
+      value: function calculatePoints(centroid) {
         var s = this.scale;
 
         var pointsArray = [];
@@ -526,7 +564,12 @@ $(document).ready(function () {
           drawPoint(p);
           pointsArray.push(p);
         }
-        console.table(pointsArray);
+        return pointsArray;
+      }
+    }, {
+      key: 'drawPolygon',
+      value: function drawPolygon() {
+        var pointsArray = this.calculatePoints();
         disk.polygon(pointsArray);
       }
     }, {
@@ -539,7 +582,7 @@ $(document).ready(function () {
     return Tesselate;
   }();
 
-  var tesselation = new Tesselate(disk, 4, 3, 80, Math.PI);
+  var tesselation = new Tesselate(disk, 3, 3, 80, 0);
 
   // * ***********************************************************************
   // *
@@ -589,16 +632,47 @@ $(document).ready(function () {
         //top left to bottom right
         //this.testPoints(100,60,-60,-60, 'green', 'red');
 
-        var p1 = { x: 80, y: -2 };
-        var p2 = { x: 40, y: 69.3 };
-        //let p3 = {x: 2.45, y: 80};
-        //let p4 = {x: -80, y: 2.94};
-
+        //let p1 = {x: -50, y: -69.3}
+        //let p2 = {x: 40, y: 69.3}
         //drawPoint(p1);
         //drawPoint(p2);
-        //drawPoint(p3);
-        //drawPoint(p4);
-        //disk.arc(p1,p2);
+        //disk.arc(p1,p2)
+        /*
+         let p3 = {x: -80, y: 2.94};
+        //let p4 = {x: -80, y: 2.94};
+         drawPoint(p1);
+        drawPoint(p2);
+        drawPoint(p3);
+         let pArray1 =  [p1,p2,p3];
+        disk.polygon(pArray1);
+        //disk.arc(p2,p3);
+        //disk.arc(p3,p1);
+         let c = greatCircle(p1, p2, disk.radius, disk.centre);
+        let p4 = inverse(p3, c.radius, c.centre);
+        drawPoint(p4);
+        let pArray2 = [p1,p2,p4];
+        disk.polygon(pArray2);
+         c = greatCircle(p2, p3, disk.radius, disk.centre);
+        let p5 = inverse(p1, c.radius, c.centre);
+        drawPoint(p5);
+        let pArray3 = [p2,p3,p5];
+        disk.polygon(pArray3);
+         c = greatCircle(p1, p3, disk.radius, disk.centre);
+        let p6 = inverse(p2, c.radius, c.centre);
+        drawPoint(p6);
+        let pArray4 = [p3,p6,p1];
+        disk.polygon(pArray4);
+         c = greatCircle(p6, p1, disk.radius, disk.centre);
+        let p7 = inverse(p3, c.radius, c.centre);
+        drawPoint(p7);
+        let pArray5 = [p6,p1,p7];
+        disk.polygon(pArray5);
+         c = greatCircle(p6, p7, disk.radius, disk.centre);
+        let p8 = inverse(p1, c.radius, c.centre);
+        drawPoint(p8);
+        let pArray6 = [p6,p7,p8];
+        disk.polygon(pArray6);
+        */
 
         //let p1 = {x:-50 , y:50};
         //drawPoint(p1);
