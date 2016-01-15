@@ -54,13 +54,26 @@ var perpendicularSlope = function perpendicularSlope(p1, p2) {
 
 //intersection point of two lines defined by p1,m1 and q1,m2
 var intersection = function intersection(p1, m1, p2, m2) {
-  //y intercept of first line
-  var c1 = p1.y - m1 * p1.x;
-  //y intercept of second line
-  var c2 = p2.y - m2 * p2.x;
+  var c1 = undefined,
+      c2 = undefined,
+      x = undefined,
+      y = undefined;
+  //CODE TO DEAL WITH m1 or m2 == inf
+  if (m1 === Infinity) {
+    x = p1.x;
+    y = m2 * (p1.x - p2.x) / p2.y;
+  } else if (m2 === Infinity) {
+    x = p2.x;
+    y = m1 * (p2.x - p1.x) / p1.y;
+  } else {
+    //y intercept of first line
+    c1 = p1.y - m1 * p1.x;
+    //y intercept of second line
+    c2 = p2.y - m2 * p2.x;
 
-  var x = (c2 - c1) / (m1 - m2);
-  var y = m1 * x + c1;
+    x = (c2 - c1) / (m1 - m2);
+    y = m1 * x + c1;
+  }
   return {
     x: x,
     y: y
@@ -92,9 +105,14 @@ var greatCircle = function greatCircle(p1, p2, r, c) {
   var m1 = perpendicularSlope(m, p1Inverse);
   var m2 = perpendicularSlope(n, p2Inverse);
 
+  var centre = undefined;
+
   //centre is the centrepoint of the circle out of which the arc is made
-  var centre = intersection(m, m1, n, m2);
+  centre = intersection(m, m1, n, m2);
+
   var radius = distance(centre, p1);
+
+  //console.log(centre,radius);
 
   return {
     centre: centre,
@@ -166,26 +184,50 @@ var throughOrigin = function throughOrigin(p1, p2) {
 
 // * ***********************************************************************
 // *
+// *  ELEMENTS CLASS
+// *  Holds references to any elements used
+// *
+// *************************************************************************
+
+var Elements = function Elements() {
+  _classCallCheck(this, Elements);
+
+  this.canvas = $('#canvas')[0];
+  this.ctx = this.canvas.getContext('2d');
+};
+
+var elems = new Elements();
+
+// * ***********************************************************************
+// *
+// *   CANVAS UTILITY FUNCTIONS
+// *
+// *************************************************************************
+
+//draw a hyperbolic line segment using calculations from line() or arc()
+var drawSegment = function drawSegment(c, alpha, alphaOffset, colour) {
+  elems.ctx.beginPath();
+  elems.ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
+  elems.ctx.strokeStyle = colour || 'black';
+  elems.ctx.stroke();
+};
+
+//draw a (euclidean) line between two points
+var euclideanLine = function euclideanLine(p1, p2, colour) {
+  var c = colour || 'black';
+  elems.ctx.beginPath();
+  elems.ctx.moveTo(p1.x, p1.y);
+  elems.ctx.lineTo(p2.x, p2.y);
+  elems.ctx.strokeStyle = c;
+  elems.ctx.stroke();
+};
+
+// * ***********************************************************************
+// *
 // *   DOCUMENT READY
 // *
 // *************************************************************************
 $(document).ready(function () {
-
-  // * ***********************************************************************
-  // *
-  // *  ELEMENTS CLASS
-  // *  Holds references to any elements used
-  // *
-  // *************************************************************************
-
-  var Elements = function Elements() {
-    _classCallCheck(this, Elements);
-
-    this.canvas = $('#canvas')[0];
-    this.ctx = this.canvas.getContext('2d');
-  };
-
-  var elems = new Elements();
 
   // * ***********************************************************************
   // *
@@ -324,7 +366,7 @@ $(document).ready(function () {
               y: -u.y * this.radius
             }
           };
-          this.euclideanLine(points.p1, points.p2, col);
+          euclideanLine(points.p1, points.p2, col);
           return;
         } else {
           c = greatCircle(p1, p2, this.radius, this.centre);
@@ -338,7 +380,7 @@ $(document).ready(function () {
         var alpha = arcLength(points.p1, points.p2, c.radius);
 
         var offset = this.alphaOffset(points.p2, points.p2, c);
-        this.drawSegment(c, alpha, offset, col);
+        drawSegment(c, alpha, offset, col);
       }
 
       //Draw an arc (hyperbolic line segment) between two points on the disk
@@ -350,16 +392,16 @@ $(document).ready(function () {
           return;
         }
         if (throughOrigin(p1, p2)) {
-          this.euclideanLine(p1, p2, colour);
+          euclideanLine(p1, p2, colour);
           return;
         }
         var col = colour || 'black';
         var c = greatCircle(p1, p2, this.radius, this.centre);
-
         var alpha = arcLength(p1, p2, c.radius);
 
         var offset = this.alphaOffset(p1, p2, c);
-        this.drawSegment(c, alpha, offset, col);
+
+        drawSegment(c, alpha, offset, col);
       }
     }, {
       key: 'polygon',
@@ -401,17 +443,6 @@ $(document).ready(function () {
         return offset;
       }
 
-      //draw a hyperbolic line segment using calculations from line() or arc()
-
-    }, {
-      key: 'drawSegment',
-      value: function drawSegment(c, alpha, alphaOffset, colour) {
-        elems.ctx.beginPath();
-        elems.ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
-        elems.ctx.strokeStyle = colour || 'black';
-        elems.ctx.stroke();
-      }
-
       //is the point in the disk?
 
     }, {
@@ -423,19 +454,6 @@ $(document).ready(function () {
           return true;
         }
         return false;
-      }
-
-      //draw a (euclidean) line between two points
-
-    }, {
-      key: 'euclideanLine',
-      value: function euclideanLine(p1, p2, colour) {
-        var c = colour || 'black';
-        elems.ctx.beginPath();
-        elems.ctx.moveTo(p1.x, p1.y);
-        elems.ctx.lineTo(p2.x, p2.y);
-        elems.ctx.strokeStyle = c;
-        elems.ctx.stroke();
       }
     }]);
 
@@ -513,7 +531,6 @@ $(document).ready(function () {
           this.disk.point(p);
           pointsArray.push(p);
         }
-        //console.table(pointsArray);
         disk.polygon(pointsArray);
       }
     }, {
@@ -526,7 +543,7 @@ $(document).ready(function () {
     return Tesselate;
   }();
 
-  //const tesselation = new Tesselate(disk, 900, 3, 30, Math.PI);
+  var tesselation = new Tesselate(disk, 5, 3, 80, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -562,23 +579,23 @@ $(document).ready(function () {
         //this.testPoints(-120,100,120,100, 'green', 'red');
         //bottom right to top left
         //this.testPoints(120,100,-120,-120, 'green', 'red');
-
-        //bottom left to top right
-        //this.testPoints(-110,90,130,-130, 'green', 'red');
-        //top left to bottom right
-        //this.testPoints(-60,-60,100,60, 'green', 'red');
-
         //through centre, horizontal
         //this.testPoints(-60,0,60,0, 'green', 'red');
         //through centre, vertical
         //this.testPoints(-0,-100,0,100, 'green', 'red');
 
-        var p1 = { x: -50, y: 50 };
-        disk.point(p1);
-        var p2 = { x: 50, y: -50 };
-        disk.point(p2);
+        //bottom left to top right
+        //this.testPoints(-80,0,30,-10, 'green', 'red');
+        //disk.point({x:-236.9140625, y: 13.372957123630071})
+        //top left to bottom right
+        //this.testPoints(-60,-60,100,60, 'green', 'red');
+
+        //let p1 = {x:-50 , y:50};
+        //disk.point(p1);
+        //let p2 = {x:50 , y:-50};
+        //disk.point(p2)
         //disk.arc(p1,p2, 'red');
-        disk.line(p1, p2, 'green');
+        //disk.line(p1,p2, 'green');
       }
     }, {
       key: 'testPoints',
