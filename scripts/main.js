@@ -416,17 +416,23 @@ $(document).ready(function () {
           y: circle.centre.y
         };
 
+        //line above centre
         if (p1.y < 0 && p2.y < 0) {
           offset = -arcLength(p2, p, circle.radius);
           if (p2.x > 0) {
             offset = -offset;
           }
-        } else {
-          offset = -arcLength(p1, p, circle.radius);
-          if (p1.x > 0) {
-            offset = -offset;
-          }
+        } else if (p1.x < p2.x && p1.y < p2.y || p1.x < p2.x && p1.y > p2.y) {
+          console.log('test');
+          offset = arcLength(p2, p, circle.radius);
         }
+        //line below centre
+        else {
+            offset = -arcLength(p1, p, circle.radius);
+            if (p1.x > 0) {
+              offset = -offset;
+            }
+          }
 
         return offset;
       }
@@ -531,7 +537,7 @@ $(document).ready(function () {
     return Tesselate;
   }();
 
-  //const tesselation = new Tesselate(disk, 5, 3, 80, Math.PI);
+  //const tesselation = new Tesselate(disk, 3, 3, 80, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -566,17 +572,17 @@ $(document).ready(function () {
         //below centre, horizontal
         //this.testPoints(-120,100,120,100, 'green', 'red');
         //bottom right to top left
-        //this.testPoints(120,100,-120,-120, 'green', 'red');
+        // /this.testPoints(120,100,-120,-120, 'green', 'red');
         //through centre, horizontal
         //this.testPoints(-60,0,60,0, 'green', 'red');
         //through centre, vertical
         //this.testPoints(-0,-100,0,100, 'green', 'red');
 
         //bottom left to top right
-        this.testPoints(-80, 0, 30, -10, 'green', 'red');
+        //this.testPoints(30,-10,-80,10, 'green', 'red');
 
         //top left to bottom right
-        this.testPoints(-60, -60, 100, 60, 'green', 'red');
+        this.testPoints(100, 60, -60, -60, 'green', 'red');
 
         //let p1 = {x:-50 , y:50};
         //drawPoint(p1);
@@ -600,7 +606,7 @@ $(document).ready(function () {
         drawPoint(p1);
         drawPoint(p2);
 
-        //disk.line(p1, p2, col1);
+        disk.line(p1, p2, col1);
         disk.arc(p1, p2, col2);
       }
 
