@@ -144,6 +144,26 @@ var arcLength = function arcLength(p1, p2, r) {
   return 2 * Math.asin(0.5 * distance(p1, p2) / r);
 };
 
+//calculate the normal vector given 2 points
+var normalVector = function normalVector(p1, p2) {
+  var d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  var u = {
+    x: (p2.x - p1.x) / d,
+    y: (p2.y - p1.y) / d
+  };
+  return u;
+};
+
+//does the line connecting p1, p2 go through the centre?
+var throughOrigin = function throughOrigin(p1, p2) {
+  if (p1.x === 0 && p2.x === 0) {
+    //vertical line through centre
+    return true;
+  }
+  var test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+  if (test === 0) return true;else return false;
+};
+
 // * ***********************************************************************
 // *
 // *   DOCUMENT READY
@@ -289,10 +309,28 @@ $(document).ready(function () {
           return;
         }
         var col = colour || 'black';
-        var c = greatCircle(p1, p2, this.radius, this.centre);
+        var c = undefined,
+            points = undefined;
 
-        var points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
-
+        if (throughOrigin(p1, p2)) {
+          var u = normalVector(p1, p2);
+          points = {
+            p1: {
+              x: u.x * this.radius,
+              y: u.y * this.radius
+            },
+            p2: {
+              x: -u.x * this.radius,
+              y: -u.y * this.radius
+            }
+          };
+          this.euclideanLine(points.p1, points.p2, col);
+          return;
+        } else {
+          c = greatCircle(p1, p2, this.radius, this.centre);
+          points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
+        }
+        //draw points for testing
         this.point(points.p1);
         this.point(points.p2);
 
@@ -309,6 +347,10 @@ $(document).ready(function () {
       key: 'arc',
       value: function arc(p1, p2, colour) {
         if (this.checkPoint(p1) || this.checkPoint(p2)) {
+          return;
+        }
+        if (throughOrigin(p1, p2)) {
+          this.euclideanLine(p1, p2, colour);
           return;
         }
         var col = colour || 'black';
@@ -382,6 +424,19 @@ $(document).ready(function () {
         }
         return false;
       }
+
+      //draw a (euclidean) line between two points
+
+    }, {
+      key: 'euclideanLine',
+      value: function euclideanLine(p1, p2, colour) {
+        var c = colour || 'black';
+        elems.ctx.beginPath();
+        elems.ctx.moveTo(p1.x, p1.y);
+        elems.ctx.lineTo(p2.x, p2.y);
+        elems.ctx.strokeStyle = c;
+        elems.ctx.stroke();
+      }
     }]);
 
     return Disk;
@@ -410,15 +465,27 @@ $(document).ready(function () {
   // *************************************************************************
 
   var Tesselate = function () {
-    function Tesselate(disk, p, q, scale) {
+    function Tesselate(disk, p, q, scale, rotation) {
       _classCallCheck(this, Tesselate);
 
-      this.p = p;
-      this.q = q;
-      this.scale = scale;
       this.disk = disk;
-      this.minExp = p - 3;
-      this.maxExp = p - 2;
+      this.p = p;
+      if (this.p < 3) {
+        console.error('Tesselation error: polygon needs at least 3 sides!');
+        return;
+      }
+      this.q = q;
+      if (this.q < 3) {
+        console.error('Tesselation error: at least 3 p-gons must meet at each vertex!');
+        return;
+      }
+      this.scale = scale;
+      if (this.scale > this.disk.radius) {
+        console.error('Tesselation error: scale must be less than disks radius!');
+        return;
+      }
+
+      this.rotation = rotation || 0;
 
       this.replicate();
     }
@@ -431,121 +498,35 @@ $(document).ready(function () {
       value: function drawPolygon() {
         var s = this.scale;
 
-        var pointsArray = [{ x: s, y: 0 }];
-        this.disk.point(pointsArray[0]);
+        var pointsArray = [];
 
         var cos = Math.cos(Math.PI / this.p);
         var sin2 = Math.sin(Math.PI / (2 * this.p));
         sin2 = sin2 * sin2;
 
-        var nextPoint = function nextPoint(p, angle) {
-
-          return { x: x, y: y };
-        };
-
         //create one point per edge, the final edge will join back to the first point
         for (var i = 0; i < this.p; i++) {
           var angle = 2 * (i + 1) * Math.PI / this.p;
-          var _y = s * Math.sin(angle);
-          var _x5 = s * Math.cos(angle);
-          var _p = { x: _x5, y: _y };
-          this.disk.point(_p);
-          pointsArray.push(_p);
+          var y = s * Math.sin(angle + this.rotation);
+          var x = s * Math.cos(angle + this.rotation);
+          var p = { x: x, y: y };
+          this.disk.point(p);
+          pointsArray.push(p);
         }
-        console.table(pointsArray);
+        //console.table(pointsArray);
         disk.polygon(pointsArray);
       }
     }, {
       key: 'replicate',
       value: function replicate() {
-        var edgeTransformations = [];
         this.drawPolygon();
-
-        for (var i = 1; i <= 5; i++) {
-          // Iterate over each vertex
-          //qtran is presumably the transformation for this vertex
-          var _qTran = 0; //edgeTran[i­-1];
-
-          for (var j = 1; j < this.q - 1; j++) {
-            // Iterate around a vertex
-            var exposure = j == 1 ? this.minExp : this.maxExp;
-            //recursiveRep(motif, qTran, 2, exposure);
-            _qTran = this.addToTran(_qTran, -1); //­-1 anticlockwise
-          }
-        }
       }
-
-      //shift denotes direction, -1 for anticlockwise
-
-    }, {
-      key: 'addToTran',
-      value: function addToTran(tran, shift) {
-        if (shift % 2 === 0) return tran;
-        //else return this.computeTran(tran, shift);
-      }
-
-      //compute the next transformation
-
-    }, {
-      key: 'computeTran',
-      value: function computeTran(tran, shift) {
-        newEdge = (tran.pPosition + tran.orientation * shift) % p;
-        return this.tranMult(tran, edgeTran[newEdge]);
-      }
-
-      //Multiplies matrices and orientations, sets pPosition to t2.pPosition
-      //and returns result
-
-    }, {
-      key: 'tranMult',
-      value: function tranMult(t1, t2) {
-        //IMPLEMENT?
-        var result = 0;
-        return result;
-      }
-
-      //draw layers recursively
-      //pShift:
-    }, {
-      key: 'recursiveRep',
-      value: function (_recursiveRep) {
-        function recursiveRep(_x, _x2, _x3, _x4) {
-          return _recursiveRep.apply(this, arguments);
-        }
-
-        recursiveRep.toString = function () {
-          return _recursiveRep.toString();
-        };
-
-        return recursiveRep;
-      }(function (motif, initialTran, layer, exposure) {
-        DrawPgon(motif, initialTran); // Draw the p­gon pattern
-        if (layer < maxLayer) {
-          // If any more layers
-          pShift = exposure == this.minExp ? 1 : 0; //????
-          verticesToDo = exposure == this.minExp ? this.minExp : this.maxExp;
-          for (var i = 1; i <= verticesToDo; i++) {
-            // Iterate over vertices
-            pTran = this.computeTran(initialTran, pShift);
-            qSkip = i == 1 ? 1 : 0; //??
-            qTran = this.addToTran(pTran, qSkip);
-            pgonsToDo = i == 1 ? this.q - 3 : this.q - 2;
-            for (var j = 1; j <= pgonsToDo; j++) {
-              // Iterate about a vertex
-              newExposure = i == 1 ? this.minExp : this.maxExp;
-              recursiveRep(motif, qTran, layer + 1, newExposure);
-              qTran = addToTran(qTran, 1);
-            }
-            pShift = (pShift + 1) % this.p; // Advance to next vertex
-          }
-        }
-      })
     }]);
 
     return Tesselate;
   }();
 
-  var tesselation = new Tesselate(disk, 5, 3, 50);
+  //const tesselation = new Tesselate(disk, 900, 3, 30, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -583,7 +564,7 @@ $(document).ready(function () {
         //this.testPoints(120,100,-120,-120, 'green', 'red');
 
         //bottom left to top right
-        //this.testPoints(-120,100,120,-120, 'green', 'red');
+        //this.testPoints(-110,90,130,-130, 'green', 'red');
         //top left to bottom right
         //this.testPoints(-60,-60,100,60, 'green', 'red');
 
@@ -591,6 +572,13 @@ $(document).ready(function () {
         //this.testPoints(-60,0,60,0, 'green', 'red');
         //through centre, vertical
         //this.testPoints(-0,-100,0,100, 'green', 'red');
+
+        var p1 = { x: -50, y: 50 };
+        disk.point(p1);
+        var p2 = { x: 50, y: -50 };
+        disk.point(p2);
+        //disk.arc(p1,p2, 'red');
+        disk.line(p1, p2, 'green');
       }
     }, {
       key: 'testPoints',
@@ -618,19 +606,6 @@ $(document).ready(function () {
       key: 'clear',
       value: function clear() {
         elems.ctx.clearRect(-dims.windowWidth / 2, -dims.windowHeight / 2, dims.windowWidth, dims.windowHeight);
-      }
-
-      //draw a (euclidean) line between two points
-
-    }, {
-      key: 'drawEuclideanLine',
-      value: function drawEuclideanLine(p1, p2, colour) {
-        var c = colour || 'black';
-        elems.ctx.beginPath();
-        elems.ctx.moveTo(p1.x, p1.y);
-        elems.ctx.lineTo(p2.x, p2.y);
-        elems.ctx.strokeStyle = c;
-        elems.ctx.stroke();
       }
     }]);
 

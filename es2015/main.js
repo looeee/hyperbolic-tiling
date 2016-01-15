@@ -128,6 +128,27 @@ const circleIntersect = (c0, c1, r0, r1) => {
 //angle at centre of circle radius r give two points on circumferece
 const arcLength = (p1, p2, r) => 2 * Math.asin(0.5 * distance(p1, p2) / r);
 
+//calculate the normal vector given 2 points
+const normalVector = (p1, p2) => {
+  let d = Math.sqrt(Math.pow(p2.x-p1.x,2) + Math.pow(p2.y-p1.y,2));
+  let u = {
+    x: (p2.x-p1.x)/d,
+    y: (p2.y-p1.y)/d
+  }
+  return u;
+}
+
+//does the line connecting p1, p2 go through the centre?
+const throughOrigin = (p1, p2) => {
+  if(p1.x === 0 && p2.x === 0){
+    //vertical line through centre
+    return true;
+  }
+  let test = (-p1.x*p2.y + p1.x*p1.y)/(p2.x-p1.x) + p1.y;
+  if(test === 0) return true;
+  else return false;
+}
+
 // * ***********************************************************************
 // *
 // *   DOCUMENT READY
@@ -253,10 +274,28 @@ $(document).ready(() => {
         return;
       }
       let col = colour || 'black';
-      let c = greatCircle(p1, p2, this.radius, this.centre);
+      let c, points;
 
-      let points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
-
+      if(throughOrigin(p1,p2)){
+        let u = normalVector(p1,p2);
+        points = {
+          p1: {
+            x: u.x * this.radius,
+            y: u.y * this.radius
+          },
+          p2: {
+            x: -u.x * this.radius,
+            y: -u.y * this.radius
+          }
+        }
+        this.euclideanLine(points.p1,points.p2, col);
+        return;
+      }
+      else{
+        c = greatCircle(p1, p2, this.radius, this.centre);
+        points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
+      }
+      //draw points for testing
       this.point(points.p1);
       this.point(points.p2);
 
@@ -270,6 +309,10 @@ $(document).ready(() => {
     //Draw an arc (hyperbolic line segment) between two points on the disk
     arc(p1, p2, colour) {
       if (this.checkPoint(p1) || this.checkPoint(p2)) {
+        return;
+      }
+      if(throughOrigin(p1,p2)){
+        this.euclideanLine(p1,p2, colour);
         return;
       }
       let col = colour || 'black';
@@ -333,6 +376,16 @@ $(document).ready(() => {
       }
       return false;
     }
+
+    //draw a (euclidean) line between two points
+    euclideanLine(p1, p2, colour) {
+      let c = colour || 'black';
+      elems.ctx.beginPath();
+      elems.ctx.moveTo(p1.x, p1.y);
+      elems.ctx.lineTo(p2.x, p2.y);
+      elems.ctx.strokeStyle = c;
+      elems.ctx.stroke()
+    }
   }
 
   const disk = new Disk();
@@ -357,13 +410,25 @@ $(document).ready(() => {
   // *    transformation was made, i.e. the edge that matched edge i in the tiling
   // *************************************************************************
   class Tesselate {
-    constructor(disk, p, q, scale) {
-      this.p = p;
-      this.q = q;
-      this.scale = scale;
+    constructor(disk, p, q, scale, rotation) {
       this.disk = disk;
-      this.minExp = p-3;
-      this.maxExp = p-2;
+      this.p = p;
+      if(this.p < 3){
+        console.error('Tesselation error: polygon needs at least 3 sides!');
+        return;
+      }
+      this.q = q;
+      if(this.q < 3){
+        console.error('Tesselation error: at least 3 p-gons must meet at each vertex!');
+        return;
+      }
+      this.scale = scale;
+      if(this.scale > this.disk.radius){
+        console.error('Tesselation error: scale must be less than disks radius!');
+        return;
+      }
+
+      this.rotation = rotation || 0;
 
       this.replicate();
     }
@@ -373,92 +438,31 @@ $(document).ready(() => {
     drawPolygon(){
       let s = this.scale;
 
-      let pointsArray = [{x: s, y: 0}];
-      this.disk.point(pointsArray[0]);
+      let pointsArray = [];
 
       let cos = Math.cos(Math.PI/this.p);
       let sin2 = Math.sin(Math.PI/(2*this.p));
       sin2 = sin2*sin2;
 
-      let nextPoint = (p, angle) => {
-
-        return {x: x, y: y};
-      }
-
       //create one point per edge, the final edge will join back to the first point
       for(let i = 0; i < this.p; i++){
         let angle =  2*(i+1)*Math.PI/this.p;
-        let y =  s * Math.sin( angle );
-        let x =  s * Math.cos( angle );
+        let y =  s * Math.sin( angle + this.rotation);
+        let x =  s * Math.cos( angle + this.rotation);
         let p = {x: x, y: y};
         this.disk.point(p);
         pointsArray.push(p);
       }
-      console.table(pointsArray);
+      //console.table(pointsArray);
       disk.polygon(pointsArray);
     }
 
     replicate() {
-      let edgeTransformations = [];
       this.drawPolygon();
-
-      for (let i = 1; i <= 5; i++) { // Iterate over each vertex
-        //qtran is presumably the transformation for this vertex
-        let qTran = 0; //edgeTran[i­-1];
-
-        for (let j = 1; j < this.q-1; j++) { // Iterate around a vertex
-          let exposure = (j == 1) ? this.minExp : this.maxExp;
-          //recursiveRep(motif, qTran, 2, exposure);
-          qTran = this.addToTran(qTran, -1); //­-1 anticlockwise
-        }
-      }
     }
-
-    //shift denotes direction, -1 for anticlockwise
-    addToTran(tran, shift) {
-      if (shift % 2 === 0) return tran;
-      //else return this.computeTran(tran, shift);
-    }
-
-    //compute the next transformation
-    computeTran(tran, shift) {
-      newEdge = (tran.pPosition + tran.orientation * shift) % p;
-      return this.tranMult(tran, edgeTran[newEdge]);
-    }
-
-    //Multiplies matrices and orientations, sets pPosition to t2.pPosition
-    //and returns result
-    tranMult(t1, t2){
-      //IMPLEMENT?
-      let result = 0;
-      return result
-    }
-
-    //draw layers recursively
-    //pShift:
-    recursiveRep(motif, initialTran, layer, exposure) {
-      DrawPgon(motif, initialTran); // Draw the p­gon pattern
-      if (layer < maxLayer) { // If any more layers
-        pShift = (exposure == this.minExp) ? 1 : 0; //????
-        verticesToDo = (exposure == this.minExp) ? this.minExp : this.maxExp;
-        for (let i = 1; i <= verticesToDo; i++) { // Iterate over vertices
-          pTran = this.computeTran(initialTran, pShift);
-          qSkip = (i == 1) ?1 : 0; //??
-          qTran = this.addToTran(pTran, qSkip);
-          pgonsToDo = (i == 1) ? this.q-3 : this.q-2;
-          for (let j = 1; j<= pgonsToDo; j++) { // Iterate about a vertex
-            newExposure = (i == 1) ? this.minExp : this.maxExp;
-            recursiveRep(motif, qTran, layer + 1, newExposure);
-            qTran = addToTran(qTran, 1);
-          }
-          pShift = (pShift + 1) % this.p; // Advance to next vertex
-        }
-      }
-    }
-
   }
 
-  const tesselation = new Tesselate(disk, 5, 3, 50);
+  //const tesselation = new Tesselate(disk, 900, 3, 30, Math.PI);
 
   // * ***********************************************************************
   // *
@@ -491,7 +495,7 @@ $(document).ready(() => {
       //this.testPoints(120,100,-120,-120, 'green', 'red');
 
       //bottom left to top right
-      //this.testPoints(-120,100,120,-120, 'green', 'red');
+      //this.testPoints(-110,90,130,-130, 'green', 'red');
       //top left to bottom right
       //this.testPoints(-60,-60,100,60, 'green', 'red');
 
@@ -500,6 +504,12 @@ $(document).ready(() => {
       //through centre, vertical
       //this.testPoints(-0,-100,0,100, 'green', 'red');
 
+      let p1 = {x:-50 , y:50};
+      disk.point(p1);
+      let p2 = {x:50 , y:-50};
+      disk.point(p2)
+      //disk.arc(p1,p2, 'red');
+      disk.line(p1,p2, 'green');
     }
 
     testPoints(x1, y1, x2, y2, col1, col2) {
@@ -523,16 +533,6 @@ $(document).ready(() => {
     //use an offset to clear it. NOT WORKING
     clear() {
       elems.ctx.clearRect(-dims.windowWidth / 2, -dims.windowHeight / 2, dims.windowWidth, dims.windowHeight);
-    }
-
-    //draw a (euclidean) line between two points
-    drawEuclideanLine(p1, p2, colour) {
-      let c = colour || 'black';
-      elems.ctx.beginPath();
-      elems.ctx.moveTo(p1.x, p1.y);
-      elems.ctx.lineTo(p2.x, p2.y);
-      elems.ctx.strokeStyle = c;
-      elems.ctx.stroke()
     }
   }
 
