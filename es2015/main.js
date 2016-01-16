@@ -283,6 +283,7 @@ $(document).ready(() => {
 
       //transform the canvas so the origin is at the centre of the disk
       elems.ctx.translate(this.x, this.y);
+      //elems.ctx.ctx.scale(1, -1);
 
       this.centre = {
         x: 0,
@@ -334,7 +335,7 @@ $(document).ready(() => {
         //angle subtended by the arc
         let alpha = arcLength(points.p1, points.p2, c.radius);
 
-        let offset = this.alphaOffset(points.p2, points.p2, c);
+        let offset = this.alphaOffset(points.p2, points.p2, c, 'line');
         drawSegment(c, alpha, offset, col);
       }
     }
@@ -354,7 +355,7 @@ $(document).ready(() => {
       let alpha = arcLength(p1, p2, c.radius);
 
       //how far around the greatCircle to start drawing the arc
-      let offset = this.alphaOffset(p1, p2, c);
+      let offset = this.alphaOffset(p1, p2, c, 'arc');
       drawSegment(c, alpha, offset, col);
     }
 
@@ -364,16 +365,18 @@ $(document).ready(() => {
       drawPoint(pointsArray[0], 5, 'red');
 
       for (let i = 0; i < l-1; i++) {
-        this.arc(pointsArray[i], pointsArray[i + 1], colour);
+        //this.line(pointsArray[i], pointsArray[i + 1], colour);
+        //this.arc(pointsArray[i], pointsArray[i + 1], 'red');
       }
 
-      let r = 3;
-      let q = 4;
+      let r = 6;
+      let q = 0;
 
-      //this.line(pointsArray[r], pointsArray[q], colour);
-      //this.arc(pointsArray[2], pointsArray[3], 'red');
+      this.line(pointsArray[r], pointsArray[q], colour);
+      this.arc(pointsArray[r], pointsArray[q], 'red');
       //close the polygon
-      this.arc(pointsArray[0], pointsArray[l - 1], colour);
+      //this.line(pointsArray[0], pointsArray[l - 1], colour);
+      //this.arc(pointsArray[0], pointsArray[l - 1], 'red');
     }
 
     //before drawing a line or arc check the points are on the disk and
@@ -382,55 +385,48 @@ $(document).ready(() => {
       if (this.checkPoint(p1) || this.checkPoint(p2)) {
         return;
       }
-      if(p1.x === p2.x){
-        return {p1: p1, p2: p2}
-      }
       //swap the points if they are not in clockwise order
-      else if(p1.x > p2.x){
-        let temp = p1;
-        p1 = p2;
-        p2 = temp;
+      if(p1.x === p2.x){
+        if(p1.y > p2.y){
+          return {p1: p2, p2: p1}
+        }
       }
-      return {p1: p1, p2: p2}
+      else if(p1.x > p2.x){
+        return {p1: p2, p2: p1}
+      }
+      else return {p1: p1, p2: p2}
     }
 
     //calculate the offset (position around the circle from which to start the
     //line or arc). As canvas draws arcs clockwise by default this will change
     //depending on where the arc is relative to the origin
     //specificall whether it lies on the x axis, or above or below it
-    alphaOffset(p1, p2, c) {
+    //type = 'line' or 'arc'
+    alphaOffset(p1, p2, c, type) {
       let offset;
-      //a point at 0 radians on the circle
+      drawPoint(c.centre);
+
+      //points at 0 radians on greatCircle
       let p = {
         x: c.centre.x + c.radius,
         y: c.centre.y
       }
-      console.log(c.centre);
-      drawPoint(c.centre);
+      drawPoint(p)
+      drawPoint(p1, 5, 'green')
 
-      //distance between disk centre and greatCircle centre
-      let d = distance(this.centre, c.centre);
-      //point on circle of radius d
-      let q = {x: d, y: 0};
-      //angle subtended by greatCircle centre from this circle
-      let beta = arcLength(q, c.centre, d);
-      console.log(beta);
-
-      if(beta > 0 && beta <= Math.PI/3){
-        offset = arcLength(p1, p, c.radius);
+      //console.log(p1, c.centre.y);
+      if(p1.y < c.centre.y){
+        //console.log('test');
+        offset = 2*Math.PI - arcLength(p1, p, c.radius);
       }
-      /*
-      else if(beta > Math.PI/3 && beta <= Math.PI){
-        offset = -arcLength(p2, p, c.radius);
-      }
-      else if(beta > Math.PI && beta <= 3*Math.PI/2 ){
-        console.log('TEST');
-        offset = arcLength(p2, p, c.radius);
-      }
-      */
       else{
+        //console.log('test2');
         offset = arcLength(p2, p, c.radius);
       }
+
+      //console.log(offset);
+
+
 
       return offset;
     }
@@ -511,7 +507,7 @@ $(document).ready(() => {
     }
   }
 
-  const tesselation = new Tesselate(disk, 7, 3, 80, 0.53);
+  const tesselation = new Tesselate(disk, 7, 3, 80, 0);
 
   // * ***********************************************************************
   // *
