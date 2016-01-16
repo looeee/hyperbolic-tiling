@@ -21,6 +21,7 @@ document.write('<canvas id="canvas" width="' + window.innerWidth + '" height="' 
 // *   define any global constants here
 // *
 // *************************************************************************
+var PI2 = Math.PI * 2;
 
 // * ***********************************************************************
 // *
@@ -402,10 +403,10 @@ $(document).ready(function () {
           this.arc(pointsArray[i], pointsArray[i + 1], colour);
         }
 
-        var r = 1;
-        var q = 2;
+        var r = 3;
+        var q = 4;
 
-        //this.arc(pointsArray[r], pointsArray[q], colour);
+        //this.line(pointsArray[r], pointsArray[q], colour);
         //this.arc(pointsArray[2], pointsArray[3], 'red');
         //close the polygon
         this.arc(pointsArray[0], pointsArray[l - 1], colour);
@@ -435,6 +436,7 @@ $(document).ready(function () {
       //calculate the offset (position around the circle from which to start the
       //line or arc). As canvas draws arcs clockwise by default this will change
       //depending on where the arc is relative to the origin
+      //specificall whether it lies on the x axis, or above or below it
 
     }, {
       key: 'alphaOffset',
@@ -445,43 +447,32 @@ $(document).ready(function () {
           x: c.centre.x + c.radius,
           y: c.centre.y
         };
+        console.log(c.centre);
+        drawPoint(c.centre);
 
-        //the following cases have been calculated experimentally
-        /*
-        if (p1.y < 0 && p2.y < 0) {
-          offset = -arcLength(p2, p, c.radius);
-          if (p2.x > 0) {
-            offset = -offset;
-          }
-        }
-        else if((p1.x < p2.x && p1.y < p2.y)
-             || (p1.x< p2.x && p1.y > p2.y)){
-          offset = arcLength(p2, p, c.radius);
-        }
-        else if(p1.y > 0 && p2.y > 0){
-          offset = -arcLength(p2, p, c.radius);
-        }
-        else if(p1.y < 0 && p2.y > 0){
+        //distance between disk centre and greatCircle centre
+        var d = distance(this.centre, c.centre);
+        //point on circle of radius d
+        var q = { x: d, y: 0 };
+        //angle subtended by greatCircle centre from this circle
+        var beta = arcLength(q, c.centre, d);
+        console.log(beta);
+
+        if (beta > 0 && beta <= Math.PI / 3) {
           offset = arcLength(p1, p, c.radius);
         }
-         else {
-          offset = -arcLength(p1, p, c.radius);
-          if (p1.x > 0) {
-            offset = -offset;
-          }
+        /*
+        else if(beta > Math.PI/3 && beta <= Math.PI){
+          offset = -arcLength(p2, p, c.radius);
+        }
+        else if(beta > Math.PI && beta <= 3*Math.PI/2 ){
+          console.log('TEST');
+          offset = arcLength(p2, p, c.radius);
         }
         */
-        var t = { x: distance(this.centre, c.centre), y: 0 };
-        //console.log(t);
-        var beta = arcLength(t, c.centre, -t.x);
-        //console.log(p1, p2, beta);
-
-        //if(true){
-        offset = -arcLength(p2, p, c.radius) + 2 * Math.PI / 3;
-        //}
-        //else{
-        //  offset = arcLength(p2, p, c.radius);
-        //  }
+        else {
+            offset = arcLength(p2, p, c.radius);
+          }
 
         return offset;
       }
@@ -507,9 +498,6 @@ $(document).ready(function () {
 
   // * ***********************************************************************
   // *
-  // *    TESSELATE CLASS
-  // *    A regular (for now) tesselation of the given Poincare Disk
-  // *    p: sides of polygon
   // *    q: number of p-gons meeting at each vertex
   // *    scale: distance from the centre to point on layer 1 p-gon
   // *
@@ -582,7 +570,7 @@ $(document).ready(function () {
     return Tesselate;
   }();
 
-  var tesselation = new Tesselate(disk, 3, 3, 80, 0);
+  var tesselation = new Tesselate(disk, 7, 3, 80, 0.53);
 
   // * ***********************************************************************
   // *
