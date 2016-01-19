@@ -516,7 +516,7 @@ $(document).ready(() => {
     }
   }
 
-  const tesselation = new Tesselate(disk, 3, 3, 30, 0);
+  const tesselation = new Tesselate(disk, 1000, 3, 1, Math.PI/2);
 
   // * ***********************************************************************
   // *
@@ -528,9 +528,10 @@ $(document).ready(() => {
     constructor() {
       this.draw();
       $(window).resize(() => {
-        //this.clear();
-        //this.draw();
+        this.clear();
+        this.draw();
       });
+      this.saveImage();
     }
 
     draw() {
@@ -541,7 +542,17 @@ $(document).ready(() => {
     //the canvas has been translated to the centre of the disk so need to
     //use an offset to clear it. NOT WORKING
     clear() {
-      elems.ctx.clearRect(-dims.windowWidth / 2, -dims.windowHeight / 2, dims.windowWidth, dims.windowHeight);
+      elems.ctx.clearRect(-window.innerWidth / 2,-window.innerHeight / 2, canvas.width, canvas.height);
+    }
+
+    //convert the canvas to a base64URL and send to saveImage.php
+    saveImage(){
+      let data = elems.canvas.toDataURL();
+      $.ajax({
+        type: 'POST',
+        url: 'saveImage.php',
+        data: { img: data }
+      });
     }
   }
 
