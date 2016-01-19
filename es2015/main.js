@@ -81,7 +81,6 @@ const inverse = (p, r, c) => {
 //calculate the radius and centre of the circle required to draw a line between
 //two points in the hyperbolic plane defined by the disk (r, c)
 const greatCircle = (p1, p2, r, c) => {
-  //console.log(p1, p2, r, c);
   let p1Inverse = inverse(p1, r, c);
   let p2Inverse = inverse(p2, r, c);
 
@@ -294,7 +293,7 @@ $(document).ready(() => {
       this.radius = (dims.windowWidth < dims.windowHeight) ? (dims.windowWidth / 2) - 5 : (dims.windowHeight / 2) - 5;
 
       //smaller circle for testing
-      this.radius = this.radius / 3;
+      //this.radius = this.radius / 3;
 
       this.color = 'black';
     }
@@ -328,9 +327,6 @@ $(document).ready(() => {
       else{
         c = greatCircle(p1, p2, this.radius, this.centre);
         points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
-        //draw points for testing
-        drawPoint(points.p1);
-        drawPoint(points.p2);
 
         //angle subtended by the arc
         let alpha = arcLength(points.p1, points.p2, c.radius);
@@ -361,22 +357,15 @@ $(document).ready(() => {
 
     polygon(pointsArray, colour) {
       let l = pointsArray.length;
-      console.table(pointsArray);
-      drawPoint(pointsArray[0], 5, 'red');
 
       for (let i = 0; i < l-1; i++) {
-        //this.line(pointsArray[i], pointsArray[i + 1], colour);
-        //this.arc(pointsArray[i], pointsArray[i + 1], 'red');
+        this.line(pointsArray[i], pointsArray[i + 1], colour);
+        this.arcV2(pointsArray[i], pointsArray[i + 1], 'red');
       }
 
-      let r = 6;
-      let q = 0;
-
-      this.line(pointsArray[r], pointsArray[q], colour);
-      this.arc(pointsArray[r], pointsArray[q], 'red');
       //close the polygon
-      //this.line(pointsArray[0], pointsArray[l - 1], colour);
-      //this.arc(pointsArray[0], pointsArray[l - 1], 'red');
+      this.line(pointsArray[0], pointsArray[l - 1], colour);
+      this.arcV2(pointsArray[0], pointsArray[l - 1], 'red');
     }
 
     //before drawing a line or arc check the points are on the disk and
@@ -391,10 +380,15 @@ $(document).ready(() => {
           return {p1: p2, p2: p1}
         }
       }
+      else if(p1.y > p2.y){
+        return {p1: p2, p2: p1}
+      }
       else if(p1.x > p2.x){
         return {p1: p2, p2: p1}
       }
-      else return {p1: p1, p2: p2}
+      else{
+        return {p1: p1, p2: p2}
+      }
     }
 
     //calculate the offset (position around the circle from which to start the
@@ -404,29 +398,19 @@ $(document).ready(() => {
     //type = 'line' or 'arc'
     alphaOffset(p1, p2, c, type) {
       let offset;
-      drawPoint(c.centre);
 
       //points at 0 radians on greatCircle
       let p = {
         x: c.centre.x + c.radius,
         y: c.centre.y
       }
-      drawPoint(p)
-      drawPoint(p1, 5, 'green')
 
-      //console.log(p1, c.centre.y);
       if(p1.y < c.centre.y){
-        //console.log('test');
         offset = 2*Math.PI - arcLength(p1, p, c.radius);
       }
       else{
-        //console.log('test2');
         offset = arcLength(p2, p, c.radius);
       }
-
-      //console.log(offset);
-
-
 
       return offset;
     }
@@ -439,6 +423,30 @@ $(document).ready(() => {
         return true;
       }
       return false;
+    }
+
+    //draw segment of greatCircle between two points using arcTo
+    arcV2(p1, p2, colour){
+      //let pts = this.prepPoints(p1, p2);
+      //p1 = pts.p1;
+      //p2 = pts.p2;
+      if(throughOrigin(p1,p2)){
+        euclideanLine(p1,p2, colour);
+        return;
+      }
+      let col = colour || 'black';
+      let c = greatCircle(p1, p2, this.radius, this.centre);
+
+      let m1 = perpendicularSlope(p1, c.centre);
+      let m2 = perpendicularSlope(p2, c.centre);
+
+      let p3 = intersection(p1, m1, p2, m2);
+      elems.ctx.beginPath();
+      elems.ctx.moveTo(p1.x, p1.y);
+      elems.ctx.arcTo(p3.x, p3.y, p2.x, p2.y, c.radius);
+      elems.ctx.strokeStyle = col;
+      elems.ctx.stroke();
+
     }
   }
 
@@ -460,12 +468,14 @@ $(document).ready(() => {
       }
       this.q = q;
       if(this.q < 3){
-        console.error('Tesselation error: at least 3 p-gons must meet at each vertex!');
+        console.error('Tesselation error: at least 3 p-gons must meet \
+                      at each vertex!');
         return;
       }
       this.scale = scale;
-      if(this.scale > this.disk.radius){
-        console.error('Tesselation error: scale must be less than disks radius!');
+      if(this.scale > this.disk.radius || this.scale < 1){
+        console.error('Tesselation error: scale must be less than disks \
+                      radius and greater than 1!');
         return;
       }
 
@@ -491,7 +501,6 @@ $(document).ready(() => {
         let y =  s * Math.sin( angle + this.rotation);
         let x =  s * Math.cos( angle + this.rotation);
         let p = {x: x, y: y};
-        drawPoint(p);
         pointsArray.push(p);
       }
       return pointsArray;
@@ -507,7 +516,7 @@ $(document).ready(() => {
     }
   }
 
-  const tesselation = new Tesselate(disk, 7, 3, 80, 0);
+  const tesselation = new Tesselate(disk, 3, 3, 30, 0);
 
   // * ***********************************************************************
   // *
@@ -527,105 +536,6 @@ $(document).ready(() => {
     draw() {
       disk.outerCircle();
       drawPoint(disk.centre);
-
-      //let pointsArray = [{x:40 , y:-70}, {x:40 , y:-70}, {x:-80 , y:3}]
-      //disk.polygon(pointsArray);
-
-      //left of centre, vertical
-      //this.testPoints(-60,-100,-60,120, 'green', 'red');
-      //right of centre, vertical
-      //this.testPoints(60,-100,60,120, 'green', 'red');
-      //above centre, horizontal
-      //this.testPoints(-90,-100,100,-100, 'green', 'red');
-      //below centre, horizontal
-      //this.testPoints(-120,100,120,100, 'green', 'red');
-      //bottom right to top left
-      // /this.testPoints(120,100,-120,-120, 'green', 'red');
-      //through centre, horizontal
-      //this.testPoints(-60,0,60,0, 'green', 'red');
-      //through centre, vertical
-      //this.testPoints(-0,-100,0,100, 'green', 'red');
-
-      //bottom left to top right
-      //this.testPoints(30,-10,-80,10, 'green', 'red');
-
-      //top left to bottom right
-      //this.testPoints(100,60,-60,-60, 'green', 'red');
-
-
-      //let p1 = {x: -50, y: -69.3}
-      //let p2 = {x: 40, y: 69.3}
-      //drawPoint(p1);
-      //drawPoint(p2);
-      //disk.arc(p1,p2)
-      /*
-
-      let p3 = {x: -80, y: 2.94};
-      //let p4 = {x: -80, y: 2.94};
-
-      drawPoint(p1);
-      drawPoint(p2);
-      drawPoint(p3);
-
-      let pArray1 =  [p1,p2,p3];
-      disk.polygon(pArray1);
-      //disk.arc(p2,p3);
-      //disk.arc(p3,p1);
-
-      let c = greatCircle(p1, p2, disk.radius, disk.centre);
-      let p4 = inverse(p3, c.radius, c.centre);
-      drawPoint(p4);
-      let pArray2 = [p1,p2,p4];
-      disk.polygon(pArray2);
-
-      c = greatCircle(p2, p3, disk.radius, disk.centre);
-      let p5 = inverse(p1, c.radius, c.centre);
-      drawPoint(p5);
-      let pArray3 = [p2,p3,p5];
-      disk.polygon(pArray3);
-
-      c = greatCircle(p1, p3, disk.radius, disk.centre);
-      let p6 = inverse(p2, c.radius, c.centre);
-      drawPoint(p6);
-      let pArray4 = [p3,p6,p1];
-      disk.polygon(pArray4);
-
-      c = greatCircle(p6, p1, disk.radius, disk.centre);
-      let p7 = inverse(p3, c.radius, c.centre);
-      drawPoint(p7);
-      let pArray5 = [p6,p1,p7];
-      disk.polygon(pArray5);
-
-      c = greatCircle(p6, p7, disk.radius, disk.centre);
-      let p8 = inverse(p1, c.radius, c.centre);
-      drawPoint(p8);
-      let pArray6 = [p6,p7,p8];
-      disk.polygon(pArray6);
-      */
-
-      //let p1 = {x:-50 , y:50};
-      //drawPoint(p1);
-      //let p2 = {x:50 , y:-50};
-      //drawPoint(p2)
-      //disk.arc(p1,p2, 'red');
-      //disk.line(p1,p2, 'green');
-    }
-
-    testPoints(x1, y1, x2, y2, col1, col2) {
-      let p1 = {
-        x: x1,
-        y: y1
-      }
-
-      let p2 = {
-        x: x2,
-        y: y2
-      }
-      drawPoint(p1);
-      drawPoint(p2);
-
-      disk.line(p1, p2, col1);
-      disk.arc(p1, p2, col2);
     }
 
     //the canvas has been translated to the centre of the disk so need to
