@@ -3,7 +3,6 @@
 // *   PRE-SETUP
 // *
 // *************************************************************************
-
 document.write('<canvas id="canvas" width="' + (window.innerWidth) + '" height="' + (window.innerHeight) + '"> \
   <h1> Canvas doesn\'t seem to be working! </h1> \
 </canvas>');
@@ -14,7 +13,8 @@ document.write('<canvas id="canvas" width="' + (window.innerWidth) + '" height="
 // *   define any global constants here
 // *
 // *************************************************************************
-const PI2 = Math.PI * 2;
+const canvas = $('#canvas')[0];
+const ctx = canvas.getContext('2d');
 
 // * ***********************************************************************
 // *
@@ -69,7 +69,7 @@ const intersection = (p1, m1, p2, m2) => {
 
 const radians = (degrees) => (Math.PI / 180) * degrees;
 
-//get the inverse of a point p with respect a circle radius r centre c
+//get the circle inverse of a point p with respect a circle radius r centre c
 const inverse = (p, r, c) => {
   let alpha = (r * r) / (Math.pow(p.x - c.x, 2) + Math.pow(p.y - c.y, 2));
   return {
@@ -97,6 +97,20 @@ const greatCircle = (p1, p2, r, c) => {
     centre: centre,
     radius: radius
   };
+}
+
+//an attempt at calculating the circle algebraically
+const greatCircleV2 = (p1,p2, r) =>{
+  let x = (p2.y*(p1.x*p1.x + r)+ p1.y*p1.y*p2.y-p1.y*(p2.x*p2.x+ p2.y*p2.y + r))/(2*p1.x*p2.y - p1.y*p2.x);
+  let y = (p1.x*p1.x*p2.x - p1.x*(p2.x*p2.x+p2.y*p2.y+r)+p2.x*(p1.y*p1.y+r))/(2*p1.y*p2.x + 2*p1.x*p2.y);
+  let radius =   Math.sqrt(x*x+y*y-r);
+  return {
+    centre: {
+      x: x,
+      y: y
+    },
+    radius: radius
+  }
 }
 
 //intersection of two circles with equations:
@@ -136,20 +150,57 @@ const circleIntersect = (c0, c1, r0, r1) => {
   };
 }
 
-//angle at centre of circle radius r give two points on circumferece
+const circleLineIntersect = (c, r, p1, p2) => {
+
+  const d = distance(p1, p2);
+  //unit vector p1 p2
+  const dx = (p2.x - p1.x)/d;
+  const dy = (p2.y - p1.y)/d;
+
+  //point on line closest to circle centre
+  const t = dx*(c.x -p1.x) + dy*(c.y-p1.y);
+  const p =  {x: t* dx + p1.x, y: t* dy + p1.y};
+
+  //distance from this point to centre
+  const d2 = distance(p, c);
+
+  //line intersects circle
+  if(d2 < r){
+    const dt = Math.sqrt( r*r - d2*d2);
+    //point 1
+    const q1 = {
+      x: (t-dt)*dx + p1.x,
+      y: (t-dt)*dy + p1.y
+    }
+    //point 2
+    const q2 = {
+      x: (t+dt)*dx + p1.x,
+      y: (t+dt)*dy + p1.y
+    }
+
+    return {p1: q1, p2: q2};
+  }
+  else if( d2 === r){
+    return p;
+  }
+  else{
+    console.error('Error: line does not intersect circle!');
+  }
+}
+
+//angle in radians between two points on circle of radius r
 const arcLength = (p1, p2, r) => 2 * Math.asin(0.5 * distance(p1, p2) / r);
 
 //calculate the normal vector given 2 points
 const normalVector = (p1, p2) => {
   let d = Math.sqrt(Math.pow(p2.x-p1.x,2) + Math.pow(p2.y-p1.y,2));
-  let u = {
+  return {
     x: (p2.x-p1.x)/d,
     y: (p2.y-p1.y)/d
   }
-  return u;
 }
 
-//does the line connecting p1, p2 go through the centre?
+//does the line connecting p1, p2 go through the point (0,0)?
 const throughOrigin = (p1, p2) => {
   if(p1.x === 0 && p2.x === 0){
     //vertical line through centre
@@ -160,21 +211,17 @@ const throughOrigin = (p1, p2) => {
   else return false;
 }
 
-// * ***********************************************************************
-// *
-// *  ELEMENTS CLASS
-// *  Holds references to any elements used
-// *
-// *************************************************************************
-class Elements {
-  constructor() {
-    this.canvas = $('#canvas')[0];
-    this.ctx = this.canvas.getContext('2d');
+//flip a set of points over a hyperoblic line defined by two points
+const transform = (pointsArray, p1, p2) => {
+  let newPointsArray = [];
+  let c = greatCircle(p1, p2, disk.radius, disk.centre);
+
+  for(let p of pointsArray){
+    let newP = inverse(p, c.radius, c.centre);
+    newPointsArray.push(newP);
   }
+  return newPointsArray;
 }
-
-const elems = new Elements();
-
 // * ***********************************************************************
 // *
 // *   CANVAS UTILITY FUNCTIONS
@@ -183,38 +230,39 @@ const elems = new Elements();
 
 //draw a hyperbolic line segment using calculations from line() or arc()
 const drawSegment = (c, alpha, alphaOffset, colour) => {
-  elems.ctx.beginPath();
-  elems.ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
-  elems.ctx.strokeStyle = colour || 'black';
-  elems.ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
+  ctx.strokeStyle = colour || 'black';
+  ctx.stroke();
 }
 
 //draw a (euclidean) line between two points
 const euclideanLine = (p1, p2, colour) => {
   let c = colour || 'black';
-  elems.ctx.beginPath();
-  elems.ctx.moveTo(p1.x, p1.y);
-  elems.ctx.lineTo(p2.x, p2.y);
-  elems.ctx.strokeStyle = c;
-  elems.ctx.stroke()
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.strokeStyle = c;
+  ctx.stroke()
 }
 
 //draw a point on the disk, optional radius and colour
 const drawPoint = (point, radius, colour) => {
   let col = colour || 'black';
   let r = radius || 2;
-  elems.ctx.beginPath();
-  elems.ctx.arc(point.x, point.y, r, 0, Math.PI * 2, true);
-  elems.ctx.fillStyle = col;
-  elems.ctx.fill();
+  ctx.beginPath();
+  ctx.arc(point.x, point.y, r, 0, Math.PI * 2, true);
+  ctx.fillStyle = col;
+  ctx.fill();
 }
 
+//draw a circle of radius r centre c and optional colour
 const drawCircle = (c, r, colour) => {
   let col = colour || 'black';
-  elems.ctx.beginPath();
-  elems.ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-  elems.ctx.strokeStyle = col;
-  elems.ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+  ctx.strokeStyle = col;
+  ctx.stroke();
 }
 
 // * ***********************************************************************
@@ -252,22 +300,6 @@ $(document).ready(() => {
 
   const dims = new Dimensions();
 
-  // * ***********************************************************************
-  // *
-  // *   LAYOUT CLASS
-  // *   overall layout set up goes here
-  // *
-  // *************************************************************************
-  class Layout {
-    constructor() {
-
-      $(window).resize(() => {
-
-      });
-    }
-  }
-
-  const layout = new Layout();
 
   // * ***********************************************************************
   // *
@@ -281,8 +313,7 @@ $(document).ready(() => {
       this.y = dims.windowHeight / 2;
 
       //transform the canvas so the origin is at the centre of the disk
-      elems.ctx.translate(this.x, this.y);
-      //elems.ctx.ctx.scale(1, -1);
+      ctx.translate(this.x, this.y);
 
       this.centre = {
         x: 0,
@@ -298,11 +329,12 @@ $(document).ready(() => {
       this.color = 'black';
     }
 
+    //draw the boundary circle
     outerCircle() {
       drawCircle({x: this.centre.x, y: this.centre.y}, this.radius);
     }
 
-    //draw a hyperbolic line between two points
+    //draw a hyperbolic line between two points on the boundary circle
     line(p1, p2, colour) {
       let pts = this.prepPoints(p1, p2);
       p1 = pts.p1;
@@ -360,12 +392,12 @@ $(document).ready(() => {
 
       for (let i = 0; i < l-1; i++) {
         this.line(pointsArray[i], pointsArray[i + 1], colour);
-        this.arcV2(pointsArray[i], pointsArray[i + 1], 'red');
+        //this.arcV2(pointsArray[i], pointsArray[i + 1], 'red');
       }
 
       //close the polygon
       this.line(pointsArray[0], pointsArray[l - 1], colour);
-      this.arcV2(pointsArray[0], pointsArray[l - 1], 'red');
+      //this.arcV2(pointsArray[0], pointsArray[l - 1], 'red');
     }
 
     //before drawing a line or arc check the points are on the disk and
@@ -427,25 +459,26 @@ $(document).ready(() => {
 
     //draw segment of greatCircle between two points using arcTo
     arcV2(p1, p2, colour){
-      //let pts = this.prepPoints(p1, p2);
-      //p1 = pts.p1;
-      //p2 = pts.p2;
+      let pts = this.prepPoints(p1, p2);
+      p1 = pts.p1;
+      p2 = pts.p2;
       if(throughOrigin(p1,p2)){
         euclideanLine(p1,p2, colour);
         return;
       }
       let col = colour || 'black';
       let c = greatCircle(p1, p2, this.radius, this.centre);
+      let c2 = greatCircleV2(p1, p2, this.radius);
 
       let m1 = perpendicularSlope(p1, c.centre);
       let m2 = perpendicularSlope(p2, c.centre);
 
       let p3 = intersection(p1, m1, p2, m2);
-      elems.ctx.beginPath();
-      elems.ctx.moveTo(p1.x, p1.y);
-      elems.ctx.arcTo(p3.x, p3.y, p2.x, p2.y, c.radius);
-      elems.ctx.strokeStyle = col;
-      elems.ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.arcTo(p3.x, p3.y, p2.x, p2.y, c.radius);
+      ctx.strokeStyle = col;
+      ctx.stroke();
 
     }
   }
@@ -453,14 +486,23 @@ $(document).ready(() => {
   const disk = new Disk();
 
   // * ***********************************************************************
-  // *
+  // *    TESSELATION CLASS
+  // *    Creates a regular Tesselation of the Poincare Disk
   // *    q: number of p-gons meeting at each vertex
-  // *    scale: distance from the centre to point on layer 1 p-gon
+  // *    p: number of sides of p-gon
+  // *    using the techniques created by Coxeter and Dunham
   // *
   // *************************************************************************
-  class Tesselate {
-    constructor(disk, p, q, scale, rotation) {
+  class Tesselation {
+    constructor(disk, p, q) {
       this.disk = disk;
+      this.p = p;
+      this.q = q;
+
+      //an array which will hold coordinates of pairs of points that have been
+      //drawn so far to prevent duplication
+      this.drawnArray = [];
+
       this.p = p;
       if(this.p < 3){
         console.error('Tesselation error: polygon needs at least 3 sides!');
@@ -472,51 +514,56 @@ $(document).ready(() => {
                       at each vertex!');
         return;
       }
-      this.scale = scale;
-      if(this.scale > this.disk.radius || this.scale < 1){
-        console.error('Tesselation error: scale must be less than disks \
-                      radius and greater than 1!');
-        return;
+
+      this.fundamentalPolygon();
+    }
+
+    //calculate fundamental region using Coxeter's method
+    //this is a right angle triangle which will be reflected to
+    //create the fundamental polygon
+    fundamentalPolygon(){
+      const p = this.firstPoint();
+      let alpha = 2*Math.PI/this.p;
+      const vertices = [p];
+
+      for(let i = 1; i <= this.p; i++){
+        let q = {
+          x: Math.cos(alpha*i)*p.x + Math.sin(alpha*i)*p.y,
+          y: -Math.sin(alpha*i)*p.x + Math.cos(alpha*i)*p.y
+        }
+        drawPoint(q);
+        vertices.push(q);
       }
-
-      this.rotation = rotation || 0;
-
-      this.replicate();
     }
 
-    //calculate the vertices of a regular p-gon as an array of points
-    //centroid at (0,0)
-    //or vertex 1 at centroid NOT IMPLEMENTED
-    calculatePoints(centroid){
-      let s = this.scale;
-
-      let pointsArray = [];
-      let cos = Math.cos(Math.PI/this.p);
-      let sin2 = Math.sin(Math.PI/(2*this.p));
-      sin2 = sin2*sin2;
-
-      //create one point per edge, the final edge will join back to the first point
-      for(let i = 0; i < this.p; i++){
-        let angle =  2*(i+1)*Math.PI/this.p;
-        let y =  s * Math.sin( angle + this.rotation);
-        let x =  s * Math.cos( angle + this.rotation);
-        let p = {x: x, y: y};
-        pointsArray.push(p);
+    firstPoint(){
+      const s = Math.sin(Math.PI/this.p);
+      const t = Math.cos(Math.PI/this.q);
+      //multiply these by the disks radius (Coxeter used unit disk);
+      const r = 1/Math.sqrt((t*t)/(s*s) -1)*this.disk.radius;
+      const d = 1/Math.sqrt(1- (s*s)/(t*t))*this.disk.radius;
+      const b = {
+        x: this.disk.radius*Math.cos(Math.PI/this.p),
+        y: -this.disk.radius*Math.sin(Math.PI/this.p)
       }
-      return pointsArray;
-    }
+      //const c = {
+      //  x: d - r,
+      //  y: 0
+      //}
 
-    drawPolygon(){
-      let pointsArray = this.calculatePoints();
-      disk.polygon(pointsArray);
-    }
+      const centre = {x: d, y: 0};
 
-    replicate() {
-      this.drawPolygon();
+      //there will be two points of intersection, of which we want the first
+      const p = circleLineIntersect(centre, r, this.disk.centre, b).p1;
+
+      //TESTING
+      drawPoint(p);
+
+      return p;
     }
   }
 
-  const tesselation = new Tesselate(disk, 1000, 3, 1, Math.PI/2);
+  const tesselation = new Tesselation(disk, 6, 4);
 
   // * ***********************************************************************
   // *
@@ -526,28 +573,60 @@ $(document).ready(() => {
   // *************************************************************************
   class Canvas {
     constructor() {
+      //this.tesellations();
       this.draw();
       $(window).resize(() => {
-        this.clear();
-        this.draw();
+        //this.clear();
+        //this.draw();
       });
-      this.saveImage();
+
+      //this.saveImage();
+      //this.clear();
     }
 
     draw() {
       disk.outerCircle();
       drawPoint(disk.centre);
+
+      let p1 = {
+        x: 50,
+        y: 50
+      }
+
+      let p2 = {
+        x: -50,
+        y: 120
+      }
+
+
+      //disk.line(p1,p2, 'black');
+      //disk.arcV2(p1,p2, 'red');
+
+      //drawPoint(p1);
+      //drawPoint(p2);
+    }
+
+    tesellations(){
+      for(let i = 3; i< 11; i++){
+        this.draw();
+
+        new Tesselation(disk, i, 3, 50, 0);
+
+        this.saveImage();
+        this.clear();
+      }
     }
 
     //the canvas has been translated to the centre of the disk so need to
-    //use an offset to clear it. NOT WORKING
+    //use an offset to clear it. NOT WORKING WHEN SCREEN IS RESIZED
     clear() {
-      elems.ctx.clearRect(-window.innerWidth / 2,-window.innerHeight / 2, canvas.width, canvas.height);
+      ctx.clearRect(-window.innerWidth/2,-window.innerHeight/2,
+                          window.innerWidth, window.innerHeight);
     }
 
     //convert the canvas to a base64URL and send to saveImage.php
     saveImage(){
-      let data = elems.canvas.toDataURL();
+      let data = canvas.toDataURL();
       $.ajax({
         type: 'POST',
         url: 'saveImage.php',
