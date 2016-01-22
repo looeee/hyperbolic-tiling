@@ -467,8 +467,8 @@ $(document).ready(function () {
         //in this case just return points
         var oy = c.centre.y;
         var ox = c.centre.x;
-        if (p1.y < oy && p2.y > oy && p1.x > ox && p2.x > ox) {
-          return { p1: p1, p2: p2 };
+        if (p1.y > oy && p2.y < oy && p1.x > ox && p2.x > ox) {
+          return { p1: p2, p2: p1 };
         }
 
         var alpha1 = centralAngle(p, p1, c.radius);
@@ -495,9 +495,6 @@ $(document).ready(function () {
         p1 = pts.p1;
         p2 = pts.p2;
 
-        //TESTING
-        // /drawCircle(c.centre, c.radius);
-
         //length of the arc
         var alpha = centralAngle(p1, p2, c.radius);
 
@@ -510,14 +507,9 @@ $(document).ready(function () {
       value: function polygon(pointsArray, colour) {
         var l = pointsArray.length;
 
-        for (var i = 0; i < l - 1; i++) {
-          //this.line(pointsArray[i], pointsArray[i + 1], colour);
-          this.arc(pointsArray[i], pointsArray[i + 1]);
+        for (var i = 0; i < l; i++) {
+          this.arc(pointsArray[i], pointsArray[(i + 1) % l], colour);
         }
-
-        //close the polygon
-        //this.line(pointsArray[0], pointsArray[l - 1], colour);
-        this.arc(pointsArray[0], pointsArray[l - 1]);
       }
 
       //return true if the point is not in the disk
@@ -552,6 +544,7 @@ $(document).ready(function () {
     function Tesselation(disk, p, q) {
       _classCallCheck(this, Tesselation);
 
+      this.level = 3;
       this.disk = disk;
       this.p = p;
       this.q = q;
@@ -576,6 +569,8 @@ $(document).ready(function () {
         return;
       }
 
+      this.reflectedLines = [];
+
       this.tesselation();
     }
 
@@ -596,20 +591,65 @@ $(document).ready(function () {
       key: 'tesselation',
       value: function tesselation() {
         var vertices = this.fundamentalPolygon();
-        var l = vertices.length;
-
         this.disk.polygon(vertices);
 
-        for (var i = 0; i < l - 1; i++) {
-          var _newVertices = this.reflectPolygon(vertices, vertices[i], vertices[i + 1]);
-          this.disk.polygon(_newVertices);
-        }
+        this.recursivePolyGen(vertices);
+      }
 
-        var newVertices = this.reflectPolygon(vertices, vertices[l - 1], vertices[0]);
-        this.disk.polygon(newVertices);
+      //recursively refelct each polygon over each edge, draw the new polygons
+      //and repeat for each of their edges
+
+    }, {
+      key: 'recursivePolyGen',
+      value: function recursivePolyGen(vertices) {
+        if (this.level === 0) {
+          return;
+        };
+        this.level--;
+
+        var l = vertices.length;
+        for (var i = 0; i < l; i++) {
+          //check if the lines vertices[i], vertices[i+1] has already been
+          //reflected over
+          var points = {
+            p1: {
+              x: vertices[i].x.toFixed(6),
+              y: vertices[i].y.toFixed(6)
+            },
+            p2: {
+              x: vertices[(i + 1) % l].x.toFixed(6),
+              y: vertices[(i + 1) % l].y.toFixed(6)
+            }
+
+          };
+          if (!this.linesOfReflection(points)) {
+            var newVertices = this.reflectPolygon(vertices, vertices[i], vertices[(i + 1) % l]);
+            this.disk.polygon(newVertices);
+
+            this.recursivePolyGen(newVertices);
+          }
+          console.table(points);
+          console.table(this.reflectedLines);
+        }
+      }
+
+      //check if a particular line has already been to do a reflection and if not
+      //add the current line to the array
+
+    }, {
+      key: 'linesOfReflection',
+      value: function linesOfReflection(points) {
+        if ($.inArray(points, this.reflectedLines) === -1) {
+          this.reflectedLines.push(points);
+          return false;
+        } else {
+          return true;
+        }
       }
 
       //rotate the first points around the disk to generate the fundamental polygon
+      //TODO: use Dunham's method of reflecting a fundamental triangle which will
+      //contain a motif eventually
 
     }, {
       key: 'fundamentalPolygon',
@@ -672,7 +712,7 @@ $(document).ready(function () {
     return Tesselation;
   }();
 
-  var tesselation = new Tesselation(disk, 5, 5);
+  var tesselation = new Tesselation(disk, 5, 4);
 
   // * ***********************************************************************
   // *
