@@ -30,6 +30,46 @@ var ctx = canvas.getContext('2d');
 // *
 // *************************************************************************
 
+//compare two points taking rounding errors into account
+var comparePoints = function comparePoints(p1, p2) {
+  if (typeof p1 === 'undefined' || typeof p2 === 'undefined') {
+    return true;
+  }
+  p1 = pointToFixed(p1, 6);
+  p2 = pointToFixed(p2, 6);
+  if (p1.x === p2.x && p1.y === p2.y) return true;else return false;
+};
+
+var pointToFixed = function pointToFixed(p, places) {
+  return {
+    x: p.x.toFixed(places),
+    y: p.y.toFixed(places)
+  };
+};
+
+//find the centroid of a non-self-intersecting polygon
+var centroidOfPolygon = function centroidOfPolygon(points) {
+  var first = pts[0],
+      last = pts[pts.length - 1];
+  if (first.x != last.x || first.y != last.y) pts.push(first);
+  var twicearea = 0,
+      x = 0,
+      y = 0,
+      nPts = pts.length,
+      p1 = undefined,
+      p2 = undefined,
+      f = undefined;
+  for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
+    p1 = pts[i];p2 = pts[j];
+    f = p1.x * p2.y - p2.x * p1.y;
+    twicearea += f;
+    x += (p1.x + p2.x) * f;
+    y += (p1.y + p2.y) * f;
+  }
+  f = twicearea * 3;
+  return { x: x / f, y: y / f };
+};
+
 //distance between two points
 var distance = function distance(p1, p2) {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
@@ -500,7 +540,7 @@ $(document).ready(function () {
 
         //how far around the greatCircle to start drawing the arc
         var offset = this.alphaOffset(p1, p2, c, 'arc');
-        drawSegment(c, alpha, offset, 'red');
+        drawSegment(c, alpha, offset, colour);
       }
     }, {
       key: 'polygon',
@@ -544,7 +584,7 @@ $(document).ready(function () {
     function Tesselation(disk, p, q) {
       _classCallCheck(this, Tesselation);
 
-      this.level = 3;
+      this.level = 220;
       this.disk = disk;
       this.p = p;
       this.q = q;
@@ -591,9 +631,9 @@ $(document).ready(function () {
       key: 'tesselation',
       value: function tesselation() {
         var vertices = this.fundamentalPolygon();
-        this.disk.polygon(vertices);
+        this.disk.polygon(vertices, 'red');
 
-        this.recursivePolyGen(vertices);
+        this.recursivePolyGen(vertices, { x: 0, y: 0 }, { x: 0, y: 0 });
       }
 
       //recursively refelct each polygon over each edge, draw the new polygons
@@ -601,35 +641,31 @@ $(document).ready(function () {
 
     }, {
       key: 'recursivePolyGen',
-      value: function recursivePolyGen(vertices) {
+      value: function recursivePolyGen(vertices, prevP1, prevP2) {
+        var _this2 = this;
+
         if (this.level === 0) {
           return;
         };
         this.level--;
-
         var l = vertices.length;
-        for (var i = 0; i < l; i++) {
-          //check if the lines vertices[i], vertices[i+1] has already been
-          //reflected over
-          var points = {
-            p1: {
-              x: vertices[i].x.toFixed(6),
-              y: vertices[i].y.toFixed(6)
-            },
-            p2: {
-              x: vertices[(i + 1) % l].x.toFixed(6),
-              y: vertices[(i + 1) % l].y.toFixed(6)
-            }
 
-          };
-          if (!this.linesOfReflection(points)) {
-            var newVertices = this.reflectPolygon(vertices, vertices[i], vertices[(i + 1) % l]);
-            this.disk.polygon(newVertices);
-
-            this.recursivePolyGen(newVertices);
+        var _loop = function _loop(i) {
+          if (!comparePoints(vertices[i], prevP1) && !comparePoints(vertices[(i + 1) % l], prevP2)) {
+            (function () {
+              var newVertices = _this2.reflectPolygon(vertices, vertices[i], vertices[(i + 1) % l]);
+              _this2.disk.polygon(newVertices, 'red');
+              if (distance(vertices[i], vertices[(i + 1) % l]) > 0.01) {
+                window.setTimeout(function () {
+                  _this2.recursivePolyGen(newVertices, vertices[i], vertices[(i + 1) % l]);
+                }, 1000);
+              }
+            })();
           }
-          console.table(points);
-          console.table(this.reflectedLines);
+        };
+
+        for (var i = 0; i < l; i++) {
+          _loop(i);
         }
       }
 
@@ -638,7 +674,8 @@ $(document).ready(function () {
 
     }, {
       key: 'linesOfReflection',
-      value: function linesOfReflection(points) {
+      value: function linesOfReflection(p1, p2) {
+        console.log(this.reflectedLines);
         if ($.inArray(points, this.reflectedLines) === -1) {
           this.reflectedLines.push(points);
           return false;
@@ -701,7 +738,6 @@ $(document).ready(function () {
         var c = greatCircle(p1, p2, this.disk.radius, this.disk.centre);
         for (var i = 0; i < l; i++) {
           var p = inverse(vertices[i], c.radius, c.centre);
-          drawPoint(p);
           newVertices.push(p);
         }
 
@@ -712,7 +748,7 @@ $(document).ready(function () {
     return Tesselation;
   }();
 
-  var tesselation = new Tesselation(disk, 5, 4);
+  var tesselation = new Tesselation(disk, 4, 5);
 
   // * ***********************************************************************
   // *

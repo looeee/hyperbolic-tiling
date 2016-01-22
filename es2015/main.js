@@ -23,6 +23,43 @@ const ctx = canvas.getContext('2d');
 // *
 // *************************************************************************
 
+//compare two points taking rounding errors into account
+const comparePoints = (p1, p2) => {
+  if(typeof p1 === 'undefined' || typeof p2 === 'undefined'){
+    return true;
+  }
+  p1 = pointToFixed(p1, 6);
+  p2 = pointToFixed(p2, 6);
+  if(p1.x === p2.x && p1.y === p2.y) return true;
+  else return false;
+}
+
+const pointToFixed = (p, places) => {
+  return {
+    x: p.x.toFixed(places),
+    y: p.y.toFixed(places)
+  };
+}
+
+//find the centroid of a non-self-intersecting polygon
+const centroidOfPolygon = (points) => {
+  let first = pts[0], last = pts[pts.length-1];
+  if (first.x != last.x || first.y != last.y) pts.push(first);
+  let twicearea=0,
+    x=0, y=0,
+    nPts = pts.length,
+    p1, p2, f;
+  for ( var i=0, j=nPts-1 ; i<nPts ; j=i++ ) {
+    p1 = pts[i]; p2 = pts[j];
+    f = p1.x*p2.y - p2.x*p1.y;
+    twicearea += f;
+    x += ( p1.x + p2.x ) * f;
+    y += ( p1.y + p2.y ) * f;
+  }
+  f = twicearea * 3;
+  return { x:x/f, y:y/f };
+}
+
 //distance between two points
 const distance = (p1, p2) => Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
 
@@ -443,7 +480,7 @@ $(document).ready(() => {
 
       //how far around the greatCircle to start drawing the arc
       let offset = this.alphaOffset(p1, p2, c, 'arc');
-      drawSegment(c, alpha, offset, 'red');
+      drawSegment(c, alpha, offset, colour);
     }
 
     polygon(pointsArray, colour) {
@@ -477,7 +514,7 @@ $(document).ready(() => {
   // *************************************************************************
   class Tesselation {
     constructor(disk, p, q) {
-      this.level = 3;
+      this.level = 220;
       this.disk = disk;
       this.p = p;
       this.q = q;
@@ -517,49 +554,35 @@ $(document).ready(() => {
 
     tesselation(){
       const vertices = this.fundamentalPolygon();
-      this.disk.polygon(vertices);
+      this.disk.polygon(vertices, 'red');
 
-      this.recursivePolyGen(vertices);
+      this.recursivePolyGen(vertices, {x: 0, y: 0}, {x: 0, y: 0});
     }
 
     //recursively refelct each polygon over each edge, draw the new polygons
     //and repeat for each of their edges
-    recursivePolyGen(vertices){
+    recursivePolyGen(vertices, prevP1, prevP2){
       if(this.level === 0){ return };
       this.level--;
-
       const l = vertices.length;
+
       for(let i = 0; i < l; i++){
-        //check if the lines vertices[i], vertices[i+1] has already been
-        //reflected over
-        let points = {
-          p1: {
-            x: vertices[i].x.toFixed(6),
-            y: vertices[i].y.toFixed(6)
-          },
-          p2: {
-            x: vertices[(i + 1)%l].x.toFixed(6),
-            y: vertices[(i + 1)%l].y.toFixed(6)
-          }
-
-        }
-        if(!this.linesOfReflection(points)){
+        if(!comparePoints(vertices[i], prevP1) && !comparePoints(vertices[(i + 1)%l], prevP2)){
           let newVertices = this.reflectPolygon(vertices, vertices[i], vertices[(i + 1)%l]);
-          this.disk.polygon(newVertices);
-
-
-          this.recursivePolyGen(newVertices);
-
+          this.disk.polygon(newVertices, 'red');
+          if(distance(vertices[i], vertices[(i + 1)%l]) > 0.01){
+            window.setTimeout( () => {
+              this.recursivePolyGen(newVertices, vertices[i], vertices[(i + 1)%l]);
+            }, 1000);
+          }
         }
-        console.table(points);
-        console.table(this.reflectedLines);
       }
-
     }
 
     //check if a particular line has already been to do a reflection and if not
     //add the current line to the array
-    linesOfReflection(points){
+    linesOfReflection(p1, p2){
+      console.log(this.reflectedLines);
       if( $.inArray(points, this.reflectedLines) === -1){
         this.reflectedLines.push(points);
         return false;
@@ -612,7 +635,6 @@ $(document).ready(() => {
       const c = greatCircle(p1, p2, this.disk.radius, this.disk.centre);
       for(let i = 0; i< l; i++){
         let p = inverse(vertices[i], c.radius, c.centre);
-        drawPoint(p);
         newVertices.push(p);
       }
 
@@ -620,7 +642,7 @@ $(document).ready(() => {
     }
   }
 
-  const tesselation = new Tesselation(disk, 5, 4);
+  const tesselation = new Tesselation(disk, 4, 5);
 
   // * ***********************************************************************
   // *
