@@ -11,6 +11,7 @@
 
   <script src="scripts/vendor/jquery.min.js"></script>
 
+  <script src="scripts/functions.js"></script>
   <script src="scripts/main.js"></script>
 
 </head>
