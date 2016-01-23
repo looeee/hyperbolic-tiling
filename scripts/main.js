@@ -305,18 +305,13 @@ $(document).ready(function () {
         return false;
       }
 
-      if (this.p < 3) {
-        console.error('Tesselation error: polygon needs at least 3 sides!');
-        return;
-      }
       this.q = q;
-      if (this.q < 3) {
-        console.error('Tesselation error: at least 3 p-gons must meet \
-                      at each vertex!');
-        return;
-      }
+      this.maxLayers = 3;
+      this.limit = 1800;
 
-      this.numPolys = 0;
+      //array of all lines that have been reflected over
+      this.reflectedLines = [];
+
       this.tesselation();
     }
 
@@ -329,6 +324,13 @@ $(document).ready(function () {
         if ((this.p - 2) * (this.q - 2) <= 4) {
           console.error('Hyperbolic tesselations require that (p-1)(q-2) < 4!');
           return true;
+        } else if (this.q < 3) {
+          console.error('Tesselation error: at least 3 p-gons must meet \
+                      at each vertex!');
+          return true;
+        } else if (this.p < 3) {
+          console.error('Tesselation error: polygon needs at least 3 sides!');
+          return true;
         } else {
           return false;
         }
@@ -338,8 +340,7 @@ $(document).ready(function () {
       value: function tesselation() {
         var vertices = this.fundamentalPolygon();
         this.disk.polygon(vertices, this.colour);
-        this.numPolys++;
-        this.recursivePolyGen(vertices, { x: 0, y: 0 }, { x: 0, y: 0 });
+        this.recursivePolyGen(vertices, { x: 0, y: 0 }, { x: 0, y: 0 }, 2);
       }
 
       //recursively reflect each polygon over each edge, draw the new polygons
@@ -348,26 +349,35 @@ $(document).ready(function () {
 
     }, {
       key: 'recursivePolyGen',
-      value: function recursivePolyGen(vertices, prevP1, prevP2) {
+      value: function recursivePolyGen(vertices, prevP1, prevP2, layer) {
         var _this = this;
+
+        //TESTING
+        if (this.limit <= 0) {
+          return;
+        }
+        this.limit--;
+
+        //console.log('Layer: ', layer);
+        //if(layer > this.maxLayers){ return; }
 
         var l = vertices.length;
 
         var _loop = function _loop(i) {
+          var p1 = vertices[i];
+          var p2 = vertices[(i + 1) % l];
           //don't reflect back over the line we've just reflected across as this
           //causes a loop
-          if (!comparePoints(vertices[i], prevP1) && !comparePoints(vertices[(i + 1) % l], prevP2)) {
-            (function () {
-              var newVertices = _this.reflectPolygon(vertices, vertices[i], vertices[(i + 1) % l]);
-              _this.disk.polygon(newVertices, _this.colour);
-              if (distance(vertices[i], vertices[(i + 1) % l]) > 100) {
-                _this.numPolys++;
-                console.log(_this.numPolys);
+          if (!comparePoints(p1, prevP1) && !comparePoints(p2, prevP2)) {
+            if (!_this.alreadyReflected(p1, p2)) {
+              (function () {
+                var newVertices = _this.reflectPolygon(vertices, p1, p2);
+                _this.disk.polygon(newVertices, _this.colour);
                 window.setTimeout(function () {
-                  _this.recursivePolyGen(newVertices, vertices[i], vertices[(i + 1) % l]);
+                  _this.recursivePolyGen(newVertices, p1, p2, layer++);
                 }, 500);
-              }
-            })();
+              })();
+            }
           }
         };
 
@@ -380,15 +390,40 @@ $(document).ready(function () {
       //add the current line to the array
 
     }, {
-      key: 'linesOfReflection',
-      value: function linesOfReflection(p1, p2) {
-        console.log(this.reflectedLines);
-        if ($.inArray(points, this.reflectedLines) === -1) {
-          this.reflectedLines.push(points);
+      key: 'alreadyReflected',
+      value: function alreadyReflected(p1, p2) {
+        var x1 = p1.x.toFixed(6);
+        var y1 = p1.y.toFixed(6);
+        var x2 = p2.x.toFixed(6);
+        var y2 = p2.y.toFixed(6);
+
+        var i = $.inArray(x1, this.reflectedLines);
+        //case1: first point not in array, line has not been used to reflect
+        if (i === -1) {
+          this.reflectedLines.push(x1);
+          this.reflectedLines.push(y1);
+          this.reflectedLines.push(x2);
+          this.reflectedLines.push(y2);
           return false;
-        } else {
-          return true;
         }
+        //case 2: first point is in array
+        else if (this.reflectedLines[i + 1] === y1) {
+            //case 2a: second point is in the array adjacent to first point;
+            // => lines has alraedy been used
+            var a = this.reflectedLines[i + 2] === x2 && this.reflectedLines[i + 3] === y2;
+            var b = this.reflectedLines[i - 2] === x2 && this.reflectedLines[i - 1] === y2;
+            if (a || b) {
+              return true;
+            }
+            //case 2b: 1st point was in array but as part of different line
+            else {
+                this.reflectedLines.push(x1);
+                this.reflectedLines.push(y1);
+                this.reflectedLines.push(x2);
+                this.reflectedLines.push(y2);
+                return false;
+              }
+          }
       }
 
       //rotate the first points around the disk to generate the fundamental polygon
@@ -443,7 +478,7 @@ $(document).ready(function () {
         return p;
       }
 
-      //reflect the polygon defined by it's vertices across the line p1, p2
+      //reflect the polygon defined by vertices across the line p1, p2
 
     }, {
       key: 'reflectPolygon',

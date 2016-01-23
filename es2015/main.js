@@ -268,18 +268,13 @@ $(document).ready(() => {
 
       if(this.checkParams()){ return false;}
 
-      if(this.p < 3){
-        console.error('Tesselation error: polygon needs at least 3 sides!');
-        return;
-      }
       this.q = q;
-      if(this.q < 3){
-        console.error('Tesselation error: at least 3 p-gons must meet \
-                      at each vertex!');
-        return;
-      }
+      this.maxLayers = 3;
+      this.limit = 1800;
 
-      this.numPolys = 0;
+      //array of all lines that have been reflected over
+      this.reflectedLines = [];
+
       this.tesselation();
     }
 
@@ -290,33 +285,48 @@ $(document).ready(() => {
         console.error('Hyperbolic tesselations require that (p-1)(q-2) < 4!');
         return true;
       }
+      else if(this.q < 3){
+        console.error('Tesselation error: at least 3 p-gons must meet \
+                      at each vertex!');
+        return true;
+      }
+      else if(this.p < 3){
+        console.error('Tesselation error: polygon needs at least 3 sides!');
+        return true;
+      }
       else { return false; }
     }
 
     tesselation(){
       const vertices = this.fundamentalPolygon();
       this.disk.polygon(vertices, this.colour);
-      this.numPolys ++;
-      this.recursivePolyGen(vertices, {x: 0, y: 0}, {x: 0, y: 0});
+      this.recursivePolyGen(vertices, {x: 0, y: 0}, {x: 0, y: 0}, 2);
     }
 
     //recursively reflect each polygon over each edge, draw the new polygons
     //and repeat for each of their edges
     //TODO make sure no line is drawn more than once
-    recursivePolyGen(vertices, prevP1, prevP2){
+    recursivePolyGen(vertices, prevP1, prevP2, layer){
+      //TESTING
+      if(this.limit <= 0){ return ;}
+      this.limit --;
+
+      //console.log('Layer: ', layer);
+      //if(layer > this.maxLayers){ return; }
+
       const l = vertices.length;
 
       for(let i = 0; i < l; i++){
+        let p1 = vertices[i];
+        let p2 = vertices[(i + 1)%l];
         //don't reflect back over the line we've just reflected across as this
         //causes a loop
-        if(!comparePoints(vertices[i], prevP1) && !comparePoints(vertices[(i + 1)%l], prevP2)){
-          let newVertices = this.reflectPolygon(vertices, vertices[i], vertices[(i + 1)%l]);
-          this.disk.polygon(newVertices, this.colour);
-          if(distance(vertices[i], vertices[(i + 1)%l]) > 100){
-            this.numPolys ++;
-            console.log(this.numPolys);
-            window.setTimeout( () => {
-              this.recursivePolyGen(newVertices, vertices[i], vertices[(i + 1)%l]);
+        if(!comparePoints(p1, prevP1) && !comparePoints(p2, prevP2)){
+          if(!this.alreadyReflected(p1, p2)){
+            let newVertices = this.reflectPolygon(vertices, p1, p2);
+            this.disk.polygon(newVertices, this.colour);
+            window.setTimeout(() => {
+              this.recursivePolyGen(newVertices, p1, p2, layer++);
             }, 500);
           }
         }
@@ -325,13 +335,39 @@ $(document).ready(() => {
 
     //check if a particular line has already been to do a reflection and if not
     //add the current line to the array
-    linesOfReflection(p1, p2){
-      console.log(this.reflectedLines);
-      if( $.inArray(points, this.reflectedLines) === -1){
-        this.reflectedLines.push(points);
-        return false;
+    alreadyReflected(p1, p2){
+      let x1 = p1.x.toFixed(6);
+      let y1 = p1.y.toFixed(6);
+      let x2 = p2.x.toFixed(6);
+      let y2 = p2.y.toFixed(6);
+
+      let i =  $.inArray(x1, this.reflectedLines);
+      //case1: first point not in array, line has not been used to reflect
+      if(i === -1){
+        this.reflectedLines.push(x1);
+        this.reflectedLines.push(y1);
+        this.reflectedLines.push(x2);
+        this.reflectedLines.push(y2);
+        return false
       }
-      else { return true; }
+      //case 2: first point is in array
+      else if(this.reflectedLines[i +1] === y1){
+        //case 2a: second point is in the array adjacent to first point;
+        // => lines has alraedy been used
+        let a = (this.reflectedLines[i+2] === x2 && this.reflectedLines[i+3] === y2);
+        let b = (this.reflectedLines[i-2] === x2 && this.reflectedLines[i-1] === y2);
+        if(a || b){
+          return true;
+        }
+        //case 2b: 1st point was in array but as part of different line
+        else{
+          this.reflectedLines.push(x1);
+          this.reflectedLines.push(y1);
+          this.reflectedLines.push(x2);
+          this.reflectedLines.push(y2);
+          return false
+        }
+      }
     }
 
     //rotate the first points around the disk to generate the fundamental polygon
@@ -380,7 +416,7 @@ $(document).ready(() => {
       return p;
     }
 
-    //reflect the polygon defined by it's vertices across the line p1, p2
+    //reflect the polygon defined by vertices across the line p1, p2
     reflectPolygon(vertices, p1, p2){
       const l = vertices.length;
       const newVertices = [];
