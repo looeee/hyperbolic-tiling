@@ -15,6 +15,8 @@ export class Disk {
     if(drawClass === 'canvas'){
       this.draw = new Canvas();
     }
+    this.draw.clearScreen();
+
     this.centre = {
       x: 0,
       y: 0
@@ -26,7 +28,7 @@ export class Disk {
     //smaller circle for testing
     // /this.radius = this.radius / 3;
 
-    this.color = 'black';
+    this.outerCircle();
   }
 
   //draw the boundary circle

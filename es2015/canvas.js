@@ -1,6 +1,6 @@
 // * ***********************************************************************
 // *
-// *  CANVAS UTILITY FUNCTIONS
+// *  CANVAS CLASS
 // *
 // *************************************************************************
 export class Canvas{
@@ -8,6 +8,7 @@ export class Canvas{
     this.canvas = document.querySelector('canvas');
     this.ctx = this.canvas.getContext('2d');
 
+    //fullscreen
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
@@ -69,7 +70,7 @@ export class Canvas{
 
   //the canvas has been translated to the centre of the disk so need to
   //use an offset to clear it. NOT WORKING WHEN SCREEN IS RESIZED
-  clear() {
+  clearScreen() {
     this.ctx.clearRect(-window.innerWidth/2,-window.innerHeight/2,
                         window.innerWidth, window.innerHeight);
   }
