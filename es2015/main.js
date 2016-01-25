@@ -3,9 +3,7 @@
 // *   PRE-SETUP
 // *
 // *************************************************************************
-document.write('<canvas id="canvas" width="' + (window.innerWidth) + '" height="' + (window.innerHeight) + '"> \
-  <h1> Canvas doesn\'t seem to be working! </h1> \
-</canvas>');
+
 
 // * ***********************************************************************
 // *
@@ -13,8 +11,18 @@ document.write('<canvas id="canvas" width="' + (window.innerWidth) + '" height="
 // *   define any global constants here
 // *
 // *************************************************************************
-const canvas = $('#canvas')[0];
-const ctx = canvas.getContext('2d');
+
+
+// * ***********************************************************************
+// *
+// *   IMPORTS
+// *
+// *************************************************************************
+
+import * as E from './euclid';
+import * as C from './canvas';
+
+
 
 // * ***********************************************************************
 // *
@@ -23,69 +31,34 @@ const ctx = canvas.getContext('2d');
 // *
 // *************************************************************************
 
-//find the centroid of a non-self-intersecting polygon
-const centroidOfPolygon = (points) => {
-  const first = pts[0], last = pts[pts.length-1];
-  if (first.x != last.x || first.y != last.y) pts.push(first);
-  let twicearea=0,
-    x=0, y=0,
-    nPts = pts.length,
-    p1, p2, f;
-  for ( var i=0, j=nPts-1 ; i<nPts ; j=i++ ) {
-    p1 = pts[i]; p2 = pts[j];
-    f = p1.x*p2.y - p2.x*p1.y;
-    twicearea += f;
-    x += ( p1.x + p2.x ) * f;
-    y += ( p1.y + p2.y ) * f;
+//compare two points taking rounding errors into account
+const comparePoints = (p1, p2) => {
+  if(typeof p1 === 'undefined' || typeof p2 === 'undefined'){
+    return true;
   }
-  f = twicearea * 3;
-  return { x:x/f, y:y/f };
+  p1 = pointToFixed(p1, 6);
+  p2 = pointToFixed(p2, 6);
+  if(p1.x === p2.x && p1.y === p2.y) return true;
+  else return false;
 }
 
-// * ***********************************************************************
-// *
-// *   CANVAS UTILITY FUNCTIONS
-// *
-// *************************************************************************
-
-//draw a hyperbolic line segment using calculations from line() or arc()
-const drawSegment = (c, alpha, alphaOffset, colour, width) => {
-  ctx.beginPath();
-  ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
-  ctx.strokeStyle = colour || 'black';
-  ctx.lineWidth = width || 1;
-  ctx.stroke();
+const pointToFixed = (p, places) => {
+  return {
+    x: p.x.toFixed(places),
+    y: p.y.toFixed(places)
+  };
 }
 
-//draw a (euclidean) line between two points
-const euclideanLine = (p1, p2, colour, width) => {
-  let c = colour || 'black';
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.strokeStyle = c;
-  ctx.lineWidth = width || 1;
-  ctx.stroke()
-}
+//flip a set of points over a hyperoblic line defined by two points
+const transform = (pointsArray, p1, p2) => {
+  let newPointsArray = [];
+  let c = E.greatCircle(p1, p2, disk.radius, disk.centre);
 
-//draw a point on the disk, optional radius and colour
-const drawPoint = (point, radius, colour) => {
-  let col = colour || 'black';
-  let r = radius || 2;
-  ctx.beginPath();
-  ctx.arc(point.x, point.y, r, 0, Math.PI * 2, true);
-  ctx.fillStyle = col;
-  ctx.fill();
-}
-
-//draw a circle of radius r centre c and optional colour
-const drawCircle = (c, r, colour, width) => {
-  let col = colour || 'black';
-  ctx.beginPath();
-  ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
-  ctx.strokeStyle = col;
-  ctx.lineWidth = width || 1;
-  ctx.stroke();
+  for(let p of pointsArray){
+    let newP = E.inverse(p, c.radius, c.centre);
+    newPointsArray.push(newP);
+  }
+  return newPointsArray;
 }
 
 // * ***********************************************************************
@@ -94,7 +67,7 @@ const drawCircle = (c, r, colour, width) => {
 // *
 // *************************************************************************
 $(document).ready(() => {
-
+  const c = new C.Canvas();
   // * ***********************************************************************
   // *
   // *   DISK CLASS
@@ -105,9 +78,6 @@ $(document).ready(() => {
     constructor() {
       this.x = window.innerWidth / 2;
       this.y = window.innerHeight / 2;
-
-      //transform the canvas so the origin is at the centre of the disk
-      ctx.translate(this.x, this.y);
 
       this.centre = {
         x: 0,
@@ -136,7 +106,7 @@ $(document).ready(() => {
       let col = colour || 'black';
       let c, points;
 
-      if(throughOrigin(p1,p2)){
+      if(E.throughOrigin(p1,p2)){
         let u = normalVector(p1,p2);
         points = {
           p1: {
@@ -151,14 +121,14 @@ $(document).ready(() => {
         euclideanLine(points.p1,points.p2, col);
       }
       else{
-        c = greatCircle(p1, p2, this.radius, this.centre);
+        c = E.greatCircle(p1, p2, this.radius, this.centre);
         points = circleIntersect(this.centre, c.centre, this.radius, c.radius);
 
         //angle subtended by the arc
-        let alpha = centralAngle(points.p1, points.p2, c.radius);
+        let alpha = E.centralAngle(points.p1, points.p2, c.radius);
 
         let offset = this.alphaOffset(points.p2, points.p2, c, 'line');
-        drawSegment(c, alpha, offset, col);
+        c.drawSegment(c, alpha, offset, col);
       }
     }
 
@@ -177,10 +147,10 @@ $(document).ready(() => {
       }
 
       if(p1.y < c.centre.y){
-        offset = 2*Math.PI - centralAngle(p1, p, c.radius);
+        offset = 2*Math.PI - E.centralAngle(p1, p, c.radius);
       }
       else{
-        offset = centralAngle(p1, p, c.radius);
+        offset = E.centralAngle(p1, p, c.radius);
       }
 
       return offset;
@@ -199,9 +169,9 @@ $(document).ready(() => {
         else if(p1.y < oy && p2.y > oy) return {p1: p1, p2: p2};
       }
 
-      let alpha1 = centralAngle(p, p1, c.radius);
+      let alpha1 = E.centralAngle(p, p1, c.radius);
       alpha1 = (p1.y < c.centre.y) ? 2*Math.PI - alpha1 : alpha1;
-      let alpha2 = centralAngle(p, p2, c.radius);
+      let alpha2 = E.centralAngle(p, p2, c.radius);
       alpha2 = (p2.y < c.centre.y) ? 2*Math.PI - alpha2 : alpha2;
 
       //if the points are not in clockwise order flip them
@@ -212,22 +182,22 @@ $(document).ready(() => {
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
     arc(p1, p2, colour) {
-      if(throughOrigin(p1,p2)){
+      if(E.throughOrigin(p1,p2)){
         euclideanLine(p1,p2, colour);
         return;
       }
       let col = colour || 'black';
-      let c = greatCircle(p1, p2, this.radius, this.centre);
+      let c = E.greatCircle(p1, p2, this.radius, this.centre);
       let pts = this.prepPoints(p1, p2, c);
       p1 = pts.p1;
       p2 = pts.p2;
 
       //length of the arc
-      let alpha = centralAngle(p1, p2, c.radius);
+      let alpha = E.centralAngle(p1, p2, c.radius);
 
       //how far around the greatCircle to start drawing the arc
       let offset = this.alphaOffset(p1, p2, c, 'arc');
-      drawSegment(c, alpha, offset, colour);
+      c.drawSegment(c, alpha, offset, colour);
     }
 
     polygon(vertices, colour) {
@@ -240,7 +210,7 @@ $(document).ready(() => {
     //return true if the point is not in the disk
     checkPoint(point) {
       let r = this.radius;
-      if (distance(point, this.centre) > r) {
+      if (E.distance(point, this.centre) > r) {
         console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
         return true;
       }
@@ -260,46 +230,38 @@ $(document).ready(() => {
   // *************************************************************************
   class Tesselation {
     constructor(disk, p, q, rotation, colour) {
-      this.rotation = rotation || 0;
+
       this.disk = disk;
       this.p = p;
       this.q = q;
+      this.minExp = p-3;
+      this.maxExp = p-2;
       this.colour = colour || 'black';
+      this.rotation = rotation || 0;
 
       if(this.checkParams()){ return false;}
 
       this.q = q;
       this.maxLayers = 3;
-      this.limit = 1800;
+      this.limit = 10000;
 
       //array of all lines that have been reflected over
       this.reflectedLines = [];
 
-      this.tesselation();
-    }
+      //array of centroids for all polygons drawn so far
+      this.polygonCentroids = [];
 
-    //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
-    // either an elliptical or euclidean tesselation);
-    checkParams(){
-      if((this.p -2)*(this.q-2) <= 4){
-        console.error('Hyperbolic tesselations require that (p-1)(q-2) < 4!');
-        return true;
-      }
-      else if(this.q < 3){
-        console.error('Tesselation error: at least 3 p-gons must meet \
-                      at each vertex!');
-        return true;
-      }
-      else if(this.p < 3){
-        console.error('Tesselation error: polygon needs at least 3 sides!');
-        return true;
-      }
-      else { return false; }
+      this.tesselation();
     }
 
     tesselation(){
       const vertices = this.fundamentalPolygon();
       this.disk.polygon(vertices, this.colour);
+
+      let p = E.centroidOfPolygon(vertices);
+      p = pointToFixed(p, 6);
+      this.polygonCentroids.push(p);
+
       this.recursivePolyGen(vertices, {x: 0, y: 0}, {x: 0, y: 0}, 2);
     }
 
@@ -316,20 +278,47 @@ $(document).ready(() => {
 
       const l = vertices.length;
 
+
+
       for(let i = 0; i < l; i++){
         let p1 = vertices[i];
         let p2 = vertices[(i + 1)%l];
         //don't reflect back over the line we've just reflected across as this
         //causes a loop
         if(!comparePoints(p1, prevP1) && !comparePoints(p2, prevP2)){
-          if(!this.alreadyReflected(p1, p2)){
-            let newVertices = this.reflectPolygon(vertices, p1, p2);
-            this.disk.polygon(newVertices, this.colour);
-            window.setTimeout(() => {
-              this.recursivePolyGen(newVertices, p1, p2, layer++);
-            }, 500);
-          }
+        //if(!this.polygonExists(vertices) ){//&& !this.alreadyReflected(p1, p2)){
+          let newVertices = this.reflectPolygon(vertices, p1, p2);
+          this.disk.polygon(newVertices, this.colour);
+          window.setTimeout(() => {
+            this.recursivePolyGen(newVertices, p1, p2, layer++);
+          }, 500);
         }
+        //}
+      }
+    }
+
+    //check if the polygon has already been drawn
+    polygonExists(vertices){
+      let p = E.centroidOfPolygon(vertices);
+      p = pointToFixed(p, 6);
+
+
+      let i =  $.inArray(p.x, this.polygonCentroids);
+      //case 1, centroid is not in array
+      if(i === -1){
+        this.polygonCentroids.push(p.x, p.y);
+        drawPoint(p);
+        return false;
+      }
+      //case 2: centroid is not in array
+      else if(this.polygonCentroids[i+1] !== p.y){
+        this.polygonCentroids.push(p.x, p.y);
+        drawPoint(p);
+        return false;
+      }
+      //case 3: centroid is in array
+      else{
+        return true;
       }
     }
 
@@ -405,7 +394,7 @@ $(document).ready(() => {
       const centre = {x: d, y: 0};
 
       //there will be two points of intersection, of which we want the first
-      let p = circleLineIntersect(centre, r, this.disk.centre, b).p1;
+      let p = E.circleLineIntersect(centre, r, this.disk.centre, b).p1;
 
       //apply the rotation
       p = {
@@ -420,108 +409,35 @@ $(document).ready(() => {
     reflectPolygon(vertices, p1, p2){
       const l = vertices.length;
       const newVertices = [];
-      const c = greatCircle(p1, p2, this.disk.radius, this.disk.centre);
+      const c = E.greatCircle(p1, p2, this.disk.radius, this.disk.centre);
       for(let i = 0; i< l; i++){
-        let p = inverse(vertices[i], c.radius, c.centre);
+        let p = E.inverse(vertices[i], c.radius, c.centre);
         newVertices.push(p);
       }
 
       return newVertices;
     }
+
+    //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
+    // either an elliptical or euclidean tesselation);
+    checkParams(){
+      if((this.p -2)*(this.q-2) <= 4){
+        console.error('Hyperbolic tesselations require that (p-1)(q-2) < 4!');
+        return true;
+      }
+      else if(this.q < 3){
+        console.error('Tesselation error: at least 3 p-gons must meet \
+                      at each vertex!');
+        return true;
+      }
+      else if(this.p < 3){
+        console.error('Tesselation error: polygon needs at least 3 sides!');
+        return true;
+      }
+      else { return false; }
+    }
   }
 
   const tesselation = new Tesselation(disk, 5, 4, 3*Math.PI/6*0, 'red');
 
-  // * ***********************************************************************
-  // *
-  // *   CANVAS CLASS
-  // *
-  // *
-  // *************************************************************************
-  class Canvas {
-    constructor() {
-      //this.tesellations();
-      this.draw();
-      $(window).resize(() => {
-        //this.clear();
-        //this.draw();
-      });
-
-      //this.saveImage();
-      //this.clear();
-    }
-
-    draw() {
-      disk.outerCircle();
-      drawPoint(disk.centre);
-
-      /*
-      //TESTING
-      let p1 = {
-        x: -53.395036426959535,
-        y: -3.552713678800501e-15
-      }
-
-      let p2 = {
-        x: -16.49997367119987,
-        y: 50.78169733167696
-      }
-
-
-      //disk.line(p1,p2, 'black');
-      disk.arc(p1,p2, 'red');
-
-      drawPoint(p1, 5, 'green');
-      drawPoint(p2, 5, 'blue');
-
-      p1 = {
-        x: 104.7936594333809,
-        y: 5.936864064325499e-14
-      }
-
-      p2 = {
-        x: 91.08228051326563,
-        y: 29.59442691657064
-      }
-
-
-      //disk.line(p1,p2, 'black');
-      disk.arc(p1,p2, 'red');
-
-      drawPoint(p1, 5, 'green');
-      drawPoint(p2, 5, 'blue');
-      */
-
-    }
-
-    tesellations(){
-      for(let i = 3; i< 11; i++){
-        this.draw();
-
-        new Tesselation(disk, i, 3, 50, 0);
-
-        this.saveImage();
-        this.clear();
-      }
-    }
-
-    //the canvas has been translated to the centre of the disk so need to
-    //use an offset to clear it. NOT WORKING WHEN SCREEN IS RESIZED
-    clear() {
-      ctx.clearRect(-window.innerWidth/2,-window.innerHeight/2,
-                          window.innerWidth, window.innerHeight);
-    }
-
-    //convert the canvas to a base64URL and send to saveImage.php
-    saveImage(){
-      let data = canvas.toDataURL();
-      $.ajax({
-        type: 'POST',
-        url: 'saveImage.php',
-        data: { img: data }
-      });
-    }
-  }
-
-  const canvas = new Canvas();
 });

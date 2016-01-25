@@ -3,7 +3,7 @@
 var projectname = 'canvas-test',
   template_path = '',
   scss_path = template_path + 'scss/**/*.scss',
-  es2015_path = template_path + 'es2015/**/*.js',
+  es2015_path = template_path + 'es2015/',
   styles_path = template_path + 'styles/',
   scripts_path = template_path + 'scripts/',
   gulp = require('gulp'),
@@ -13,8 +13,8 @@ var projectname = 'canvas-test',
   babelify = require('babelify'),
   through2 = require('through2'),
   browserify = require('browserify'),
+  source = require('vinyl-source-stream'),
   livereload = require('gulp-livereload');
-  //concat = require('gulp-concat');
 
 //Put all css/scss tasks here
 gulp.task('css', function() {
@@ -30,21 +30,14 @@ gulp.task('css', function() {
 
 //Put all javascript tasks here
 gulp.task('js', function() {
-  return gulp.src(es2015_path)
-    //.pipe(concat({path: es2015_path + 'main.js'}))
-    .pipe(through2.obj(function(file, enc, next) {
-      browserify(file.path)
-        .transform(babelify, {
-          presets: ['es2015']
-        })
-        .bundle(function(err, res) {
-          if (err) {
-            return next(err);
-          }
-          file.contents = res;
-          next(null, file);
-        })
-    }))
+  return browserify({
+    entries: es2015_path + 'main.js',
+    extensions: ['.js'],
+    debug: true
+  })
+    .transform('babelify', {presets: ['es2015']})
+    .bundle()
+    .pipe(source('main.js'))
     .pipe(gulp.dest(scripts_path))
     .pipe(livereload());
 });
@@ -53,5 +46,5 @@ gulp.task('js', function() {
 gulp.task('default', ['css', 'js'], function() {
   livereload.listen();
   gulp.watch(scss_path, ['css']);
-  gulp.watch(es2015_path, ['js']);
+  gulp.watch(es2015_path + '/**/*.js', ['js']);
 });
