@@ -219,3 +219,35 @@ export const centroidOfPolygon = (points) => {
   f = twicearea * 3;
   return { x:x/f, y:y/f };
 }
+
+//compare two points taking rounding errors into account
+export const comparePoints = (p1, p2) => {
+  if(typeof p1 === 'undefined' || typeof p2 === 'undefined'){
+    return true;
+  }
+  p1 = pointToFixed(p1, 6);
+  p2 = pointToFixed(p2, 6);
+  if(p1.x === p2.x && p1.y === p2.y) return true;
+  else return false;
+}
+
+export const pointToFixed = (p, places) => {
+  return {
+    x: p.x.toFixed(places),
+    y: p.y.toFixed(places)
+  };
+}
+
+/*
+//flip a set of points over a hyperoblic line defined by two points
+export const transform = (pointsArray, p1, p2) => {
+  let newPointsArray = [];
+  let c = E.greatCircle(p1, p2, disk.radius, disk.centre);
+
+  for(let p of pointsArray){
+    let newP = E.inverse(p, c.radius, c.centre);
+    newPointsArray.push(newP);
+  }
+  return newPointsArray;
+}
+*/

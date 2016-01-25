@@ -3,7 +3,7 @@
 // *  CANVAS UTILITY FUNCTIONS
 // *
 // *************************************************************************
-class Canvas{
+export class Canvas{
   constructor(){
     this.canvas = document.querySelector('canvas');
     this.ctx = this.canvas.getContext('2d');
@@ -18,12 +18,12 @@ class Canvas{
 
 
   //draw a hyperbolic line segment using calculations from line() or arc()
-  drawSegment(c, alpha, alphaOffset, colour, width){
-    ctx.beginPath();
-    ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
-    ctx.strokeStyle = colour || 'black';
-    ctx.lineWidth = width || 1;
-    ctx.stroke();
+  segment(c, alpha, alphaOffset, colour, width){
+    this.ctx.beginPath();
+    this.ctx.arc(c.centre.x, c.centre.y, c.radius, alphaOffset, alpha + alphaOffset);
+    this.ctx.strokeStyle = colour || 'black';
+    this.ctx.lineWidth = width || 1;
+    this.ctx.stroke();
   }
 
   //draw a (euclidean) line between two points
@@ -38,7 +38,7 @@ class Canvas{
   }
 
   //draw a point on the disk, optional radius and colour
-  drawPoint(point, radius, colour){
+  point(point, radius, colour){
     const col = colour || 'black';
     const r = radius || 2;
     this.ctx.beginPath();
@@ -48,7 +48,7 @@ class Canvas{
   }
 
   //draw a circle of radius r centre c and optional colour
-  drawCircle(c, r, colour, width){
+  circle(c, r, colour, width){
     const col = colour || 'black';
     this.ctx.beginPath();
     this.ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
@@ -75,7 +75,3 @@ class Canvas{
   }
 
 }
-
-
-
-export {Canvas}

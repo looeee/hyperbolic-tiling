@@ -11,8 +11,6 @@
 
   <script src="scripts/vendor/jquery.min.js"></script>
 
-  <script src="scripts/main.js"></script>
-
 </head>
 
 <body>
@@ -21,6 +19,7 @@
     <h1> Canvas doesn't seem to be working! </h1>
   </canvas>
 
+  <script src="scripts/main.js"></script>
 </body>
 
 </html>
