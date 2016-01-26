@@ -13,6 +13,16 @@ export class WebGL {
 
     this.gl = this.initWebGL(canvas);
 
+    this.rotation = 0;
+    this.lastSquareUpdateTime = 0;
+    this.squareXOffset = 0.0;
+    this.squareYOffset = 0.0;
+    this.squareZOffset = 0.0;
+    this.lastSquareUpdateTime = 0;
+    this.xIncValue = 0.2;
+    this.yIncValue = -0.4;
+    this.zIncValue = 0.3;
+
     if (this.gl) {
       this.start();
       this.initShaders();
@@ -67,19 +77,22 @@ export class WebGL {
 
     this.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgram, 'aVertexPosition');
     this.gl.enableVertexAttribArray(this.vertexPositionAttribute);
+
+    this.vertexColorAttribute = this.gl.getAttribLocation(this.shaderProgram, 'aVertexColor');
+    this.gl.enableVertexAttribArray(this.vertexColorAttribute);
+
   }
 
   getShader(gl, id) {
-    let shaderScript, theSource, currentChild, shader;
-
-    shaderScript = document.getElementById(id);
+    let shader;
+    const shaderScript = document.getElementById(id);
 
     if (!shaderScript) {
       return null;
     }
 
-    theSource = '';
-    currentChild = shaderScript.firstChild;
+    let theSource = '';
+    let currentChild = shaderScript.firstChild;
 
     while (currentChild) {
       if (currentChild.nodeType == currentChild.TEXT_NODE) {
@@ -112,7 +125,7 @@ export class WebGL {
   }
 
   initBuffers() {
-    const horizAspect = window.innerHeight / window.innerWidth;
+    //const horizAspect = window.innerHeight / window.innerWidth;
     this.squareVerticesBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVerticesBuffer);
 
@@ -124,6 +137,17 @@ export class WebGL {
     this.gl.bufferData(this.gl.ARRAY_BUFFER,
       new Float32Array(vertices),
       this.gl.STATIC_DRAW);
+
+    const colors = [
+      1.0, 1.0, 1.0, 1.0, // white
+      1.0, 0.0, 0.0, 1.0, // red
+      0.0, 1.0, 0.0, 1.0, // green
+      0.0, 0.0, 1.0, 1.0 // blue
+    ];
+
+    this.squareVerticesColorBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVerticesColorBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(colors), this.gl.STATIC_DRAW);
   }
 
   drawScene() {
@@ -134,17 +158,34 @@ export class WebGL {
     loadIdentity();
     mvTranslate([-0.0, 0.0, -6.0]);
 
+    //mvPushMatrix();
+    mvRotate(this.rotation, [1, 0, 1]);
+
+
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVerticesBuffer);
     this.gl.vertexAttribPointer(this.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareVerticesColorBuffer);
+    this.gl.vertexAttribPointer(this.vertexColorAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
     this.setMatrixUniforms();
     this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+
+    //mvPopMatrix();
+    this.currentTime = Date.now();
+    //if (this.lastSquareUpdateTime) {
+    const delta = this.currentTime - this.lastSquareUpdateTime;
+    this.rotation += (30 * delta) / 1000.0;
+    //}
+
+    this.lastSquareUpdateTime = this.currentTime;
   }
 
   setMatrixUniforms() {
-    let pUniform = this.gl.getUniformLocation(this.shaderProgram, 'uPMatrix');
+    const pUniform = this.gl.getUniformLocation(this.shaderProgram, 'uPMatrix');
     this.gl.uniformMatrix4fv(pUniform, false, new Float32Array(this.perspectiveMatrix.flatten()));
 
-    let mvUniform = this.gl.getUniformLocation(this.shaderProgram, 'uMVMatrix');
+    const mvUniform = this.gl.getUniformLocation(this.shaderProgram, 'uMVMatrix');
     this.gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()));
   }
 
