@@ -10,10 +10,7 @@
   <link rel="stylesheet" type="text/css" href="styles/main.css" />
 
   <script src="scripts/vendor/jquery.min.js"></script>
-  <!--
-  <script src="scripts/vendor/sylvester.js"></script>
-  <script src="scripts/vendor/glUtils.js"></script>
--->
+
   <script src="scripts/vendor/three.min.js"></script>
 </head>
 

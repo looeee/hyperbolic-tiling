@@ -1,6 +1,9 @@
 import * as E from './euclid';
 //import { Canvas } from './canvas';
-import { ThreeJS } from './threejs';
+import {
+  ThreeJS
+}
+from './threejs';
 
 // * ***********************************************************************
 // *
@@ -25,7 +28,7 @@ export class Disk {
 
   }
 
-  init(){
+  init() {
     this.centre = {
       x: 0,
       y: 0
@@ -38,16 +41,39 @@ export class Disk {
 
     this.drawDisk();
 
-    this.point(this.centre, 4, 0xffff00);
+    this.testing();
+  }
+
+  testing() {
+    const p1 = {
+      x: 0,
+      y: 150
+    };
+    const p2 = {
+      x: -50,
+      y: 150
+    };
+    const p3 = {
+      x: 50,
+      y: -150
+    };
+
+    this.point(p1, 4, 0x000fff);
+    this.point(p2, 4, 0xf0ff0f);
+    this.point(p3, 4, 0xf00fff);
+
+    //this.arc(p1, p2, 0x000fff );
+
+    this.arc(p1, this.centre, 0xf0ff0f);
   }
 
   //draw the disk background
-  drawDisk(){
+  drawDisk() {
     this.draw.disk(this.centre, this.radius, 0x000000, true);
   }
 
-  point(centre, radius, color){
-    this.draw.disk(this.centre, radius, color, false);
+  point(centre, radius, color) {
+    this.draw.disk(centre, radius, color, false);
   }
 
   //draw a hyperbolic line between two points on the boundary circle
@@ -58,8 +84,8 @@ export class Disk {
     let col = colour || 'black';
     let c, points;
 
-    if(E.throughOrigin(p1,p2)){
-      let u = normalVector(p1,p2);
+    if (E.throughOrigin(p1, p2)) {
+      let u = normalVector(p1, p2);
       points = {
         p1: {
           x: u.x * this.radius,
@@ -70,9 +96,8 @@ export class Disk {
           y: -u.y * this.radius
         }
       }
-      this.draw.euclideanLine(points.p1,points.p2, col);
-    }
-    else{
+      this.draw.line(points.p1, points.p2, col);
+    } else {
       c = E.greatCircle(p1, p2, this.radius, this.centre);
       points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
 
@@ -98,10 +123,9 @@ export class Disk {
       y: c.centre.y
     }
 
-    if(p1.y < c.centre.y){
-      offset = 2*Math.PI - E.centralAngle(p1, p, c.radius);
-    }
-    else{
+    if (p1.y < c.centre.y) {
+      offset = 2 * Math.PI - E.centralAngle(p1, p, c.radius);
+    } else {
       offset = E.centralAngle(p1, p, c.radius);
     }
 
@@ -109,33 +133,48 @@ export class Disk {
   }
 
   //put points in clockwise order
-  prepPoints(p1, p2, c){
-    const p = {x: c.centre.x + c.radius, y: c.centre.y};
+  prepPoints(p1, p2, c) {
+    const p = {
+      x: c.centre.x + c.radius,
+      y: c.centre.y
+    };
     //case where points are above and below the line c.centre -> p
     //in this case just return points
     const oy = c.centre.y;
     const ox = c.centre.x;
 
-    if(p1.x > ox && p2.x > ox){
-      if(p1.y > oy && p2.y < oy) return {p1: p2, p2: p1};
-      else if(p1.y < oy && p2.y > oy) return {p1: p1, p2: p2};
+    if (p1.x > ox && p2.x > ox) {
+      if (p1.y > oy && p2.y < oy) return {
+        p1: p2,
+        p2: p1
+      };
+      else if (p1.y < oy && p2.y > oy) return {
+        p1: p1,
+        p2: p2
+      };
     }
 
     let alpha1 = E.centralAngle(p, p1, c.radius);
-    alpha1 = (p1.y < c.centre.y) ? 2*Math.PI - alpha1 : alpha1;
+    alpha1 = (p1.y < c.centre.y) ? 2 * Math.PI - alpha1 : alpha1;
     let alpha2 = E.centralAngle(p, p2, c.radius);
-    alpha2 = (p2.y < c.centre.y) ? 2*Math.PI - alpha2 : alpha2;
+    alpha2 = (p2.y < c.centre.y) ? 2 * Math.PI - alpha2 : alpha2;
 
     //if the points are not in clockwise order flip them
-    if(alpha1 > alpha2) return {p1: p2, p2: p1};
-    else return {p1: p1, p2: p2};
+    if (alpha1 > alpha2) return {
+      p1: p2,
+      p2: p1
+    };
+    else return {
+      p1: p1,
+      p2: p2
+    };
 
   }
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
   arc(p1, p2, colour) {
-    if(E.throughOrigin(p1,p2)){
-      this.draw.euclideanLine(p1,p2, colour);
+    if (E.throughOrigin(p1, p2)) {
+      this.draw.line(p1, p2, colour);
       return;
     }
     let col = colour || 'black';
@@ -155,7 +194,7 @@ export class Disk {
   polygon(vertices, colour) {
     let l = vertices.length;
     for (let i = 0; i < l; i++) {
-      this.arc(vertices[i], vertices[(i + 1)%l], colour);
+      this.arc(vertices[i], vertices[(i + 1) % l], colour);
     }
   }
 

@@ -33,8 +33,8 @@ export class ThreeJS {
     //console.log(this.scene);
   }
 
-  reset(){
-    cancelAnimationFrame(this.id);// Stop the animation
+  reset() {
+    cancelAnimationFrame(this.id); // Stop the animation
     this.renderer.domElement.addEventListener('dblclick', null, false); //remove listener to render
     this.scene = null;
     this.projector = null;
@@ -49,9 +49,8 @@ export class ThreeJS {
   }
 
   initCamera() {
-    this.camera = new THREE.OrthographicCamera(window.innerWidth / - 2,
-      window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2,
-      -1, 1);
+    this.camera = new THREE.OrthographicCamera(window.innerWidth / -2,
+      window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
     this.scene.add(this.camera);
     this.camera.position.x = 0;
     this.camera.position.y = 0;
@@ -68,7 +67,9 @@ export class ThreeJS {
   }
 
   initRenderer() {
-    this.renderer = new THREE.WebGLRenderer();
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+    });
     this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
@@ -77,32 +78,74 @@ export class ThreeJS {
   }
 
   //behind: true/false
-  disk(centre, radius, color, behind){
+  disk(centre, radius, color, behind) {
     let col = color;
-    if( col === 'undefined') col = 0xffffff;
+    if (col === 'undefined') col = 0xffffff;
 
-    const geometry = new THREE.CircleGeometry(radius, 100, 0, 2*Math.PI);
+    const geometry = new THREE.CircleGeometry(radius, 100, 0, 2 * Math.PI);
     const circle = this.createMesh(geometry, col);
     circle.position.x = centre.x;
     circle.position.y = centre.y;
-    if(!behind){
+    if (!behind) {
       circle.position.z = 1;
     }
 
     this.scene.add(circle);
   }
 
+  segment(circle, alpha, offset, color) {
+    let col = color;
+    if (col === 'undefined') col = 0xffffff;
+    const curve = new THREE.EllipseCurve(
+      circle.centre.x, circle.centre.y, // ax, aY
+      circle.radius, circle.radius, // xRadius, yRadius
+      alpha, offset, // aStartAngle, aEndAngle
+      true // aClockwise
+    );
+
+    const points = curve.getSpacedPoints(100);
+
+    const path = new THREE.Path();
+    const geometry = path.createGeometry(points);
+
+    const material = new THREE.LineBasicMaterial({
+      color: col
+    });
+    const s = new THREE.Line(geometry, material);
+
+    this.scene.add(s);
+  }
+
+  line(start, end, color) {
+    let col = color;
+    if (col === 'undefined') col = 0xffffff;
+
+    const geometry = new THREE.Geometry();
+
+    geometry.vertices.push(
+      new THREE.Vector3(start.x, start.y, 0),
+      new THREE.Vector3(end.x, end.y, 0)
+    );
+    const material = new THREE.LineBasicMaterial({
+      color: col
+    });
+    const l = new THREE.Line(geometry, material);
+    this.scene.add(l);
+  }
+
   createMesh(geometry, color, imageURL) {
     let col = color;
-    if( col === 'undefined') col = 0xffffff;
-    const material = new THREE.MeshBasicMaterial({ color: col });
+    if (col === 'undefined') col = 0xffffff;
+    const material = new THREE.MeshBasicMaterial({
+      color: col
+    });
 
-    if(imageURL){
+    if (imageURL) {
       const textureLoader = new THREE.TextureLoader();
 
       //load texture and apply to material in callback
       const texture = textureLoader.load(imageURL, (tex) => {});
-      texture.repeat.set(0.05,0.05);
+      texture.repeat.set(0.05, 0.05);
       material.map = texture;
       material.map.wrapT = THREE.RepeatWrapping;
       material.map.wrapS = THREE.RepeatWrapping;
