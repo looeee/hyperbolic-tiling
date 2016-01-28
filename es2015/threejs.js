@@ -12,42 +12,103 @@ export class ThreeJS {
     }, false);
 
     window.addEventListener('resize', () => {
-      this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      //this.camera.aspect = window.innerWidth / window.innerHeight;
+      //this.camera.updateProjectionMatrix();
+      //this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+      this.reset();
     }, false);
 
   }
 
   init() {
     this.scene = new THREE.Scene();
-    this.camera();
+    this.initCamera();
 
-    this.lighting();
+    this.initLighting();
 
     this.axes();
-    this.shape();
-    this.renderer();
+
+    this.initRenderer();
+    //console.log(this.scene);
   }
 
-  camera() {
-    this.camera = new THREE.PerspectiveCamera(75,
-      window.innerWidth / window.innerHeight, 0.1, 1000);
+  reset(){
+    cancelAnimationFrame(this.id);// Stop the animation
+    this.renderer.domElement.addEventListener('dblclick', null, false); //remove listener to render
+    this.scene = null;
+    this.projector = null;
+    this.camera = null;
+    this.controls = null;
+
+    const element = document.getElementsByTagName('canvas');
+    for (let index = element.length - 1; index >= 0; index--) {
+      element[index].parentNode.removeChild(element[index]);
+    }
+    this.init();
+  }
+
+  initCamera() {
+    this.camera = new THREE.OrthographicCamera(window.innerWidth / - 2,
+      window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2,
+      -1, 1);
     this.scene.add(this.camera);
     this.camera.position.x = 0;
     this.camera.position.y = 0;
-    this.camera.lookAt(this.scene.position);
 
-    this.camera.position.z = 10;
+    this.camera.position.z = 1;
   }
 
-  renderer() {
+  initLighting() {
+    //const spotLight = new THREE.SpotLight(0xffffff);
+    //spotLight.position.set(0, 0, 100);
+    //this.scene.add(spotLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff);
+    this.scene.add(ambientLight);
+  }
+
+  initRenderer() {
     this.renderer = new THREE.WebGLRenderer();
-    this.renderer.setClearColor(0x000000, 1.0);
+    this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
     this.render();
+  }
+
+  //behind: true/false
+  disk(centre, radius, color, behind){
+    let col = color;
+    if( col === 'undefined') col = 0xffffff;
+
+    const geometry = new THREE.CircleGeometry(radius, 100, 0, 2*Math.PI);
+    const circle = this.createMesh(geometry, col);
+    circle.position.x = centre.x;
+    circle.position.y = centre.y;
+    if(!behind){
+      circle.position.z = 1;
+    }
+
+    this.scene.add(circle);
+  }
+
+  createMesh(geometry, color, imageURL) {
+    let col = color;
+    if( col === 'undefined') col = 0xffffff;
+    const material = new THREE.MeshBasicMaterial({ color: col });
+
+    if(imageURL){
+      const textureLoader = new THREE.TextureLoader();
+
+      //load texture and apply to material in callback
+      const texture = textureLoader.load(imageURL, (tex) => {});
+      texture.repeat.set(0.05,0.05);
+      material.map = texture;
+      material.map.wrapT = THREE.RepeatWrapping;
+      material.map.wrapS = THREE.RepeatWrapping;
+    }
+
+    return new THREE.Mesh(geometry, material);
   }
 
   shape() {
@@ -72,43 +133,6 @@ export class ThreeJS {
     this.scene.add(this.curve);
   }
 
-  createMesh(geometry, imageURL) {
-    let material = new THREE.MeshBasicMaterial({
-      color: 0xff00ff
-    });
-
-    const textureLoader = new THREE.TextureLoader();
-
-    //load texture and apply to material in callback
-    let texture = textureLoader.load(imageURL, (tex) => {});
-    texture.repeat.set(0.05,0.05);
-    material.map = texture;
-    material.map.wrapT = THREE.RepeatWrapping;
-    material.map.wrapS = THREE.RepeatWrapping;
-
-    //geometry = new THREE.BoxGeometry( 8, 8, 8 );
-    console.log(geometry.faceVertexUvs);
-
-    geometry.faceVertexUvs[0][0][0].x = 0.5;
-    geometry.faceVertexUvs[0][0][0].y = 0.5;
-    geometry.faceVertexUvs[0][0][1].x = 0.5;
-    geometry.faceVertexUvs[0][0][1].y = 0.5;
-    geometry.faceVertexUvs[0][0][2].x = 0.5;
-    geometry.faceVertexUvs[0][0][2].y = 0.5;
-    console.log(geometry.faceVertexUvs);
-
-
-    return new THREE.Mesh(geometry, material);
-  }
-
-  lighting() {
-    //const spotLight = new THREE.SpotLight(0xffffff);
-    //spotLight.position.set(0, 0, 100);
-    //this.scene.add(spotLight);
-    const ambientLight = new THREE.AmbientLight(0xffffff);
-    this.scene.add(ambientLight);
-  }
-
   axes() {
     const xyz = new THREE.AxisHelper(20);
     this.scene.add(xyz);
@@ -118,7 +142,7 @@ export class ThreeJS {
     requestAnimationFrame(() => {
       this.render()
     });
-    //this.curve.rotation.y += 0.02;
+    //this.circle.rotation.x += 0.02;
     this.renderer.render(this.scene, this.camera);
   }
 

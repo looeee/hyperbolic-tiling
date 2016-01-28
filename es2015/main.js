@@ -1,6 +1,7 @@
 import { RegularTesselation } from './regularTesselation';
+import * as E from './euclid';
+import { Disk } from './disk';
 
-import { ThreeJS } from './threejs';
 
 // * ***********************************************************************
 // *
@@ -8,6 +9,6 @@ import { ThreeJS } from './threejs';
 // *
 // *************************************************************************
 
-const three = new ThreeJS();
+const disk = new Disk('threejs');
 
 //const tesselation = new RegularTesselation(5, 4, 3*Math.PI/6*0, 'red');

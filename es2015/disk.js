@@ -1,22 +1,31 @@
 import * as E from './euclid';
-import { Canvas } from './canvas';
+//import { Canvas } from './canvas';
+import { ThreeJS } from './threejs';
 
 // * ***********************************************************************
 // *
 // *   DISK CLASS
 // *   Poincare Disk representation of the hyperbolic plane
 // *   Contains any functions used to draw to the disk
-// *   Constructor takes the drawing class as an argument
-// *   (Currently only Canvas used, might switch to WebGL in future)
+// *   (Currently using three js as drawing class)
 // *************************************************************************
 export class Disk {
-  constructor(drawClass) {
-    drawClass = drawClass || 'canvas';
-    if(drawClass === 'canvas'){
-      this.draw = new Canvas();
-    }
-    this.draw.clearScreen();
+  constructor() {
+    this.draw = new ThreeJS();
 
+
+    window.addEventListener('load', (event) => {
+      window.removeEventListener('load');
+      this.init();
+    }, false);
+
+    window.addEventListener('resize', () => {
+      this.init();
+    }, false);
+
+  }
+
+  init(){
     this.centre = {
       x: 0,
       y: 0
@@ -24,16 +33,21 @@ export class Disk {
 
     //draw largest circle possible given window dims
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-
     //smaller circle for testing
-    // /this.radius = this.radius / 3;
+    //this.radius = this.radius / 3;
 
-    this.outerCircle();
+    this.drawDisk();
+
+    this.point(this.centre, 4, 0xffff00);
   }
 
-  //draw the boundary circle
-  outerCircle() {
-    this.draw.circle({x: this.centre.x, y: this.centre.y}, this.radius);
+  //draw the disk background
+  drawDisk(){
+    this.draw.disk(this.centre, this.radius, 0x000000, true);
+  }
+
+  point(centre, radius, color){
+    this.draw.disk(this.centre, radius, color, false);
   }
 
   //draw a hyperbolic line between two points on the boundary circle
