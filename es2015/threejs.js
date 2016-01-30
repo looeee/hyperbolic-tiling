@@ -96,11 +96,12 @@ export class ThreeJS {
   segment(circle, alpha, offset, color) {
     let col = color;
     if (col === 'undefined') col = 0xffffff;
+
     const curve = new THREE.EllipseCurve(
       circle.centre.x, circle.centre.y, // ax, aY
       circle.radius, circle.radius, // xRadius, yRadius
       alpha, offset, // aStartAngle, aEndAngle
-      true // aClockwise
+      false // aClockwise
     );
 
     const points = curve.getSpacedPoints(100);

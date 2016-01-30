@@ -36,8 +36,9 @@ export class Disk {
 
     //draw largest circle possible given window dims
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+
     //smaller circle for testing
-    //this.radius = this.radius / 3;
+    this.radius = this.radius / 2;
 
     this.drawDisk();
 
@@ -54,7 +55,7 @@ export class Disk {
       y: 150
     };
     const p3 = {
-      x: 50,
+      x: -50,
       y: -150
     };
 
@@ -62,9 +63,9 @@ export class Disk {
     this.point(p2, 4, 0xf0ff0f);
     this.point(p3, 4, 0xf00fff);
 
-    //this.arc(p1, p2, 0x000fff );
+    this.arc(p1, p2, 0x000fff);
 
-    this.arc(p1, this.centre, 0xf0ff0f);
+    this.arc(p1, p3, 0xf00f0f);
   }
 
   //draw the disk background
@@ -78,58 +79,41 @@ export class Disk {
 
   //draw a hyperbolic line between two points on the boundary circle
   line(p1, p2, colour) {
-    //let pts = this.prepPoints(p1, p2);
-    //p1 = pts.p1;
-    //p2 = pts.p2;
-    let col = colour || 'black';
-    let c, points;
+    let c = E.greatCircle(p1, p2, this.radius, this.centre);
+    let points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
 
-    if (E.throughOrigin(p1, p2)) {
-      let u = normalVector(p1, p2);
-      points = {
-        p1: {
-          x: u.x * this.radius,
-          y: u.y * this.radius
-        },
-        p2: {
-          x: -u.x * this.radius,
-          y: -u.y * this.radius
-        }
-      }
-      this.draw.line(points.p1, points.p2, col);
-    } else {
-      c = E.greatCircle(p1, p2, this.radius, this.centre);
-      points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
-
-      //angle subtended by the arc
-      let alpha = E.centralAngle(points.p1, points.p2, c.radius);
-
-      let offset = this.alphaOffset(points.p2, points.p2, c, 'line');
-      this.draw.segment(c, alpha, offset, col);
-    }
+    this.arc(points.p1, points.p2, colour)
   }
 
-  //calculate the offset (position around the circle from which to start the
-  //line or arc). As canvas draws arcs clockwise by default this will change
-  //depending on where the arc is relative to the origin
-  //specificall whether it lies on the x axis, or above or below it
-  //type = 'line' or 'arc'
-  alphaOffset(p1, p2, c, type) {
-    let offset;
+  //Draw an arc (hyperbolic line segment) between two points on the disk
+  arc(p1, p2, colour) {
+    let col = colour || 'black';
 
-    //points at 0 radians on greatCircle
-    let p = {
+    if (E.throughOrigin(p1, p2)) {
+      this.draw.line(p1, p2, col);
+      return;
+    }
+
+    let c = E.greatCircle(p1, p2, this.radius, this.centre);
+
+    //put points in clockwise order
+    let pts = this.prepPoints(p1, p2, c);
+    p1 = pts.p1;
+    p2 = pts.p2;
+
+    //point at 0 radians on greatCircle
+    let p3 = {
       x: c.centre.x + c.radius,
       y: c.centre.y
     }
 
-    if (p1.y < c.centre.y) {
-      offset = 2 * Math.PI - E.centralAngle(p1, p, c.radius);
-    } else {
-      offset = E.centralAngle(p1, p, c.radius);
-    }
+    let startAngle = E.centralAngle(p3, p2, c.radius);
+    startAngle = (p3.y < c.centre.y) ? 2 * Math.PI - startAngle : startAngle;
 
-    return offset;
+
+    let endAngle = startAngle + E.centralAngle(p1, p2, c.radius);
+
+    this.draw.segment(c, -endAngle, -startAngle, colour);
   }
 
   //put points in clockwise order
@@ -154,6 +138,7 @@ export class Disk {
       };
     }
 
+    //calculate the position of each point in the circle
     let alpha1 = E.centralAngle(p, p1, c.radius);
     alpha1 = (p1.y < c.centre.y) ? 2 * Math.PI - alpha1 : alpha1;
     let alpha2 = E.centralAngle(p, p2, c.radius);
@@ -171,27 +156,7 @@ export class Disk {
 
   }
 
-  //Draw an arc (hyperbolic line segment) between two points on the disk
-  arc(p1, p2, colour) {
-    if (E.throughOrigin(p1, p2)) {
-      this.draw.line(p1, p2, colour);
-      return;
-    }
-    let col = colour || 'black';
-    let c = E.greatCircle(p1, p2, this.radius, this.centre);
-    let pts = this.prepPoints(p1, p2, c);
-    p1 = pts.p1;
-    p2 = pts.p2;
-
-    //length of the arc
-    let alpha = E.centralAngle(p1, p2, c.radius);
-
-    //how far around the greatCircle to start drawing the arc
-    let offset = this.alphaOffset(p1, p2, c, 'arc');
-    this.draw.segment(c, alpha, offset, colour);
-  }
-
-  polygon(vertices, colour) {
+  polygonOutline(vertices, colour) {
     let l = vertices.length;
     for (let i = 0; i < l; i++) {
       this.arc(vertices[i], vertices[(i + 1) % l], colour);
