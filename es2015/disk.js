@@ -52,20 +52,22 @@ export class Disk {
     };
     const p2 = {
       x: -50,
-      y: 150
+      y: 50
     };
     const p3 = {
       x: -50,
-      y: -150
+      y: -50
     };
 
-    this.point(p1, 4, 0x000fff);
-    this.point(p2, 4, 0xf0ff0f);
-    this.point(p3, 4, 0xf00fff);
+    //this.point(p1, 4, 0x000fff);
+    //this.point(p2, 4, 0xf0ff0f);
+    //this.point(p3, 4, 0xf00fff);
 
-    this.arc(p1, p2, 0x000fff);
+    //this.arc(p2, p1, 0x000fff);
 
-    this.arc(p1, p3, 0xf00f0f);
+    //this.arc(p3, p2, 0xf00f0f);
+
+    this.polygonOutline([p1,p2,p3], 0xf00f0f)
   }
 
   //draw the disk background
@@ -78,6 +80,7 @@ export class Disk {
   }
 
   //draw a hyperbolic line between two points on the boundary circle
+  //TODO: fix!
   line(p1, p2, colour) {
     let c = E.greatCircle(p1, p2, this.radius, this.centre);
     let points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
@@ -87,6 +90,7 @@ export class Disk {
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
   arc(p1, p2, colour) {
+    let alpha1, alpha2, startAngle, endAngle;
     let col = colour || 'black';
 
     if (E.throughOrigin(p1, p2)) {
@@ -96,63 +100,52 @@ export class Disk {
 
     let c = E.greatCircle(p1, p2, this.radius, this.centre);
 
-    //put points in clockwise order
-    let pts = this.prepPoints(p1, p2, c);
-    p1 = pts.p1;
-    p2 = pts.p2;
-
-    //point at 0 radians on greatCircle
+    //point at 0 radians on c
     let p3 = {
       x: c.centre.x + c.radius,
       y: c.centre.y
     }
 
-    let startAngle = E.centralAngle(p3, p2, c.radius);
-    startAngle = (p3.y < c.centre.y) ? 2 * Math.PI - startAngle : startAngle;
+    this.point(p1, 4, 0xf0ff0f);
+    this.point(p2, 4, 0xf0000f);
+    this.point(p3, 4, 0xffffff);
 
-
-    let endAngle = startAngle + E.centralAngle(p1, p2, c.radius);
-
-    this.draw.segment(c, -endAngle, -startAngle, colour);
-  }
-
-  //put points in clockwise order
-  prepPoints(p1, p2, c) {
-    const p = {
-      x: c.centre.x + c.radius,
-      y: c.centre.y
-    };
-    //case where points are above and below the line c.centre -> p
-    //in this case just return points
     const oy = c.centre.y;
     const ox = c.centre.x;
 
-    if (p1.x > ox && p2.x > ox) {
-      if (p1.y > oy && p2.y < oy) return {
-        p1: p2,
-        p2: p1
-      };
-      else if (p1.y < oy && p2.y > oy) return {
-        p1: p1,
-        p2: p2
-      };
-    }
-
     //calculate the position of each point in the circle
-    let alpha1 = E.centralAngle(p, p1, c.radius);
+    alpha1 = E.centralAngle(p3, p1, c.radius);
     alpha1 = (p1.y < c.centre.y) ? 2 * Math.PI - alpha1 : alpha1;
-    let alpha2 = E.centralAngle(p, p2, c.radius);
+    alpha2 = E.centralAngle(p3, p2, c.radius);
     alpha2 = (p2.y < c.centre.y) ? 2 * Math.PI - alpha2 : alpha2;
 
-    //if the points are not in clockwise order flip them
-    if (alpha1 > alpha2) return {
-      p1: p2,
-      p2: p1
-    };
-    else return {
-      p1: p1,
-      p2: p2
-    };
+    //case where p1 above and p2 below the line c.centre -> p
+    if ( (p1.x > ox && p2.x > ox) && (p1.y < oy && p2.y > oy) ) {
+      //console.log('case 1'); //Working
+      startAngle = alpha1;
+      endAngle = alpha2;
+    }
+    //case where p2 above and p1 below the line c.centre -> p
+    else if( (p1.x > ox && p2.x > ox) && (p1.y > oy && p2.y < oy) ){
+      //console.log('case 1a'); //Working
+      startAngle = alpha2;
+      endAngle = alpha1;
+    }
+    //points in clockwise order
+    else if(alpha1 > alpha2){
+      console.log('case 2'); //working
+      startAngle = alpha2;
+      endAngle = alpha1;
+    }
+    //points in anticlockwise order
+    else{
+      console.log('case 3'); //working
+      startAngle = alpha1;
+      endAngle = alpha2;
+    }
+
+    console.log(startAngle, endAngle);
+    this.draw.segment(c, startAngle, endAngle, colour);
 
   }
 
