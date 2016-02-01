@@ -241,11 +241,10 @@ export const pointToFixed = (p, places) => {
 //find a point at a distance d along the circumference of
 //a circle of radius r, centre c from a point also
 //on the circumference
-export const nextPoint = (circle, point, distance) => {
-  const cosTheta =-((distance*distance)/(2*circle.radius*circle.radius)-1);
+export const nextPoint = (circle, point, d) => {
+  const cosTheta =-((d*d)/(2*circle.radius*circle.radius)-1);
   const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   const sinThetaNeg = -sinThetaPos;
-  console.log(cosTheta, sinThetaPos);
 
   const xPos = circle.centre.x + cosTheta*(point.x-circle.centre.x) - sinThetaPos*(point.y - circle.centre.y);
   const xNeg = circle.centre.x + cosTheta*(point.x-circle.centre.x) - sinThetaNeg*(point.y - circle.centre.y);

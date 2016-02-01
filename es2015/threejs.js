@@ -134,7 +134,8 @@ export class ThreeJS {
     this.scene.add(l);
   }
 
-  polygon(edges){
+  polygon(vertices){
+    /*
     let points = [];
     for(let edge of edges){
       const curve = new THREE.EllipseCurve(
@@ -150,15 +151,15 @@ export class ThreeJS {
     }
 
     const l = points.length;
-
+    */
     const poly = new THREE.Shape();
-    poly.moveTo(points[0].x, points[0].y);
+    poly.moveTo(vertices[0].x, vertices[0].y);
 
-    for(let i = 1; i < points.length; i++){
-      poly.lineTo(points[i].x, points[i].y)
+    for(let i = 1; i < vertices.length; i++){
+      poly.lineTo(vertices[i].x, vertices[i].y)
     }
 
-    poly.lineTo(points[0].x, points[0].y);
+    poly.lineTo(vertices[0].x, vertices[0].y);
 
     const geometry = new THREE.ShapeGeometry( poly );
 
