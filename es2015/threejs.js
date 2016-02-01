@@ -134,25 +134,25 @@ export class ThreeJS {
     this.scene.add(l);
   }
 
-  createMesh(geometry, color, imageURL) {
-    let col = color;
-    if (col === 'undefined') col = 0xffffff;
-    const material = new THREE.MeshBasicMaterial({
-      color: col
-    });
+  polygon(edges){
+    const poly = new THREE.Shape();
 
-    if (imageURL) {
-      const textureLoader = new THREE.TextureLoader();
-
-      //load texture and apply to material in callback
-      const texture = textureLoader.load(imageURL, (tex) => {});
-      texture.repeat.set(0.05, 0.05);
-      material.map = texture;
-      material.map.wrapT = THREE.RepeatWrapping;
-      material.map.wrapS = THREE.RepeatWrapping;
+    for(let edge of edges){
+      poly.absellipse(
+        edge.c.centre.x,
+        edge.c.centre.y,
+        edge.c.radius,
+        edge.c.radius,
+        edge.startAngle,
+        edge.endAngle,
+        false
+      );
     }
+    const shape = new THREE.Shape(poly.getSpacedPoints(100));
 
-    return new THREE.Mesh(geometry, material);
+    const geometry = new THREE.ShapeGeometry(shape);
+
+    this.scene.add(this.createMesh(geometry, 0xffffff));
   }
 
   shape() {
@@ -175,6 +175,28 @@ export class ThreeJS {
     this.curve.position.y = -30;
     this.curve.position.z = -40;
     this.scene.add(this.curve);
+  }
+
+
+  createMesh(geometry, color, imageURL) {
+    let col = color;
+    if (col === 'undefined') col = 0xffffff;
+    const material = new THREE.MeshBasicMaterial({
+      color: col
+    });
+
+    if (imageURL) {
+      const textureLoader = new THREE.TextureLoader();
+
+      //load texture and apply to material in callback
+      const texture = textureLoader.load(imageURL, (tex) => {});
+      texture.repeat.set(0.05, 0.05);
+      material.map = texture;
+      material.map.wrapT = THREE.RepeatWrapping;
+      material.map.wrapS = THREE.RepeatWrapping;
+    }
+
+    return new THREE.Mesh(geometry, material);
   }
 
   axes() {

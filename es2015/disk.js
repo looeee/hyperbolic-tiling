@@ -38,7 +38,7 @@ export class Disk {
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
     //smaller circle for testing
-    this.radius = this.radius / 2;
+    //this.radius = this.radius / 2;
 
     this.drawDisk();
 
@@ -47,27 +47,22 @@ export class Disk {
 
   testing() {
     const p1 = {
-      x: 0,
-      y: 150
+      x: -200,
+      y: 250
     };
     const p2 = {
-      x: -50,
+      x: 50,
       y: 50
     };
     const p3 = {
-      x: -50,
+      x: 70,
       y: -50
     };
 
-    //this.point(p1, 4, 0x000fff);
-    //this.point(p2, 4, 0xf0ff0f);
-    //this.point(p3, 4, 0xf00fff);
+    //this.drawArc(p2, p3, 0xf00f0f);
 
-    //this.arc(p2, p1, 0x000fff);
-
-    //this.arc(p3, p2, 0xf00f0f);
-
-    this.polygonOutline([p1,p2,p3], 0xf00f0f)
+    this.polygonOutline([p1, p2, p3],0xf00f0f)
+    this.polygon([p1, p2, p3]);
   }
 
   //draw the disk background
@@ -82,87 +77,102 @@ export class Disk {
   //draw a hyperbolic line between two points on the boundary circle
   //TODO: fix!
   line(p1, p2, colour) {
-    let c = E.greatCircle(p1, p2, this.radius, this.centre);
-    let points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
+    const c = E.greatCircle(p1, p2, this.radius, this.centre);
+    const points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
 
     this.arc(points.p1, points.p2, colour)
   }
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
-  arc(p1, p2, colour) {
-    let alpha1, alpha2, startAngle, endAngle;
-    let col = colour || 'black';
-
+  drawArc(p1, p2, colour) {
+    const col = colour || 0xffffff;
     if (E.throughOrigin(p1, p2)) {
       this.draw.line(p1, p2, col);
-      return;
+    } else {
+      const arc = this.arc(p1, p2);
+      this.draw.segment(arc.c, arc.startAngle, arc.endAngle, colour);
     }
+  }
 
-    let c = E.greatCircle(p1, p2, this.radius, this.centre);
-
-    //point at 0 radians on c
-    let p3 = {
-      x: c.centre.x + c.radius,
-      y: c.centre.y
+  //calculate greatCircle, startAngle and endAngle for hyperbolic arc
+  arc(p1, p2) {
+    //check that the points are in the disk
+    if(this.checkPoints(p1, p2)){
+      return false
     }
-
-    this.point(p1, 4, 0xf0ff0f);
-    this.point(p2, 4, 0xf0000f);
-    this.point(p3, 4, 0xffffff);
+    let alpha1, alpha2, startAngle, endAngle;
+    const c = E.greatCircle(p1, p2, this.radius, this.centre);
 
     const oy = c.centre.y;
     const ox = c.centre.x;
 
+    //point at 0 radians on c
+    const p3 = {
+      x: ox + c.radius,
+      y: oy
+    }
+
     //calculate the position of each point in the circle
     alpha1 = E.centralAngle(p3, p1, c.radius);
-    alpha1 = (p1.y < c.centre.y) ? 2 * Math.PI - alpha1 : alpha1;
+    alpha1 = (p1.y < oy) ? 2 * Math.PI - alpha1 : alpha1;
     alpha2 = E.centralAngle(p3, p2, c.radius);
-    alpha2 = (p2.y < c.centre.y) ? 2 * Math.PI - alpha2 : alpha2;
+    alpha2 = (p2.y < oy) ? 2 * Math.PI - alpha2 : alpha2;
 
-    //case where p1 above and p2 below the line c.centre -> p
-    if ( (p1.x > ox && p2.x > ox) && (p1.y < oy && p2.y > oy) ) {
-      //console.log('case 1'); //Working
+    //case where p1 above and p2 below the line c.centre -> p3
+    if ((p1.x > ox && p2.x > ox) && (p1.y < oy && p2.y > oy)) {
       startAngle = alpha1;
       endAngle = alpha2;
     }
-    //case where p2 above and p1 below the line c.centre -> p
-    else if( (p1.x > ox && p2.x > ox) && (p1.y > oy && p2.y < oy) ){
-      //console.log('case 1a'); //Working
+    //case where p2 above and p1 below the line c.centre -> p3
+    else if ((p1.x > ox && p2.x > ox) && (p1.y > oy && p2.y < oy)) {
       startAngle = alpha2;
       endAngle = alpha1;
     }
     //points in clockwise order
-    else if(alpha1 > alpha2){
-      console.log('case 2'); //working
+    else if (alpha1 > alpha2) {
       startAngle = alpha2;
       endAngle = alpha1;
     }
     //points in anticlockwise order
-    else{
-      console.log('case 3'); //working
+    else {
       startAngle = alpha1;
       endAngle = alpha2;
     }
 
-    console.log(startAngle, endAngle);
-    this.draw.segment(c, startAngle, endAngle, colour);
-
+    return {
+      c: c,
+      startAngle: startAngle,
+      endAngle: endAngle
+    }
   }
 
   polygonOutline(vertices, colour) {
-    let l = vertices.length;
+    const l = vertices.length;
     for (let i = 0; i < l; i++) {
-      this.arc(vertices[i], vertices[(i + 1) % l], colour);
+      this.drawArc(vertices[i], vertices[(i + 1) % l], colour);
     }
   }
 
-  //return true if the point is not in the disk
-  checkPoint(point) {
-    let r = this.radius;
-    if (E.distance(point, this.centre) > r) {
-      console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
-      return true;
+  polygon(vertices) {
+    const edges = [];
+    const l = vertices.length;
+    for (let i = 0; i < l; i++) {
+      edges.push(this.arc(vertices[i], vertices[(i + 1) % l]));
     }
-    return false;
+    this.draw.polygon(edges);
+  }
+
+  //return true if any of the points is not in the disk
+  checkPoints(...points) {
+    const r = this.radius;
+    let test = false;
+    for(let point of points){
+      if (E.distance(point, this.centre) > r) {
+        console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
+        test = true;
+      }
+    }
+    if(test) return true
+    else return false
   }
 }

@@ -11,7 +11,7 @@
 
   <script src="scripts/vendor/jquery.min.js"></script>
 
-  <script src="scripts/vendor/three.min.js"></script>
+  <script src="scripts/vendor/three.js"></script>
 </head>
 
 <body>
