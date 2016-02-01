@@ -238,6 +238,28 @@ export const pointToFixed = (p, places) => {
   };
 }
 
+//find a point at a distance d along the circumference of
+//a circle of radius r, centre c from a point also
+//on the circumference
+export const nextPoint = (circle, point, distance) => {
+  const cosTheta =-((distance*distance)/(2*circle.radius*circle.radius)-1);
+  const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
+  const sinThetaNeg = -sinThetaPos;
+  console.log(cosTheta, sinThetaPos);
+
+  const xPos = circle.centre.x + cosTheta*(point.x-circle.centre.x) - sinThetaPos*(point.y - circle.centre.y);
+  const xNeg = circle.centre.x + cosTheta*(point.x-circle.centre.x) - sinThetaNeg*(point.y - circle.centre.y);
+  const yPos = circle.centre.y + sinThetaPos*(point.x-circle.centre.x) + cosTheta*(point.y - circle.centre.y);
+  const yNeg = circle.centre.y + sinThetaNeg*(point.x-circle.centre.x) + cosTheta*(point.y - circle.centre.y);
+
+  const p1 = {x: xPos, y: yPos};
+  const p2 = {x: xNeg, y: yNeg};
+  return {
+    p1: p1,
+    p2: p2
+  }
+}
+
 /*
 //flip a set of points over a hyperoblic line defined by two points
 export const transform = (pointsArray, p1, p2) => {

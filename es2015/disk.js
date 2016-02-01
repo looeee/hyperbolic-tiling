@@ -51,18 +51,30 @@ export class Disk {
       y: 250
     };
     const p2 = {
-      x: 50,
-      y: 50
+      x: -150,
+      y: 150
     };
     const p3 = {
       x: 70,
       y: -50
     };
 
+    const a = this.arc(p1, p2);
+    console.log(a);
+
+    this.draw.disk(a.c.centre, a.c.radius, 0xffffff, false);
+
+    const p4 = E.nextPoint(a.c, p2, 50).p2;
+    console.log(p4);
+
+    this.point(p1, 5, 0xf00f0f);
+    this.point(p2, 5, 0xffff0f);
+    this.point(p4, 5, 0x00ff0f);
+
     //this.drawArc(p2, p3, 0xf00f0f);
 
-    this.polygonOutline([p1, p2, p3],0xf00f0f)
-    this.polygon([p1, p2, p3]);
+    //this.polygonOutline([p1, p2, p3],0xf00f0f)
+    //this.polygon([p1, p2, p3]);
   }
 
   //draw the disk background
@@ -159,6 +171,7 @@ export class Disk {
     for (let i = 0; i < l; i++) {
       edges.push(this.arc(vertices[i], vertices[(i + 1) % l]));
     }
+    console.log(edges);
     this.draw.polygon(edges);
   }
 

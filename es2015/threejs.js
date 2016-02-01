@@ -135,10 +135,9 @@ export class ThreeJS {
   }
 
   polygon(edges){
-    const poly = new THREE.Shape();
-
+    let points = [];
     for(let edge of edges){
-      poly.absellipse(
+      const curve = new THREE.EllipseCurve(
         edge.c.centre.x,
         edge.c.centre.y,
         edge.c.radius,
@@ -147,10 +146,21 @@ export class ThreeJS {
         edge.endAngle,
         false
       );
+      points = points.concat(curve.getSpacedPoints(10));
     }
-    const shape = new THREE.Shape(poly.getSpacedPoints(100));
 
-    const geometry = new THREE.ShapeGeometry(shape);
+    const l = points.length;
+
+    const poly = new THREE.Shape();
+    poly.moveTo(points[0].x, points[0].y);
+
+    for(let i = 1; i < points.length; i++){
+      poly.lineTo(points[i].x, points[i].y)
+    }
+
+    poly.lineTo(points[0].x, points[0].y);
+
+    const geometry = new THREE.ShapeGeometry( poly );
 
     this.scene.add(this.createMesh(geometry, 0xffffff));
   }
