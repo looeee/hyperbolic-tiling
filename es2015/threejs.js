@@ -30,7 +30,6 @@ export class ThreeJS {
     this.axes();
 
     this.initRenderer();
-    //console.log(this.scene);
   }
 
   reset() {

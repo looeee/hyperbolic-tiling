@@ -16,7 +16,6 @@ export class Disk {
   constructor() {
     this.draw = new ThreeJS();
 
-
     window.addEventListener('load', (event) => {
       window.removeEventListener('load');
       this.init();
@@ -33,6 +32,7 @@ export class Disk {
       x: 0,
       y: 0
     }
+    this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
     //draw largest circle possible given window dims
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
@@ -42,7 +42,7 @@ export class Disk {
 
     this.drawDisk();
 
-    this.testing();
+    //this.testing();
   }
 
   testing() {
@@ -89,6 +89,9 @@ export class Disk {
     //this.polygonOutline([p1, p2, p3],0xf00f0f)
     this.polygon([p1, p2, p4, p3, p5], 0x70069a);
     //this.polygon([p2, p3, p4]);
+  }
+  getRadius(){
+    return this.radius;
   }
 
   //draw the disk background
