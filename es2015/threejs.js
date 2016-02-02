@@ -134,66 +134,30 @@ export class ThreeJS {
     this.scene.add(l);
   }
 
-  polygon(vertices){
-    /*
-    let points = [];
-    for(let edge of edges){
-      const curve = new THREE.EllipseCurve(
-        edge.c.centre.x,
-        edge.c.centre.y,
-        edge.c.radius,
-        edge.c.radius,
-        edge.startAngle,
-        edge.endAngle,
-        false
-      );
-      points = points.concat(curve.getSpacedPoints(10));
-    }
+  polygon(vertices, color, texture) {
+    let col = color;
+    if (col === 'undefined') col = 0xffffff;
 
-    const l = points.length;
-    */
     const poly = new THREE.Shape();
     poly.moveTo(vertices[0].x, vertices[0].y);
 
-    for(let i = 1; i < vertices.length; i++){
+    for (let i = 1; i < vertices.length; i++) {
       poly.lineTo(vertices[i].x, vertices[i].y)
     }
 
     poly.lineTo(vertices[0].x, vertices[0].y);
 
-    const geometry = new THREE.ShapeGeometry( poly );
+    const geometry = new THREE.ShapeGeometry(poly);
 
-    this.scene.add(this.createMesh(geometry, 0xffffff));
+    this.scene.add(this.createMesh(geometry, color, texture));
   }
-
-  shape() {
-    // create a basic shape
-    var shape = new THREE.Shape();
-
-    // startpoint
-    shape.moveTo(0, 0);
-
-    // straight line upwards
-    shape.lineTo(0, 50);
-
-    // the top of the figure, curve to the right
-    shape.quadraticCurveTo(15, 25, 25, 30);
-
-    shape.lineTo(0, 0);
-
-    const geometry = new THREE.ShapeGeometry(shape);
-    this.curve = this.createMesh(geometry, './images/textures/test.jpg');
-    this.curve.position.y = -30;
-    this.curve.position.z = -40;
-    this.scene.add(this.curve);
-  }
-
 
   createMesh(geometry, color, imageURL) {
     let col = color;
     if (col === 'undefined') col = 0xffffff;
     const material = new THREE.MeshBasicMaterial({
-      color: col
+      color: col,
+      //wireframe: true
     });
 
     if (imageURL) {
@@ -219,7 +183,7 @@ export class ThreeJS {
     requestAnimationFrame(() => {
       this.render()
     });
-    //this.circle.rotation.x += 0.02;
+
     this.renderer.render(this.scene, this.camera);
   }
 

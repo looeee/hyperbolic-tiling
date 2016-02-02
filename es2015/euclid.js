@@ -1,7 +1,8 @@
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
-// *   all Euclidean mathematical functions go here
+// *   a place to stash all the functions that are euclidean gemeometrical
+// *   operations
 // *
 // *************************************************************************
 
@@ -28,17 +29,16 @@ export const intersection = (p1, m1, p2, m2) => {
   let c1, c2, x, y;
   //case where first line is vertical
   //if(m1 > 5000 || m1 < -5000 || m1 === Infinity){
-  if(p1.y < 0.000001 && p1.y > -0.000001 ){
+  if (p1.y < 0.000001 && p1.y > -0.000001) {
     x = p1.x;
-    y = (m2)*(p1.x-p2.x) + p2.y;
+    y = (m2) * (p1.x - p2.x) + p2.y;
   }
   //case where second line is vertical
   //else if(m2 > 5000 || m2 < -5000 || m1 === Infinity){
-  else if(p2.y < 0.000001 && p2.y > -0.000001 ){
+  else if (p2.y < 0.000001 && p2.y > -0.000001) {
     x = p2.x;
-    y = (m1*(p2.x-p1.x)) + p1.y;
-  }
-  else{
+    y = (m1 * (p2.x - p1.x)) + p1.y;
+  } else {
     //y intercept of first line
     c1 = p1.y - m1 * p1.x;
     //y intercept of second line
@@ -88,10 +88,10 @@ export const greatCircle = (p1, p2, r, c) => {
 }
 
 //an attempt at calculating the circle algebraically
-export const greatCircleV2 = (p1,p2, r) =>{
-  let x = (p2.y*(p1.x*p1.x + r)+ p1.y*p1.y*p2.y-p1.y*(p2.x*p2.x+ p2.y*p2.y + r))/(2*p1.x*p2.y - p1.y*p2.x);
-  let y = (p1.x*p1.x*p2.x - p1.x*(p2.x*p2.x+p2.y*p2.y+r)+p2.x*(p1.y*p1.y+r))/(2*p1.y*p2.x + 2*p1.x*p2.y);
-  let radius =   Math.sqrt(x*x+y*y-r);
+export const greatCircleV2 = (p1, p2, r) => {
+  let x = (p2.y * (p1.x * p1.x + r) + p1.y * p1.y * p2.y - p1.y * (p2.x * p2.x + p2.y * p2.y + r)) / (2 * p1.x * p2.y - p1.y * p2.x);
+  let y = (p1.x * p1.x * p2.x - p1.x * (p2.x * p2.x + p2.y * p2.y + r) + p2.x * (p1.y * p1.y + r)) / (2 * p1.y * p2.x + 2 * p1.x * p2.y);
+  let radius = Math.sqrt(x * x + y * y - r);
   return {
     centre: {
       x: x,
@@ -142,36 +142,40 @@ export const circleLineIntersect = (c, r, p1, p2) => {
 
   const d = distance(p1, p2);
   //unit vector p1 p2
-  const dx = (p2.x - p1.x)/d;
-  const dy = (p2.y - p1.y)/d;
+  const dx = (p2.x - p1.x) / d;
+  const dy = (p2.y - p1.y) / d;
 
   //point on line closest to circle centre
-  const t = dx*(c.x -p1.x) + dy*(c.y-p1.y);
-  const p =  {x: t* dx + p1.x, y: t* dy + p1.y};
+  const t = dx * (c.x - p1.x) + dy * (c.y - p1.y);
+  const p = {
+    x: t * dx + p1.x,
+    y: t * dy + p1.y
+  };
 
   //distance from this point to centre
   const d2 = distance(p, c);
 
   //line intersects circle
-  if(d2 < r){
-    const dt = Math.sqrt( r*r - d2*d2);
+  if (d2 < r) {
+    const dt = Math.sqrt(r * r - d2 * d2);
     //point 1
     const q1 = {
-      x: (t-dt)*dx + p1.x,
-      y: (t-dt)*dy + p1.y
+      x: (t - dt) * dx + p1.x,
+      y: (t - dt) * dy + p1.y
     }
     //point 2
     const q2 = {
-      x: (t+dt)*dx + p1.x,
-      y: (t+dt)*dy + p1.y
+      x: (t + dt) * dx + p1.x,
+      y: (t + dt) * dy + p1.y
     }
 
-    return {p1: q1, p2: q2};
-  }
-  else if( d2 === r){
+    return {
+      p1: q1,
+      p2: q2
+    };
+  } else if (d2 === r) {
     return p;
-  }
-  else{
+  } else {
     console.error('Error: line does not intersect circle!');
   }
 }
@@ -183,51 +187,57 @@ export const centralAngle = (p1, p2, r) => {
 
 //calculate the normal vector given 2 points
 export const normalVector = (p1, p2) => {
-  let d = Math.sqrt(Math.pow(p2.x-p1.x,2) + Math.pow(p2.y-p1.y,2));
+  let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   return {
-    x: (p2.x-p1.x)/d,
-    y: (p2.y-p1.y)/d
+    x: (p2.x - p1.x) / d,
+    y: (p2.y - p1.y) / d
   }
 }
 
 //does the line connecting p1, p2 go through the point (0,0)?
 export const throughOrigin = (p1, p2) => {
-  if(p1.x === 0 && p2.x === 0){
+  if (p1.x === 0 && p2.x === 0) {
     //vertical line through centre
     return true;
   }
-  let test = (-p1.x*p2.y + p1.x*p1.y)/(p2.x-p1.x) + p1.y;
-  if(test === 0) return true;
+  let test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+  if (test === 0) return true;
   else return false;
 }
 
 //find the centroid of a non-self-intersecting polygon
 export const centroidOfPolygon = (points) => {
-  let first = points[0], last = points[points.length-1];
+  let first = points[0],
+    last = points[points.length - 1];
   if (first.x != last.x || first.y != last.y) points.push(first);
-  let twicearea=0,
-    x=0, y=0,
+  let twicearea = 0,
+    x = 0,
+    y = 0,
     nPts = points.length,
     p1, p2, f;
-  for ( var i=0, j=nPts-1 ; i<nPts ; j=i++ ) {
-    p1 = points[i]; p2 = points[j];
-    f = p1.x*p2.y - p2.x*p1.y;
+  for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
+    p1 = points[i];
+    p2 = points[j];
+    f = p1.x * p2.y - p2.x * p1.y;
     twicearea += f;
-    x += ( p1.x + p2.x ) * f;
-    y += ( p1.y + p2.y ) * f;
+    x += (p1.x + p2.x) * f;
+    y += (p1.y + p2.y) * f;
   }
   f = twicearea * 3;
-  return { x:x/f, y:y/f };
+  return {
+    x: x / f,
+    y: y / f
+  };
 }
 
 //compare two points taking rounding errors into account
 export const comparePoints = (p1, p2) => {
-  if(typeof p1 === 'undefined' || typeof p2 === 'undefined'){
+  if (typeof p1 === 'undefined' || typeof p2 === 'undefined') {
     return true;
   }
   p1 = pointToFixed(p1, 6);
   p2 = pointToFixed(p2, 6);
-  if(p1.x === p2.x && p1.y === p2.y) return true;
+  if (p1.x === p2.x && p1.y === p2.y) return true;
   else return false;
 }
 
@@ -242,17 +252,23 @@ export const pointToFixed = (p, places) => {
 //a circle of radius r, centre c from a point also
 //on the circumference
 export const nextPoint = (circle, point, d) => {
-  const cosTheta =-((d*d)/(2*circle.radius*circle.radius)-1);
+  const cosTheta = -((d * d) / (2 * circle.radius * circle.radius) - 1);
   const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   const sinThetaNeg = -sinThetaPos;
 
-  const xPos = circle.centre.x + cosTheta*(point.x-circle.centre.x) - sinThetaPos*(point.y - circle.centre.y);
-  const xNeg = circle.centre.x + cosTheta*(point.x-circle.centre.x) - sinThetaNeg*(point.y - circle.centre.y);
-  const yPos = circle.centre.y + sinThetaPos*(point.x-circle.centre.x) + cosTheta*(point.y - circle.centre.y);
-  const yNeg = circle.centre.y + sinThetaNeg*(point.x-circle.centre.x) + cosTheta*(point.y - circle.centre.y);
+  const xPos = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaPos * (point.y - circle.centre.y);
+  const xNeg = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaNeg * (point.y - circle.centre.y);
+  const yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
+  const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
 
-  const p1 = {x: xPos, y: yPos};
-  const p2 = {x: xNeg, y: yNeg};
+  const p1 = {
+    x: xPos,
+    y: yPos
+  };
+  const p2 = {
+    x: xNeg,
+    y: yNeg
+  };
   return {
     p1: p1,
     p2: p2
