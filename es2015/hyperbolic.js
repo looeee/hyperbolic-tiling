@@ -10,6 +10,15 @@ import * as E from './euclid';
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 //TODO deal with case of staight lines through centre
 export const arc = ( p1, p2, circle ) => {
+  if(E.throughOrigin(p1,p2)){
+    return {
+      circle: circle,
+      startAngle: 0,
+      endAngle: 0,
+      clockwise: false,
+      straightLine: true,
+    }
+  }
   let clockwise = false;
   let alpha1, alpha2, startAngle, endAngle;
   const c = E.greatCircle( p1, p2, circle.radius, circle.centre );
@@ -53,10 +62,11 @@ export const arc = ( p1, p2, circle ) => {
   }
 
   return {
-    c: c,
+    circle: c,
     startAngle: startAngle,
     endAngle: endAngle,
-    clockwise: clockwise
+    clockwise: clockwise,
+    straightLine: false,
   }
 }
 
@@ -90,8 +100,16 @@ export const reflect = ( pointsArray, p1, p2, circle ) => {
   const l = pointsArray.length;
   const a = arc( p1, p2, circle );
   const newPoints = [];
-  for ( let i = 0; i < l; i++ ) {
-    newPoints.push( E.inverse( pointsArray[ i ], a.c.radius, a.c.centre ) );
+  
+  if(!a.straightLine){
+    for ( let i = 0; i < l; i++ ) {
+      newPoints.push( E.inverse( pointsArray[ i ], a.circle.radius, a.circle.centre ) );
+    }
+  }
+  else{
+    for ( let i = 0; i < l; i++ ) {
+      newPoints.push( );
+    }
   }
   return newPoints;
 }

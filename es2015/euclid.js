@@ -200,7 +200,7 @@ export const throughOrigin = (p1, p2) => {
     //vertical line through centre
     return true;
   }
-  let test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+  const test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
   if (test === 0) return true;
   else return false;
 }
@@ -251,8 +251,8 @@ export const pointToFixed = (p, places) => {
 //find a point at a distance d along the circumference of
 //a circle of radius r, centre c from a point also
 //on the circumference
-export const nextPoint = (circle, point, d) => {
-  const cosTheta = -((d * d) / (2 * circle.radius * circle.radius) - 1);
+export const spacedPointOnArc = (circle, point, spacing) => {
+  const cosTheta = -((spacing * spacing) / (2 * circle.radius * circle.radius) - 1);
   const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   const sinThetaNeg = -sinThetaPos;
 
@@ -274,17 +274,3 @@ export const nextPoint = (circle, point, d) => {
     p2: p2
   }
 }
-
-/*
-//flip a set of points over a hyperoblic line defined by two points
-export const transform = (pointsArray, p1, p2) => {
-  let newPointsArray = [];
-  let c = E.greatCircle(p1, p2, disk.radius, disk.centre);
-
-  for(let p of pointsArray){
-    let newP = E.inverse(p, c.radius, c.centre);
-    newPointsArray.push(newP);
-  }
-  return newPointsArray;
-}
-*/

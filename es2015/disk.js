@@ -41,6 +41,7 @@ export class Disk {
       centre: this.centre,
       radius: this.radius
     }
+
     //smaller circle for testing
     //this.radius = this.radius / 2;
 
@@ -81,9 +82,9 @@ export class Disk {
     /*
     const a = H.arc(p1, p2);
 
-    this.draw.disk(a.c.centre, a.c.radius, 0xffffff, false);
+    this.draw.disk(a.circle.centre, a.circle.radius, 0xffffff, false);
 
-    const p4 = E.nextPoint(a.c, p2, 20).p1;
+    const p4 = E.nextPoint(a.circle, p2, 20).p1;
     console.log(p4);
 
 
@@ -94,7 +95,7 @@ export class Disk {
     this.polygon([p1, p2, p4, p3, p5], 0x70069a);
     //this.polygon([p2, p3, p4]);
   }
-  getRadius(){
+  getRadius() {
     return this.radius;
   }
 
@@ -119,15 +120,16 @@ export class Disk {
   //Draw an arc (hyperbolic line segment) between two points on the disk
   drawArc(p1, p2, colour) {
     //check that the points are in the disk
-    if(this.checkPoints(p1, p2)){
+    if (this.checkPoints(p1, p2)) {
       return false
     }
     const col = colour || 0xffffff;
-    if (E.throughOrigin(p1, p2)) {
+    const arc = H.arc(p1, p2, this.circle);
+
+    if (a.straightLine) {
       this.draw.line(p1, p2, col);
     } else {
-      const arc = H.arc(p1, p2, this.circle);
-      this.draw.segment(arc.c, arc.startAngle, arc.endAngle, colour);
+      this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, colour);
     }
   }
 
@@ -148,21 +150,42 @@ export class Disk {
     const l = vertices.length;
     for (let i = 0; i < l; i++) {
       let p;
-      const a = H.arc(vertices[i], vertices[(i + 1) % l], this.circle);
+      const arc = H.arc(vertices[i], vertices[(i + 1) % l], this.circle);
 
-      if(a.clockwise){ p = E.nextPoint(a.c, vertices[i], spacing).p2;}
-      else{ p = E.nextPoint(a.c, vertices[i], spacing).p1;}
-      points.push(p);
-
-      while(E.distance(p, vertices[(i + 1) % l]) > spacing ){
-
-        if(a.clockwise){ p = E.nextPoint(a.c, p, spacing).p2 }
-        else{ p = E.nextPoint(a.c, p, spacing).p1 }
-
+      //line not through the origin (hyperbolic arc)
+      if (!arc.straightLine) {
+        if (arc.clockwise) {
+          p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
+        } else {
+          p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
+        }
         points.push(p);
+
+        while (E.distance(p, vertices[(i + 1) % l]) > spacing) {
+
+          if (arc.clockwise) {
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p2
+          } else {
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p1
+          }
+
+          points.push(p);
+        }
+        points.push(vertices[(i + 1) % l]);
       }
-      points.push(vertices[(i + 1) % l]);
+
+      //line through origin (straight line)
+      else{
+        points.push(vertices[(i + 1) % l]);
+      }
     }
+    //TESTING
+    //console.table(points);
+    /*
+    for(let point of points){
+      this.point(point,2,0x10ded8);
+    }
+    */
     this.draw.polygon(points, color, texture);
   }
 
@@ -170,13 +193,13 @@ export class Disk {
   checkPoints(...points) {
     const r = this.radius;
     let test = false;
-    for(let point of points){
+    for (let point of points) {
       if (E.distance(point, this.centre) > r) {
         console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
         test = true;
       }
     }
-    if(test) return true
+    if (test) return true
     else return false
   }
 }
