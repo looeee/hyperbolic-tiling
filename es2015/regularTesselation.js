@@ -1,5 +1,8 @@
 import * as E from './euclid';
-import { Disk } from './disk';
+import {
+  Disk
+}
+from './disk';
 // * ***********************************************************************
 // *    TESSELATION CLASS
 // *    Creates a regular Tesselation of the Poincare Disk
@@ -39,17 +42,19 @@ export class RegularTesselation {
 
   }
 
-  init(){
+  init() {
     this.radius = this.disk.getRadius();
     this.fr = this.fundamentalRegion();
-
+    console.table(this.fr);
     this.testing();
   }
 
-  testing(){
+  testing() {
     //this.disk.polygonOutline([this.fr.a, this.fr.b, this.fr.c], 0x5312ba);
-    this.disk.polygon([this.fr.a, this.fr.b, this.fr.c], 0xe80348);
-
+    this.disk.polygon(this.fr, 0xe80348);
+    const poly2 = this.disk.reflect(this.fr, this.fr[1], this.fr[2]);
+    console.table(poly2);
+    this.disk.polygon(poly2, 0xc3167e);
   }
 
   //calculate first point of fundamental polygon using Coxeter's method
@@ -70,14 +75,14 @@ export class RegularTesselation {
     //there will be two points of intersection, of which we want the first
     const p1 = E.circleLineIntersect(centre, r, this.disk.centre, b).p1;
 
-    return {
-      a: this.disk.centre,
-      b: p1,
-      c: {
-        x: d - r,
-        y: 0
-      }
+    const p2 = {
+      x: d - r,
+      y: 0
     };
+
+    const points = [this.disk.centre, p1, p2];
+
+    return points;
   }
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is

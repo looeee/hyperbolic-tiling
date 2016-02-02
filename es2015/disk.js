@@ -124,6 +124,7 @@ export class Disk {
   }
 
   //calculate greatCircle, startAngle and endAngle for hyperbolic arc
+  //TODO deal with case of staight lines through centre
   arc(p1, p2) {
     let clockwise = false;
     //check that the points are in the disk
@@ -200,7 +201,6 @@ export class Disk {
 
       if(a.clockwise){ p = E.nextPoint(a.c, vertices[i], spacing).p2;}
       else{ p = E.nextPoint(a.c, vertices[i], spacing).p1;}
-
       points.push(p);
 
       while(E.distance(p, vertices[(i + 1) % l]) > spacing ){
@@ -212,8 +212,25 @@ export class Disk {
       }
       points.push(vertices[(i + 1) % l]);
     }
-
     this.draw.polygon(points, color, texture);
+  }
+
+  //rotate a set of points about a point by a given angle
+  rotation(pointsArray, point, angle){
+
+  }
+
+  //reflect a set of points across a hyperbolic arc
+  //TODO add case where reflection is across straight line
+  reflect(pointsArray, p1, p2){
+    const l = pointsArray.length;
+    const a = this.arc(p1,p2);
+    console.log(a);
+    const newPoints = [];
+    for(let i =0; i < l; i++){
+      newPoints.push(E.inverse(pointsArray[i], a.c.radius, a.c.centre));
+    }
+    return newPoints;
   }
 
   //return true if any of the points is not in the disk
