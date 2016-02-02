@@ -58,8 +58,9 @@ export class RegularTesselation {
 
     this.disk.polygon(poly2, 0xc3167e);
 
-    const poly3 = H.translateX(this.fr, -.5);
-    //this.disk.polygon(poly3, 0xd2be11);
+    const poly3 = H.rotatePgonAboutOrigin(this.fr, Math.PI);
+    console.table(poly3);
+    this.disk.polygon(poly3, 0xd2be11);
   }
 
   //calculate first point of fundamental polygon using Coxeter's method

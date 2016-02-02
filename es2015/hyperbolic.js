@@ -9,10 +9,10 @@ import * as E from './euclid';
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 //TODO deal with case of staight lines through centre
-export const arc = (p1, p2, circle) => {
+export const arc = ( p1, p2, circle ) => {
   let clockwise = false;
   let alpha1, alpha2, startAngle, endAngle;
-  const c = E.greatCircle(p1, p2, circle.radius, circle.centre);
+  const c = E.greatCircle( p1, p2, circle.radius, circle.centre );
 
   const oy = c.centre.y;
   const ox = c.centre.x;
@@ -24,24 +24,24 @@ export const arc = (p1, p2, circle) => {
   }
 
   //calculate the position of each point in the circle
-  alpha1 = E.centralAngle(p3, p1, c.radius);
-  alpha1 = (p1.y < oy) ? 2 * Math.PI - alpha1 : alpha1;
-  alpha2 = E.centralAngle(p3, p2, c.radius);
-  alpha2 = (p2.y < oy) ? 2 * Math.PI - alpha2 : alpha2;
+  alpha1 = E.centralAngle( p3, p1, c.radius );
+  alpha1 = ( p1.y < oy ) ? 2 * Math.PI - alpha1 : alpha1;
+  alpha2 = E.centralAngle( p3, p2, c.radius );
+  alpha2 = ( p2.y < oy ) ? 2 * Math.PI - alpha2 : alpha2;
 
   //case where p1 above and p2 below the line c.centre -> p3
-  if ((p1.x > ox && p2.x > ox) && (p1.y < oy && p2.y > oy)) {
+  if ( ( p1.x > ox && p2.x > ox ) && ( p1.y < oy && p2.y > oy ) ) {
     startAngle = alpha1;
     endAngle = alpha2;
   }
   //case where p2 above and p1 below the line c.centre -> p3
-  else if ((p1.x > ox && p2.x > ox) && (p1.y > oy && p2.y < oy)) {
+  else if ( ( p1.x > ox && p2.x > ox ) && ( p1.y > oy && p2.y < oy ) ) {
     startAngle = alpha2;
     endAngle = alpha1;
     clockwise = true;
   }
   //points in clockwise order
-  else if (alpha1 > alpha2) {
+  else if ( alpha1 > alpha2 ) {
     startAngle = alpha2;
     endAngle = alpha1;
     clockwise = true;
@@ -80,7 +80,7 @@ export const translateX = ( pointsArray, distance ) => {
 
 //rotate a set of points about a point by a given angle
 //clockwise defaults to false
-export const rotation =( pointsArray, point, angle, clockwise ) => {
+export const rotation = ( pointsArray, point, angle, clockwise ) => {
 
 }
 
@@ -94,4 +94,41 @@ export const reflect = ( pointsArray, p1, p2, circle ) => {
     newPoints.push( E.inverse( pointsArray[ i ], a.c.radius, a.c.centre ) );
   }
   return newPoints;
+}
+
+export const poincareToWeierstrass = ( point2D ) => {
+  const factor = 1 / ( 1 - point2D.x * point2D.x - point2D.y * point2D.y );
+  return {
+    x: 2 * factor * point2D.x,
+    y: 2 * factor * point2D.y,
+    z: factor * ( 1 + point2D.x * point2D.x + point2D.y * point2D.y )
+  }
+}
+
+export const weierstrassToPoincare = ( point3D ) => {
+  const factor = 1 / ( 1 + point3D.z );
+  return {
+    x: factor * point3D.x,
+    y: factor * point3D.y
+  }
+}
+
+export const rotateAboutOriginWeierstrass = ( point3D, angle ) => {
+  return {
+    x: Math.cos( angle ) * point3D.x - Math.sin( angle ) * point3D.y,
+    y: Math.sin( angle ) * point3D.x + Math.cos( angle ) * point3D.y,
+    z: point3D.z
+  }
+}
+
+export const rotatePgonAboutOrigin = ( points2DArray, angle ) => {
+  const l = points2DArray.length;
+  const rotatedPoints2DArray = [];
+  for ( let i = 0; i < l; i++ ) {
+    let point = poincareToWeierstrass( points2DArray[ i ] );
+    point = rotateAboutOriginWeierstrass( point, angle );
+    point = weierstrassToPoincare(point);
+    rotatedPoints2DArray.push(point);
+  }
+  return rotatedPoints2DArray;
 }
