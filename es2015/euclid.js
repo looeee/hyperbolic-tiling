@@ -1,7 +1,7 @@
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
-// *   a place to stash all the functions that are euclidean gemeometrical
+// *   a place to stash all the functions that are euclidean geometrical
 // *   operations
 // *
 // *************************************************************************

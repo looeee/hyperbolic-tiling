@@ -1,8 +1,11 @@
 import * as E from './euclid';
+import * as H from './hyperbolic';
 import {
   Disk
 }
 from './disk';
+
+
 // * ***********************************************************************
 // *    TESSELATION CLASS
 // *    Creates a regular Tesselation of the Poincare Disk
@@ -45,16 +48,18 @@ export class RegularTesselation {
   init() {
     this.radius = this.disk.getRadius();
     this.fr = this.fundamentalRegion();
-    console.table(this.fr);
     this.testing();
   }
 
   testing() {
     //this.disk.polygonOutline([this.fr.a, this.fr.b, this.fr.c], 0x5312ba);
     this.disk.polygon(this.fr, 0xe80348);
-    const poly2 = this.disk.reflect(this.fr, this.fr[1], this.fr[2]);
-    console.table(poly2);
+    const poly2 = H.reflect(this.fr, this.fr[1], this.fr[2], this.disk.circle);
+
     this.disk.polygon(poly2, 0xc3167e);
+
+    const poly3 = H.translateX(this.fr, -.5);
+    //this.disk.polygon(poly3, 0xd2be11);
   }
 
   //calculate first point of fundamental polygon using Coxeter's method
