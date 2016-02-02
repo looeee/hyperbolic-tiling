@@ -154,6 +154,7 @@ export class Disk {
 
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {
+
         if (arc.clockwise) {
           p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
         } else {
@@ -164,9 +165,9 @@ export class Disk {
         while (E.distance(p, vertices[(i + 1) % l]) > spacing) {
 
           if (arc.clockwise) {
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p2
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
           } else {
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p1
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
           }
 
           points.push(p);
@@ -181,11 +182,11 @@ export class Disk {
     }
     //TESTING
     //console.table(points);
-    /*
+
     for(let point of points){
-      this.point(point,2,0x10ded8);
+      //this.point(point,2,0x10ded8);
     }
-    */
+
     this.draw.polygon(points, color, texture);
   }
 

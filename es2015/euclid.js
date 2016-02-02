@@ -195,13 +195,16 @@ export const normalVector = (p1, p2) => {
 }
 
 //does the line connecting p1, p2 go through the point (0,0)?
+//needs to take into account roundoff errors so returns true if
+//test is close to 0
 export const throughOrigin = (p1, p2) => {
   if (p1.x === 0 && p2.x === 0) {
     //vertical line through centre
     return true;
   }
   const test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
-  if (test === 0) return true;
+
+  if (test.toFixed(6) == 0) return true;
   else return false;
 }
 

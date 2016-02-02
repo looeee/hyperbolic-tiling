@@ -56,12 +56,17 @@ export class RegularTesselation {
     //this.disk.polygon(this.fr, 0xe80348);
     const poly2 = H.reflect(this.fr, this.fr[1], this.fr[2], this.disk.circle);
     //console.table(poly2);
-    //this.disk.polygon(poly2, 0xc3167e);
+    this.disk.polygon(poly2, 0xc3167e);
 
-    const poly3 = H.rotatePgonAboutOrigin(poly2, Math.PI/5);
+    let poly3 = H.rotatePgonAboutOrigin(poly2, Math.PI);
+
+    //console.log(E.throughOrigin(poly3[0], poly3[1]));
+    //console.log(E.throughOrigin(poly3[1], poly3[2]));
+    //console.log(E.throughOrigin(poly3[2], poly3[0]));
+
     //console.table(poly2);
-    console.table(poly3);
-    //this.disk.polygon(poly3, 0xd2be11);
+    //console.log(poly3);
+    this.disk.polygon(poly3, 0xd2be11);
   }
 
   //calculate first point of fundamental polygon using Coxeter's method

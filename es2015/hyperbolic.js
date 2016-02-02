@@ -100,7 +100,7 @@ export const reflect = ( pointsArray, p1, p2, circle ) => {
   const l = pointsArray.length;
   const a = arc( p1, p2, circle );
   const newPoints = [];
-  
+
   if(!a.straightLine){
     for ( let i = 0; i < l; i++ ) {
       newPoints.push( E.inverse( pointsArray[ i ], a.circle.radius, a.circle.centre ) );
