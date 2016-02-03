@@ -53,20 +53,41 @@ export class RegularTesselation {
 
   testing() {
 
-    this.disk.polygon(this.fr, 0xe80348);
-    const poly2 = H.reflect(this.fr, this.fr[0], this.fr[1], this.disk.circle);
-    //console.table(poly2);
-    this.disk.polygon(poly2, 0xc3167e);
+    this.disk.polygon(this.fr, E.randomInt(10000, 14777215));
+    const poly2 = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
+    console.table(poly2);
+    this.disk.polygon(poly2, E.randomInt(10000, 14777215));
 
-    const poly3 = H.reflect(poly2, poly2[0], poly2[2], this.disk.circle);
-    this.disk.polygon(poly3, 0xd2be11);
+    const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
+    console.table(poly3);
+    this.disk.polygon(poly3, E.randomInt(10000, 14777215));
+
+    const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
+    console.table(poly4);
+    this.disk.polygon(poly4, E.randomInt(10000, 14777215));
+
+    const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
+    console.table(poly5);
+    this.disk.polygon(poly5, E.randomInt(10000, 14777215));
+
+    const poly6 = H.reflect(poly5, poly5[0], poly5[2], this.disk.circle);
+    console.table(poly6);
+    this.disk.polygon(poly6, E.randomInt(10000, 14777215));
+
+    const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
+    console.table(poly7);
+    this.disk.polygon(poly7, E.randomInt(10000, 14777215));
+
+    const poly8 = H.reflect(poly7, poly7[0], poly7[2], this.disk.circle);
+    console.table(poly8);
+    this.disk.polygon(poly8, E.randomInt(10000, 14777215));
 
     let num = 8;
     for(let i =0; i < num; i++){
-      //let poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
-      //this.disk.polygon(poly, E.randomInt(1000, 14777215));
-      //poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
-      //this.disk.polygon(poly, E.randomInt(1000, 14777215));
+      let poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
+      this.disk.polygon(poly, E.randomInt(10000, 14777215));
+      poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
+      this.disk.polygon(poly, E.randomInt(10000, 14777215));
     }
   }
 

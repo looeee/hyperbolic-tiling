@@ -68,15 +68,22 @@ export const inverse = (p, r, c) => {
 //reflect p3 across the line defined by p1,p2
 export const lineReflection = (p1,p2,p3) => {
   const m = slope(p1,p2);
-  if(m === Infinity) {
-    console.error('Reflection over x axis not implemented');
+  //reflection in y axis
+  if(m > 999999) {
+    return { x: p3.x, y: -p3.y};
   }
-  const c = p1.y - m*p1.x;
-  const d = (p3.x + (p3.y - c)*m)/(1+m*m);
-  const x = 2*d - p3.x;
-  const y = 2*d*m - p3.y + 2*c;
-
-  return { x: x, y: y};
+  //reflection in x axis
+  else if(m.toFixed(6) == 0){
+    return { x: -p3.x, y: p3.y};
+  }
+  //reflection in arbitrary line
+  else{
+    const c = p1.y - m*p1.x;
+    const d = (p3.x + (p3.y - c)*m)/(1+m*m);
+    const x = 2*d - p3.x;
+    const y = 2*d*m - p3.y + 2*c;
+    return { x: x, y: y};
+  }
 }
 
 //calculate the radius and centre of the circle required to draw a line between
