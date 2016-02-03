@@ -74,17 +74,11 @@ export const lineReflection = (p1, p2, p3) => {
   const m = slope(p1, p2);
   //reflection in y axis
   if (m > 999999) {
-    return {
-      x: p3.x,
-      y: -p3.y
-    };
+    return new Point( p3.x, -p3.y);
   }
   //reflection in x axis
   else if (m.toFixed(6) == 0) {
-    return {
-      x: -p3.x,
-      y: p3.y
-    };
+    return new Point( -p3.x, p3.y);
   }
   //reflection in arbitrary line
   else {
@@ -92,10 +86,7 @@ export const lineReflection = (p1, p2, p3) => {
     const d = (p3.x + (p3.y - c) * m) / (1 + m * m);
     const x = 2 * d - p3.x;
     const y = 2 * d * m - p3.y + 2 * c;
-    return {
-      x: x,
-      y: y
-    };
+    return new Point(x,y);
   }
 }
 
@@ -156,15 +147,9 @@ export const circleIntersect = (c0, c1, r0, r1) => {
   let y1 = yPartial + 2 * del * (a - c) / (dist * dist);
   let y2 = yPartial - 2 * del * (a - c) / (dist * dist);
 
-  let p1 = {
-    x: x1,
-    y: y1
-  }
+  let p1 = new Point(x1,y1);
 
-  let p2 = {
-    x: x2,
-    y: y2
-  }
+  let p2 = new Point(x2,y2);
 
   return {
     p1: p1,
@@ -181,10 +166,7 @@ export const circleLineIntersect = (c, r, p1, p2) => {
 
   //point on line closest to circle centre
   const t = dx * (c.x - p1.x) + dy * (c.y - p1.y);
-  const p = {
-    x: t * dx + p1.x,
-    y: t * dy + p1.y
-  };
+  const p = new Point(t * dx + p1.x, t * dy + p1.y);
 
   //distance from this point to centre
   const d2 = distance(p, c);
@@ -193,15 +175,9 @@ export const circleLineIntersect = (c, r, p1, p2) => {
   if (d2 < r) {
     const dt = Math.sqrt(r * r - d2 * d2);
     //point 1
-    const q1 = {
-      x: (t - dt) * dx + p1.x,
-      y: (t - dt) * dy + p1.y
-    }
+    const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
     //point 2
-    const q2 = {
-      x: (t + dt) * dx + p1.x,
-      y: (t + dt) * dy + p1.y
-    }
+    const q2 = new Point((t + dt) * dx + p1.x,(t + dt) * dy + p1.y);
 
     return {
       p1: q1,
@@ -222,10 +198,7 @@ export const centralAngle = (p1, p2, r) => {
 //calculate the normal vector given 2 points
 export const normalVector = (p1, p2) => {
   let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return {
-    x: (p2.x - p1.x) / d,
-    y: (p2.y - p1.y) / d
-  }
+  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
 }
 
 //does the line connecting p1, p2 go through the point (0,0)?
@@ -261,10 +234,7 @@ export const centroidOfPolygon = (points) => {
     y += (p1.y + p2.y) * f;
   }
   f = twicearea * 3;
-  return {
-    x: x / f,
-    y: y / f
-  };
+  return new Point( x / f, y / f);
 }
 
 //compare two points taking rounding errors into account
@@ -298,17 +268,9 @@ export const spacedPointOnArc = (circle, point, spacing) => {
   const yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
   const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
 
-  const p1 = {
-    x: xPos,
-    y: yPos
-  };
-  const p2 = {
-    x: xNeg,
-    y: yNeg
-  };
   return {
-    p1: p1,
-    p2: p2
+    p1: new Point(xPos, yPos),
+    p2: new Point(xNeg,yNeg)
   }
 }
 
