@@ -19,10 +19,8 @@ export class RegularTesselation {
   constructor(p, q, rotation, colour, maxLayers) {
     this.disk = new Disk();
 
-    this.centre = {
-      x: 0,
-      y: 0
-    }
+    this.centre = new Point(0,0);
+
     this.p = p;
     this.q = q;
     this.colour = colour || 'black';
@@ -103,17 +101,12 @@ export class RegularTesselation {
       x: this.radius * Math.cos(Math.PI / this.p),
       y: -this.radius * Math.sin(Math.PI / this.p)
     }
-    const centre = {
-      x: d,
-      y: 0
-    };
+    const centre = new Point(d,0);
+
     //there will be two points of intersection, of which we want the first
     const p1 = E.circleLineIntersect(centre, r, this.disk.centre, b).p1;
 
-    const p2 = {
-      x: d - r,
-      y: 0
-    };
+    const p2 = new Point(d-r,0);
 
     const points = [this.disk.centre, p1, p2];
 

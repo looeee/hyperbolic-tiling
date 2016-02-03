@@ -26,10 +26,7 @@ export class Disk {
   }
 
   init() {
-    this.centre = {
-      x: 0,
-      y: 0
-    }
+    this.centre = new Point(0,0);
 
     //draw largest circle possible given window dims
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
@@ -48,50 +45,9 @@ export class Disk {
   }
 
   testing() {
-    const p1 = {
-      x: 100,
-      y: 250
-    };
-    const p2 = {
-      x: -150,
-      y: 150
-    };
-    const p3 = {
-      x: -70,
-      y: -250
-    };
 
-    const p4 = {
-      x: -170,
-      y: -150
-    };
-
-    const p5 = {
-      x: 170,
-      y: -150
-    };
-    this.point(p1, 5, 0xf00f0f);
-    this.point(p2, 5, 0xffff0f);
-    this.point(p3, 5, 0x1d00d5);
-    this.point(p4, 5, 0x00ff0f);
-    this.point(p5, 5, 0x359543);
-
-    /*
-    const a = H.arc(p1, p2);
-
-    this.draw.disk(a.circle.centre, a.circle.radius, 0xffffff, false);
-
-    const p4 = E.nextPoint(a.circle, p2, 20).p1;
-    console.log(p4);
-
-
-
-    //this.drawArc(p2, p3, 0xf00f0f);
-    */
-    //this.polygonOutline([p1, p2, p3],0xf00f0f)
-    this.polygon([p1, p2, p4, p3, p5], 0x70069a);
-    //this.polygon([p2, p3, p4]);
   }
+
   getRadius() {
     return this.radius;
   }

@@ -28,10 +28,7 @@ export const arc = (p1, p2, circle) => {
   const ox = c.centre.x;
 
   //point at 0 radians on c
-  const p3 = {
-    x: ox + c.radius,
-    y: oy
-  }
+  const p3 = new Point( ox + c.radius, oy);
 
   //calculate the position of each point in the circle
   alpha1 = E.centralAngle(p3, p1, c.radius);
@@ -81,10 +78,7 @@ export const translateX = (pointsArray, distance) => {
   for (let i = 0; i < l; i++) {
     const x = pos * pointsArray[i].x + neg * pointsArray[i].y;
     const y = neg * pointsArray[i].x + pos * pointsArray[i].y;
-    newPoints.push({
-      x: x,
-      y: y
-    })
+    newPoints.push( new Point(x,y));
   }
   return newPoints;
 }
@@ -112,7 +106,6 @@ export const reflect = (pointsArray, p1, p2, circle) => {
       newPoints.push(E.lineReflection(p1,p2,pointsArray[i]));
     }
   }
-  console.log(newPoints);
   return newPoints;
 }
 
@@ -127,10 +120,7 @@ export const poincareToWeierstrass = (point2D) => {
 
 export const weierstrassToPoincare = (point3D) => {
   const factor = 1 / (1 + point3D.z);
-  return {
-    x: factor * point3D.x,
-    y: factor * point3D.y
-  }
+  return new Point(factor * point3D.x,factor * point3D.y);
 }
 
 export const rotateAboutOriginWeierstrass = (point3D, angle) => {
@@ -141,18 +131,16 @@ export const rotateAboutOriginWeierstrass = (point3D, angle) => {
   }
 }
 
-export const rotateAboutOriginPoincare = (point2D, angle) => {
-  return {
-    x: Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
-    y: Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y,
-  }
+export const rotateAboutOrigin = (point2D, angle) => {
+  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
+     Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
 }
 
 export const rotatePgonAboutOrigin = (points2DArray, angle) => {
   const l = points2DArray.length;
   const rotatedPoints2DArray = [];
   for (let i = 0; i < l; i++) {
-    let point = rotateAboutOriginPoincare(points2DArray[i], angle);
+    let point = rotateAboutOrigin(points2DArray[i], angle);
     rotatedPoints2DArray.push(point);
   }
   return rotatedPoints2DArray;
@@ -173,10 +161,7 @@ export const translatePoincare = (p1, p2) => {
   const x = p1Factor * p1.x + p2Factor * p2.x;
   const y = p1Factor * p1.y + p2Factor * p2.y;
 
-  return {
-    x: x,
-    y: y
-  }
+  return new Point(x,y);
 }
 
 export const inverseTranslatePoincare = (p1, p2) => {
