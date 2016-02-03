@@ -73,7 +73,7 @@ export const inverse = (p, r, c) => {
 export const lineReflection = (p1, p2, p3) => {
   const m = slope(p1, p2);
   //reflection in y axis
-  if (m > 999999) {
+  if (m > 999999 || m < -999999) {
     return new Point( p3.x, -p3.y);
   }
   //reflection in x axis

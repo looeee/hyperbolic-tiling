@@ -54,34 +54,27 @@ export class RegularTesselation {
 
     this.disk.polygon(this.fr, E.randomInt(10000, 14777215));
     const poly2 = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
-    console.table(poly2);
     this.disk.polygon(poly2, E.randomInt(10000, 14777215));
 
     const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
-    console.table(poly3);
     this.disk.polygon(poly3, E.randomInt(10000, 14777215));
 
     const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
-    console.table(poly4);
     this.disk.polygon(poly4, E.randomInt(10000, 14777215));
 
     const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
-    console.table(poly5);
     this.disk.polygon(poly5, E.randomInt(10000, 14777215));
 
     const poly6 = H.reflect(poly5, poly5[0], poly5[2], this.disk.circle);
-    console.table(poly6);
     this.disk.polygon(poly6, E.randomInt(10000, 14777215));
 
     const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
-    console.table(poly7);
     this.disk.polygon(poly7, E.randomInt(10000, 14777215));
 
     const poly8 = H.reflect(poly7, poly7[0], poly7[2], this.disk.circle);
-    console.table(poly8);
     this.disk.polygon(poly8, E.randomInt(10000, 14777215));
 
-    let num = 8;
+    let num = 0;
     for(let i =0; i < num; i++){
       let poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
       this.disk.polygon(poly, E.randomInt(10000, 14777215));
@@ -97,10 +90,9 @@ export class RegularTesselation {
     //multiply these by the disks radius (Coxeter used unit disk);
     const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * this.radius;
     const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * this.radius;
-    const b = {
-      x: this.radius * Math.cos(Math.PI / this.p),
-      y: -this.radius * Math.sin(Math.PI / this.p)
-    }
+    const b = new Point(this.radius * Math.cos(Math.PI / this.p),
+    -this.radius * Math.sin(Math.PI / this.p));
+
     const centre = new Point(d,0);
 
     //there will be two points of intersection, of which we want the first

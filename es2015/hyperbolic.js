@@ -102,7 +102,6 @@ export const reflect = (pointsArray, p1, p2, circle) => {
     }
   } else {
     for (let i = 0; i < l; i++) {
-      //console.error('reflection across straight line not implemented! ')
       newPoints.push(E.lineReflection(p1,p2,pointsArray[i]));
     }
   }
