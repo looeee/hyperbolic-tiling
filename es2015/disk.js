@@ -136,7 +136,7 @@ export class Disk {
 
     let wireframe = false;
     //TESTING
-    wireframe = true;
+    //wireframe = true;
     for(let point of points){
       //this.point(point,2,0x10ded8);
     }

@@ -11,4 +11,4 @@ import { Disk } from './disk';
 
 //const disk = new Disk();
 
-const tesselation = new RegularTesselation(4, 5, 0, 'red');
+const tesselation = new RegularTesselation(5, 5, 0, 'red');
