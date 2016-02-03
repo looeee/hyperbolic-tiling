@@ -78,11 +78,10 @@ export class ThreeJS {
 
   //behind: true/false
   disk(centre, radius, color, behind) {
-    let col = color;
-    if (col === 'undefined') col = 0xffffff;
+    if (color === undefined) color = 0xffffff;
 
     const geometry = new THREE.CircleGeometry(radius, 100, 0, 2 * Math.PI);
-    const circle = this.createMesh(geometry, col);
+    const circle = this.createMesh(geometry, color);
     circle.position.x = centre.x;
     circle.position.y = centre.y;
     if (!behind) {
@@ -93,8 +92,7 @@ export class ThreeJS {
   }
 
   segment(circle, alpha, offset, color) {
-    let col = color;
-    if (col === 'undefined') col = 0xffffff;
+    if (color === undefined) color = 0xffffff;
 
     const curve = new THREE.EllipseCurve(
       circle.centre.x, circle.centre.y, // ax, aY
@@ -109,7 +107,7 @@ export class ThreeJS {
     const geometry = path.createGeometry(points);
 
     const material = new THREE.LineBasicMaterial({
-      color: col
+      color: color
     });
     const s = new THREE.Line(geometry, material);
 
@@ -117,8 +115,7 @@ export class ThreeJS {
   }
 
   line(start, end, color) {
-    let col = color;
-    if (col === 'undefined') col = 0xffffff;
+    if (color === undefined) color = 0xffffff;
 
     const geometry = new THREE.Geometry();
 
@@ -127,15 +124,14 @@ export class ThreeJS {
       new THREE.Vector3(end.x, end.y, 0)
     );
     const material = new THREE.LineBasicMaterial({
-      color: col
+      color: color
     });
     const l = new THREE.Line(geometry, material);
     this.scene.add(l);
   }
 
-  polygon(vertices, color, texture) {
-    let col = color;
-    if (col === 'undefined') col = 0xffffff;
+  polygon(vertices, color, texture, wireframe) {
+    if (color === undefined) color = 0xffffff;
 
     const poly = new THREE.Shape();
     poly.moveTo(vertices[0].x, vertices[0].y);
@@ -148,15 +144,16 @@ export class ThreeJS {
 
     const geometry = new THREE.ShapeGeometry(poly);
 
-    this.scene.add(this.createMesh(geometry, color, texture));
+    this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
-  createMesh(geometry, color, imageURL) {
-    let col = color;
-    if (col === 'undefined') col = 0xffffff;
+  createMesh(geometry, color, imageURL, wireframe) {
+    if(wireframe === undefined) wireframe = false;
+    if (color === undefined) color = 0xffffff;
+
     const material = new THREE.MeshBasicMaterial({
-      color: col,
-      //wireframe: true
+      color: color,
+      wireframe: wireframe
     });
 
     if (imageURL) {

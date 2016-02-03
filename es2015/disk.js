@@ -180,14 +180,15 @@ export class Disk {
         points.push(vertices[(i + 1) % l]);
       }
     }
-    //TESTING
-    //console.table(points);
 
+    let wireframe = false;
+    //TESTING
+    wireframe = true;
     for(let point of points){
       //this.point(point,2,0x10ded8);
     }
 
-    this.draw.polygon(points, color, texture);
+    this.draw.polygon(points, color, texture, wireframe);
   }
 
   //return true if any of the points is not in the disk

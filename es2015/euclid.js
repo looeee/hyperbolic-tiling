@@ -65,6 +65,20 @@ export const inverse = (p, r, c) => {
   };
 }
 
+//reflect p3 across the line defined by p1,p2
+export const lineReflection = (p1,p2,p3) => {
+  const m = slope(p1,p2);
+  if(m === Infinity) {
+    console.error('Reflection over x axis not implemented');
+  }
+  const c = p1.y - m*p1.x;
+  const d = (p3.x + (p3.y - c)*m)/(1+m*m);
+  const x = 2*d - p3.x;
+  const y = 2*d*m - p3.y + 2*c;
+
+  return { x: x, y: y};
+}
+
 //calculate the radius and centre of the circle required to draw a line between
 //two points in the hyperbolic plane defined by the disk (r, c)
 export const greatCircle = (p1, p2, r, c) => {
@@ -276,4 +290,12 @@ export const spacedPointOnArc = (circle, point, spacing) => {
     p1: p1,
     p2: p2
   }
+}
+
+export const randomFloat = (min, max) => {
+  return Math.random() * (max - min) + min;
+}
+
+export const randomInt = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1) + min);
 }
