@@ -1,4 +1,5 @@
 import * as E from './euclid';
+import { Point } from './point';
 // * ***********************************************************************
 // *
 // *   HYPERBOLIC FUNCTIONS

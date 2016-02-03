@@ -1,27 +1,35 @@
+import {
+  Point
+}
+from './point';
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
 // *   a place to stash all the functions that are euclidean geometrical
 // *   operations
+// *   All functions are 2D unless otherwise specified!
 // *
 // *************************************************************************
 
 //distance between two points
-export const distance = (p1, p2) => Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
+export const distance = (p1, p2) => {
+  return Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
+}
 
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => {
-  return {
-    x: (p1.x + p2.x) / 2,
-    y: (p1.y + p2.y) / 2
-  }
+  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 }
 
 //slope of line through p1, p2
-export const slope = (p1, p2) => (p2.x - p1.x) / (p2.y - p1.y);
+export const slope = (p1, p2) => {
+  return (p2.x - p1.x) / (p2.y - p1.y);
+}
 
 //slope of line perpendicular to a line defined by p1,p2
-export const perpendicularSlope = (p1, p2) => -1 / (Math.pow(slope(p1, p2), -1));
+export const perpendicularSlope = (p1, p2) => {
+  return -1 / (Math.pow(slope(p1, p2), -1));
+}
 
 //intersection point of two lines defined by p1,m1 and q1,m2
 //NOT WORKING FOR VERTICAL LINES!!!
@@ -48,41 +56,46 @@ export const intersection = (p1, m1, p2, m2) => {
     y = m1 * x + c1;
   }
 
-  return {
-    x: x,
-    y: y
-  }
+  return new Point(x, y);
 }
 
-export const radians = (degrees) => (Math.PI / 180) * degrees;
+export const radians = (degrees) => {
+  return (Math.PI / 180) * degrees;
+}
 
 //get the circle inverse of a point p with respect a circle radius r centre c
 export const inverse = (p, r, c) => {
   let alpha = (r * r) / (Math.pow(p.x - c.x, 2) + Math.pow(p.y - c.y, 2));
-  return {
-    x: alpha * (p.x - c.x) + c.x,
-    y: alpha * (p.y - c.y) + c.y
-  };
+  return new Point(alpha * (p.x - c.x) + c.x, alpha * (p.y - c.y) + c.y);
 }
 
 //reflect p3 across the line defined by p1,p2
-export const lineReflection = (p1,p2,p3) => {
-  const m = slope(p1,p2);
+export const lineReflection = (p1, p2, p3) => {
+  const m = slope(p1, p2);
   //reflection in y axis
-  if(m > 999999) {
-    return { x: p3.x, y: -p3.y};
+  if (m > 999999) {
+    return {
+      x: p3.x,
+      y: -p3.y
+    };
   }
   //reflection in x axis
-  else if(m.toFixed(6) == 0){
-    return { x: -p3.x, y: p3.y};
+  else if (m.toFixed(6) == 0) {
+    return {
+      x: -p3.x,
+      y: p3.y
+    };
   }
   //reflection in arbitrary line
-  else{
-    const c = p1.y - m*p1.x;
-    const d = (p3.x + (p3.y - c)*m)/(1+m*m);
-    const x = 2*d - p3.x;
-    const y = 2*d*m - p3.y + 2*c;
-    return { x: x, y: y};
+  else {
+    const c = p1.y - m * p1.x;
+    const d = (p3.x + (p3.y - c) * m) / (1 + m * m);
+    const x = 2 * d - p3.x;
+    const y = 2 * d * m - p3.y + 2 * c;
+    return {
+      x: x,
+      y: y
+    };
   }
 }
 

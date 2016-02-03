@@ -1,10 +1,7 @@
 import * as E from './euclid';
 import * as H from './hyperbolic';
-
-import {
-  ThreeJS
-}
-from './threejs';
+import { Point } from './point';
+import { ThreeJS } from './threejs';
 
 // * ***********************************************************************
 // *
