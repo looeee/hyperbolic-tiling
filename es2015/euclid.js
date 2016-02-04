@@ -192,6 +192,7 @@ export const circleLineIntersect = (c, r, p1, p2) => {
 
 //angle in radians between two points on circle of radius r
 export const centralAngle = (p1, p2, r) => {
+  //round off error can result in this being very slightly greater than 1
   let temp = (0.5 * distance(p1, p2) / r).toFixed(12);
   let res = 2 * Math.asin(temp);
   if(isNaN(res)) res = 0;

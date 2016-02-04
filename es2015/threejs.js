@@ -1,3 +1,5 @@
+//NOTE will give a warning:  Too many active WebGL contexts
+//after resizing 16 times. This is a bug in threejs and can be safely ignored.
 // * ***********************************************************************
 // *
 // *  THREE JS CLASS
@@ -7,15 +9,11 @@ export class ThreeJS {
   constructor() {
 
     window.addEventListener('load', (event) => {
-      window.removeEventListener('load');
+      //window.removeEventListener('load');
       this.init();
     }, false);
 
     window.addEventListener('resize', () => {
-      //this.camera.aspect = window.innerWidth / window.innerHeight;
-      //this.camera.updateProjectionMatrix();
-      //this.renderer.setSize(window.innerWidth, window.innerHeight);
-
       this.reset();
     }, false);
 
@@ -34,7 +32,6 @@ export class ThreeJS {
 
   reset() {
     cancelAnimationFrame(this.id); // Stop the animation
-    this.renderer.domElement.addEventListener('dblclick', null, false); //remove listener to render
     this.scene = null;
     this.projector = null;
     this.camera = null;

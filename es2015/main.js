@@ -1,9 +1,7 @@
 //TODO create circle class and refactor
+//TODO window.removeEventListener('load'); not working in firefox
 
 import { RegularTesselation } from './regularTesselation';
-import * as E from './euclid';
-import { Disk } from './disk';
-
 
 // * ***********************************************************************
 // *
@@ -11,6 +9,5 @@ import { Disk } from './disk';
 // *
 // *************************************************************************
 
-//const disk = new Disk();
-
-const tesselation = new RegularTesselation(5, 5, 0, 'red');
+//const tesselation = new RegularTesselation(E.randomInt(4,12), E.randomInt(4,12));
+const tesselation = new RegularTesselation(6, 12);
