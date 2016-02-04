@@ -1,3 +1,5 @@
+//TODO create circle class and refactor
+
 import { RegularTesselation } from './regularTesselation';
 import * as E from './euclid';
 import { Disk } from './disk';

@@ -1,7 +1,7 @@
 {
-  "name": "canvas-test",
+  "name": "hyperbolic-tiling",
   "version": "1.0.0",
-  "description": "canvas-test",
+  "description": "hyperbolic-tiling",
   "main": "Gulpfile.js",
   "dependencies": {},
   "devDependencies": {
@@ -13,8 +13,10 @@
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "^3.1.0",
     "gulp-babel": "^6.1.1",
+    "gulp-closure-compiler": "^0.4.0",
     "gulp-concat": "^2.6.0",
     "gulp-livereload": "^3.8.1",
+    "gulp-rollup": "^1.7.0",
     "gulp-sass": "^2.1.1",
     "gulp-watch": "^4.3.5",
     "through2": "^2.0.0",
@@ -25,12 +27,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/looeee/webpack-test.git"
+    "url": "git+https://github.com/looeee/hyperbolic-tiling.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/looeee/webpack-test/issues"
+    "url": "https://github.com/looeee/hyperbolic-tiling/issues"
   },
-  "homepage": "https://github.com/looeee/webpack-test#readme"
+  "homepage": "https://github.com/looeee/hyperbolic-tiling#readme"
 }

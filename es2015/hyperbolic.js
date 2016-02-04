@@ -30,18 +30,23 @@ export const arc = (p1, p2, circle) => {
   //point at 0 radians on c
   const p3 = new Point( ox + c.radius, oy);
 
+  //point at PI radians on c
+  const p4 = new Point( ox - c.radius, oy);
+
   //calculate the position of each point in the circle
   alpha1 = E.centralAngle(p3, p1, c.radius);
   alpha1 = (p1.y < oy) ? 2 * Math.PI - alpha1 : alpha1;
   alpha2 = E.centralAngle(p3, p2, c.radius);
   alpha2 = (p2.y < oy) ? 2 * Math.PI - alpha2 : alpha2;
 
-  //case where p1 above and p2 below the line c.centre -> p3
+  //console.log(c.centre, c.radius, alpha1, alpha2);
+
+  //case where p1 above and p2 below or on the line c.centre -> p3
   if ((p1.x >= ox && p2.x >= ox) && (p1.y <= oy && p2.y >= oy)) {
     startAngle = alpha1;
     endAngle = alpha2;
   }
-  //case where p2 above and p1 below the line c.centre -> p3
+  //case where p2 above and p1 below or on the line c.centre -> p3
   else if ((p1.x >= ox && p2.x >= ox) && (p1.y >= oy && p2.y <= oy)) {
     startAngle = alpha2;
     endAngle = alpha1;

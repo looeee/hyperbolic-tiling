@@ -192,7 +192,10 @@ export const circleLineIntersect = (c, r, p1, p2) => {
 
 //angle in radians between two points on circle of radius r
 export const centralAngle = (p1, p2, r) => {
-  return 2 * Math.asin(0.5 * distance(p1, p2) / r);
+  let temp = (0.5 * distance(p1, p2) / r).toFixed(12);
+  let res = 2 * Math.asin(temp);
+  if(isNaN(res)) res = 0;
+  return res;
 }
 
 //calculate the normal vector given 2 points
@@ -240,10 +243,11 @@ export const centroidOfPolygon = (points) => {
 //compare two points taking rounding errors into account
 export const comparePoints = (p1, p2) => {
   if (typeof p1 === 'undefined' || typeof p2 === 'undefined') {
-    return true;
+    console.warn('Warning: point no defined.')
+    return false;
   }
-  p1 = pointToFixed(p1, 6);
-  p2 = pointToFixed(p2, 6);
+  p1 = pointToFixed(p1, 10);
+  p2 = pointToFixed(p2, 10);
   if (p1.x === p2.x && p1.y === p2.y) return true;
   else return false;
 }

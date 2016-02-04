@@ -79,7 +79,7 @@ export class Disk {
     const col = colour || 0xffffff;
     const arc = H.arc(p1, p2, this.circle);
 
-    if (a.straightLine) {
+    if (arc.straightLine) {
       this.draw.line(p1, p2, col);
     } else {
       this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, colour);
@@ -97,7 +97,7 @@ export class Disk {
   //polygon and pass these to ThreeJS.polygon()
   //TODO make spacing a function of final resolution
   //TODO check whether vertices are in the right order
-  polygon(vertices, color, texture) {
+  polygon(vertices, color, texture, wireframe) {
     const points = [];
     const spacing = 5;
     const l = vertices.length;
@@ -134,9 +134,6 @@ export class Disk {
       }
     }
 
-    let wireframe = false;
-    //TESTING
-    //wireframe = true;
     for(let point of points){
       //this.point(point,2,0x10ded8);
     }

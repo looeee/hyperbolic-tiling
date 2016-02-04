@@ -1,6 +1,6 @@
 'use strict';
 
-var projectname = 'canvas-test',
+var projectname = 'hyperbolic-tiling',
   template_path = '',
   scss_path = template_path + 'scss/**/*.scss',
   es2015_path = template_path + 'es2015/',
@@ -14,6 +14,7 @@ var projectname = 'canvas-test',
   through2 = require('through2'),
   browserify = require('browserify'),
   source = require('vinyl-source-stream'),
+  rollup     = require('gulp-rollup'),
   livereload = require('gulp-livereload');
 
 //Put all css/scss tasks here

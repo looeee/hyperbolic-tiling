@@ -51,35 +51,55 @@ export class RegularTesselation {
   }
 
   testing() {
+    let wireframe = false;
+    wireframe = true;
 
-    this.disk.polygon(this.fr, E.randomInt(10000, 14777215));
+    /*
+    const p4 = new Point(141.28127650860085, 0);
+    this.disk.point(p4, 8, 45454536)
+    this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
     const poly2 = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
     //this.disk.polygon(poly2, E.randomInt(10000, 14777215));
 
-    const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
-    //this.disk.polygon(poly3, E.randomInt(10000, 14777215));
+    const poly3 = H.reflect(poly2, poly2[2], poly2[1], this.disk.circle);
+    //this.disk.polygon(poly3, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
-    //this.disk.polygon(poly4, E.randomInt(10000, 14777215));
+    const poly4 = H.reflect(poly3, poly3[2], poly3[0], this.disk.circle);
+    // /console.table(poly4);
+    //this.disk.polygon(poly4, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
-    //this.disk.polygon(poly5, E.randomInt(10000, 14777215));
+    const poly5 = H.reflect(poly4, poly4[2], poly3[0], this.disk.circle);
+    this.disk.polygon(poly5, E.randomInt(10000, 14777215), '', wireframe);
+    //console.table(poly5);
+    this.disk.point(poly5[1], 4, E.randomInt(10000, 14777215));
+    this.disk.point(poly5[2], 4, E.randomInt(10000, 14777215));
 
-    const poly6 = H.reflect(poly5, poly5[0], poly5[2], this.disk.circle);
-    //this.disk.polygon(poly6, E.randomInt(10000, 14777215));
+    console.table(poly5);
+    */
 
-    const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
-    //this.disk.polygon(poly7, E.randomInt(10000, 14777215));
+    let p1 = new Point(243.92813230298395, 0);
+    let p2 = new Point(159.6530352953734, 115.99471986722955);
+    let p3 = new Point(141.28127650860074, 0);
 
-    const poly8 = H.reflect(poly7, poly7[0], poly7[2], this.disk.circle);
-    //this.disk.polygon(poly8, E.randomInt(10000, 14777215));
+    this.disk.polygon([p1,p2,p3], E.randomInt(10000, 14777215), '', wireframe);
+    this.disk.drawArc(p2,p3);
+
+    const c = {
+      centre: this.centre,
+      radius: this.radius
+    };
+    //let a = H.arc(poly4[1], poly4[2], c)
+    //console.log('poly4 arc: ', a);
+
+    //a = H.arc(poly5[1], poly5[2], c)
+    //console.log('poly5 arc: ', a);
 
     let num = 10;
     for(let i =0; i < num; i++){
-      let poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215));
-      poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215));
+      //let poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
+      //this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
+      //poly = H.rotatePgonAboutOrigin(poly4, (2*Math.PI/num)*(i+1));
+      //this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
     }
   }
 
