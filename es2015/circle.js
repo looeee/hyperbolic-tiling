@@ -1,3 +1,4 @@
+import * as E from './euclid';
 import { Point } from './point';
 // * ***********************************************************************
 // *
@@ -7,13 +8,7 @@ import { Point } from './point';
 
 export class Circle{
   constructor(centreX, centreY, radius){
-    if(centreX.toFixed(10) == 0){
-      centreX = 0;
-    }
-    if(centreY.toFixed(10) == 0){
-      centreY = 0;
-    }
-    if(radius.toFixed(10) == 0){
+    if( E.toFixed(radius) == 0){
       radius = 0;
     }
     this.centre = new Point(centreX, centreY);

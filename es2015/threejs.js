@@ -55,9 +55,6 @@ export class ThreeJS {
   }
 
   initLighting() {
-    //const spotLight = new THREE.SpotLight(0xffffff);
-    //spotLight.position.set(0, 0, 100);
-    //this.scene.add(spotLight);
     const ambientLight = new THREE.AmbientLight(0xffffff);
     this.scene.add(ambientLight);
   }
@@ -73,17 +70,13 @@ export class ThreeJS {
     this.render();
   }
 
-  //behind: true/false
-  disk(centre, radius, color, behind) {
+  disk(centre, radius, color) {
     if (color === undefined) color = 0xffffff;
 
     const geometry = new THREE.CircleGeometry(radius, 100, 0, 2 * Math.PI);
     const circle = this.createMesh(geometry, color);
     circle.position.x = centre.x;
     circle.position.y = centre.y;
-    if (!behind) {
-      circle.position.z = 1;
-    }
 
     this.scene.add(circle);
   }

@@ -6,6 +6,11 @@ import {
 }
 from './disk';
 
+import {
+  Circle
+}
+from './circle';
+
 
 // * ***********************************************************************
 // *    TESSELATION CLASS
@@ -17,10 +22,7 @@ from './disk';
 // *************************************************************************
 export class RegularTesselation {
   constructor(p, q, rotation, colour, maxLayers) {
-    console.log(p,q);
     this.disk = new Disk();
-
-    this.centre = new Point(0,0);
 
     this.p = p;
     this.q = q;
@@ -46,7 +48,6 @@ export class RegularTesselation {
   }
 
   init() {
-    this.radius = this.disk.getRadius();
     this.fr = this.fundamentalRegion();
     this.testing();
   }
@@ -54,6 +55,11 @@ export class RegularTesselation {
   testing() {
     let wireframe = false;
     wireframe = true;
+
+    let p1 = new Point(-239.55051764498, 239.55051764498035);
+    let p2 = new Point(-270.1439571978872, 217.15456551396463);
+
+    //this.disk.drawArc(p1,p2, 45348774);
 
 
     //this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
@@ -79,13 +85,7 @@ export class RegularTesselation {
     //this.disk.polygon(poly8, E.randomInt(10000, 14777215), '', wireframe);
 
     const poly9 = H.reflect(poly7, poly7[0], poly7[1], this.disk.circle);
-    this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
-
-
-    const c = {
-      centre: this.centre,
-      radius: this.radius
-    };
+    //this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
 
     let num = this.p*2;
     for(let i =0; i < num; i++){
@@ -108,22 +108,24 @@ export class RegularTesselation {
       poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
       this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
     }
+
   }
 
   //calculate first point of fundamental polygon using Coxeter's method
   fundamentalRegion() {
+    const radius = this.disk.circle.radius;
     const s = Math.sin(Math.PI / this.p);
     const t = Math.cos(Math.PI / this.q);
     //multiply these by the disks radius (Coxeter used unit disk);
-    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * this.radius;
-    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * this.radius;
-    const b = new Point(this.radius * Math.cos(Math.PI / this.p),
-    -this.radius * Math.sin(Math.PI / this.p));
+    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * radius;
+    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * radius;
+    const b = new Point(radius * Math.cos(Math.PI / this.p),
+    -radius * Math.sin(Math.PI / this.p));
 
-    const centre = new Point(d,0);
+    const circle = new Circle(d, 0, r);
 
     //there will be two points of intersection, of which we want the first
-    const p1 = E.circleLineIntersect(centre, r, this.disk.centre, b).p1;
+    const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
 
     const p2 = new Point(d-r,0);
 

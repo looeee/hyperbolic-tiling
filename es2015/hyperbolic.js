@@ -22,24 +22,19 @@ export const arc = (p1, p2, circle) => {
   }
   let clockwise = false;
   let alpha1, alpha2, startAngle, endAngle;
-  const c = E.greatCircle(p1, p2, circle.radius, circle.centre);
-
+  const c = E.greatCircle(p1, p2, circle);
   const oy = c.centre.y;
   const ox = c.centre.x;
 
   //point at 0 radians on c
   const p3 = new Point( ox + c.radius, oy);
 
-  //point at PI radians on c
-  const p4 = new Point( ox - c.radius, oy);
-
   //calculate the position of each point in the circle
   alpha1 = E.centralAngle(p3, p1, c.radius);
-  alpha1 = (p1.y < oy) ? 2 * Math.PI - alpha1 : alpha1;
   alpha2 = E.centralAngle(p3, p2, c.radius);
-  alpha2 = (p2.y < oy) ? 2 * Math.PI - alpha2 : alpha2;
 
-  //console.log(c.centre, c.radius, alpha1, alpha2);
+  alpha1 = (p1.y < oy) ? 2 * Math.PI - alpha1 : alpha1;
+  alpha2 = (p2.y < oy) ? 2 * Math.PI - alpha2 : alpha2;
 
   //case where p1 above and p2 below or on the line c.centre -> p3
   if ((p1.x >= ox && p2.x >= ox) && (p1.y <= oy && p2.y >= oy)) {
@@ -63,7 +58,7 @@ export const arc = (p1, p2, circle) => {
     startAngle = alpha1;
     endAngle = alpha2;
   }
-
+  //console.log(startAngle, endAngle);
   return {
     circle: c,
     startAngle: startAngle,
@@ -103,7 +98,7 @@ export const reflect = (pointsArray, p1, p2, circle) => {
 
   if (!a.straightLine) {
     for (let i = 0; i < l; i++) {
-      newPoints.push(E.inverse(pointsArray[i], a.circle.radius, a.circle.centre));
+      newPoints.push(E.inverse(pointsArray[i], a.circle));
     }
   } else {
     for (let i = 0; i < l; i++) {

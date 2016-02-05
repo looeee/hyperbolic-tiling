@@ -2,6 +2,11 @@ import {
   Point
 }
 from './point';
+
+import {
+  Circle
+}
+from './circle';
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
@@ -32,18 +37,13 @@ export const perpendicularSlope = (p1, p2) => {
 }
 
 //intersection point of two lines defined by p1,m1 and q1,m2
-//NOT WORKING FOR VERTICAL LINES!!!
 export const intersection = (p1, m1, p2, m2) => {
   let c1, c2, x, y;
-  //case where first line is vertical
-  //if(m1 > 5000 || m1 < -5000 || m1 === Infinity){
-  if (p1.y < 0.000001 && p1.y > -0.000001) {
+  if ( toFixed(p1.y, 10) == 0) {
     x = p1.x;
     y = (m2) * (p1.x - p2.x) + p2.y;
   }
-  //case where second line is vertical
-  //else if(m2 > 5000 || m2 < -5000 || m1 === Infinity){
-  else if (p2.y < 0.000001 && p2.y > -0.000001) {
+  else if ( toFixed(p2.y, 10) == 0) {
     x = p2.x;
     y = (m1 * (p2.x - p1.x)) + p1.y;
   } else {
@@ -64,9 +64,11 @@ export const radians = (degrees) => {
 }
 
 //get the circle inverse of a point p with respect a circle radius r centre c
-export const inverse = (p, r, c) => {
-  let alpha = (r * r) / (Math.pow(p.x - c.x, 2) + Math.pow(p.y - c.y, 2));
-  return new Point(alpha * (p.x - c.x) + c.x, alpha * (p.y - c.y) + c.y);
+export const inverse = (point, circle) => {
+  const c = circle.centre;
+  const r = circle.radius;
+  const alpha = (r * r) / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
 }
 
 //reflect p3 across the line defined by p1,p2
@@ -77,7 +79,7 @@ export const lineReflection = (p1, p2, p3) => {
     return new Point( p3.x, -p3.y);
   }
   //reflection in x axis
-  else if (m.toFixed(6) == 0) {
+  else if ( toFixed(m, 10) == 0) {
     return new Point( -p3.x, p3.y);
   }
   //reflection in arbitrary line
@@ -92,64 +94,51 @@ export const lineReflection = (p1, p2, p3) => {
 
 //calculate the radius and centre of the circle required to draw a line between
 //two points in the hyperbolic plane defined by the disk (r, c)
-export const greatCircle = (p1, p2, r, c) => {
-  let p1Inverse = inverse(p1, r, c);
-  let p2Inverse = inverse(p2, r, c);
+export const greatCircle = (p1, p2, circle) => {
+  const p1Inverse = inverse(p1, circle);
+  const p2Inverse = inverse(p2, circle);
 
-  let m = midpoint(p1, p1Inverse);
-  let n = midpoint(p2, p2Inverse);
+  const m = midpoint(p1, p1Inverse);
+  const n = midpoint(p2, p2Inverse);
 
-  let m1 = perpendicularSlope(m, p1Inverse);
-  let m2 = perpendicularSlope(n, p2Inverse);
+  const m1 = perpendicularSlope(m, p1Inverse);
+  const m2 = perpendicularSlope(n, p2Inverse);
 
 
   //centre is the centrepoint of the circle out of which the arc is made
-  let centre = intersection(m, m1, n, m2);
-  let radius = distance(centre, p1);
-  return {
-    centre: centre,
-    radius: radius
-  };
-}
+  const centre = intersection(m, m1, n, m2);
+  const radius = distance(centre, p1);
 
-//an attempt at calculating the circle algebraically
-export const greatCircleV2 = (p1, p2, r) => {
-  let x = (p2.y * (p1.x * p1.x + r) + p1.y * p1.y * p2.y - p1.y * (p2.x * p2.x + p2.y * p2.y + r)) / (2 * p1.x * p2.y - p1.y * p2.x);
-  let y = (p1.x * p1.x * p2.x - p1.x * (p2.x * p2.x + p2.y * p2.y + r) + p2.x * (p1.y * p1.y + r)) / (2 * p1.y * p2.x + 2 * p1.x * p2.y);
-  let radius = Math.sqrt(x * x + y * y - r);
-  return {
-    centre: {
-      x: x,
-      y: y
-    },
-    radius: radius
-  }
+  return new Circle(centre.x, centre.y, radius);
 }
 
 //intersection of two circles with equations:
 //(x-a)^2 +(y-a)^2 = r0^2
 //(x-b)^2 +(y-c)^2 = r1^2
 //NOTE assumes the two circles DO intersect!
-export const circleIntersect = (c0, c1, r0, r1) => {
-  let a = c0.x;
-  let b = c0.y;
-  let c = c1.x;
-  let d = c1.y;
-  let dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
+export const circleIntersect = (circle0, circle1) => {
+  const a = circle0.centre.x;
+  const b = circle0.centre.y;
+  const c = circle1.centre.x;
+  const d = circle1.centre.y;
+  const r0 = circle0.radius;
+  const r1 = circle1.radius;
 
-  let del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
+  const dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
 
-  let xPartial = (a + c) / 2 + ((c - a) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
-  let x1 = xPartial - 2 * del * (b - d) / (dist * dist);
-  let x2 = xPartial + 2 * del * (b - d) / (dist * dist);
+  const del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
 
-  let yPartial = (b + d) / 2 + ((d - b) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
-  let y1 = yPartial + 2 * del * (a - c) / (dist * dist);
-  let y2 = yPartial - 2 * del * (a - c) / (dist * dist);
+  const xPartial = (a + c) / 2 + ((c - a) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
+  const x1 = xPartial - 2 * del * (b - d) / (dist * dist);
+  const x2 = xPartial + 2 * del * (b - d) / (dist * dist);
 
-  let p1 = new Point(x1,y1);
+  const yPartial = (b + d) / 2 + ((d - b) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
+  const y1 = yPartial + 2 * del * (a - c) / (dist * dist);
+  const y2 = yPartial - 2 * del * (a - c) / (dist * dist);
 
-  let p2 = new Point(x2,y2);
+  const p1 = new Point(x1,y1);
+
+  const p2 = new Point(x2,y2);
 
   return {
     p1: p1,
@@ -157,7 +146,10 @@ export const circleIntersect = (c0, c1, r0, r1) => {
   };
 }
 
-export const circleLineIntersect = (c, r, p1, p2) => {
+export const circleLineIntersect = (circle, p1, p2) => {
+  const cx = circle.centre.x;
+  const cy = circle.centre.y;
+  const r = circle.radius;
 
   const d = distance(p1, p2);
   //unit vector p1 p2
@@ -165,11 +157,11 @@ export const circleLineIntersect = (c, r, p1, p2) => {
   const dy = (p2.y - p1.y) / d;
 
   //point on line closest to circle centre
-  const t = dx * (c.x - p1.x) + dy * (c.y - p1.y);
+  const t = dx * (cx - p1.x) + dy * (cy - p1.y);
   const p = new Point(t * dx + p1.x, t * dy + p1.y);
 
   //distance from this point to centre
-  const d2 = distance(p, c);
+  const d2 = distance(p, circle.centre);
 
   //line intersects circle
   if (d2 < r) {
@@ -193,7 +185,8 @@ export const circleLineIntersect = (c, r, p1, p2) => {
 //angle in radians between two points on circle of radius r
 export const centralAngle = (p1, p2, r) => {
   //round off error can result in this being very slightly greater than 1
-  let temp = (0.5 * distance(p1, p2) / r).toFixed(12);
+  let temp = (0.5 * distance(p1, p2) / r);
+  temp = toFixed(temp,10);
   let res = 2 * Math.asin(temp);
   if(isNaN(res)) res = 0;
   return res;
@@ -215,7 +208,7 @@ export const throughOrigin = (p1, p2) => {
   }
   const test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
 
-  if (test.toFixed(6) == 0) return true;
+  if ( toFixed(test, 10) == 0) return true;
   else return false;
 }
 
@@ -239,25 +232,6 @@ export const centroidOfPolygon = (points) => {
   }
   f = twicearea * 3;
   return new Point( x / f, y / f);
-}
-
-//compare two points taking rounding errors into account
-export const comparePoints = (p1, p2) => {
-  if (typeof p1 === 'undefined' || typeof p2 === 'undefined') {
-    console.warn('Warning: point no defined.')
-    return false;
-  }
-  p1 = pointToFixed(p1, 10);
-  p2 = pointToFixed(p2, 10);
-  if (p1.x === p2.x && p1.y === p2.y) return true;
-  else return false;
-}
-
-export const pointToFixed = (p, places) => {
-  return {
-    x: p.x.toFixed(places),
-    y: p.y.toFixed(places)
-  };
 }
 
 //find a point at a distance d along the circumference of
@@ -285,4 +259,10 @@ export const randomFloat = (min, max) => {
 
 export const randomInt = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+//.toFixed returns a string for some no doubt very good reason.
+//Change it back to a float
+export const toFixed = (number, places) => {
+  return parseFloat(number.toFixed(places));
 }

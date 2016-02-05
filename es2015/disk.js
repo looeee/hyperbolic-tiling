@@ -48,13 +48,9 @@ export class Disk {
 
   }
 
-  getRadius() {
-    return this.radius;
-  }
-
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, this.radius, 0x000000, true);
+    this.draw.disk(this.centre, this.radius, 0x000000);
   }
 
   point(centre, radius, color) {
@@ -64,8 +60,8 @@ export class Disk {
   //draw a hyperbolic line between two points on the boundary circle
   //TODO: fix!
   line(p1, p2, color) {
-    const c = E.greatCircle(p1, p2, this.radius, this.centre);
-    const points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
+    //const c = E.greatCircle(p1, p2, this.radius, this.centre);
+    //const points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
 
     this.drawArc(points.p1, points.p2, color)
   }
