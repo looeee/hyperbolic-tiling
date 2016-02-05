@@ -12,4 +12,4 @@ import { RegularTesselation } from './regularTesselation';
 // *************************************************************************
 
 const tesselation = new RegularTesselation(E.randomInt(4,12), E.randomInt(4,12));
-//const tesselation = new RegularTesselation(6, 12);
+//const tesselation = new RegularTesselation(11, 12);

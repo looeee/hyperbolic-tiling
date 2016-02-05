@@ -23,8 +23,8 @@ export const arc = (p1, p2, circle) => {
   let clockwise = false;
   let alpha1, alpha2, startAngle, endAngle;
   const c = E.greatCircle(p1, p2, circle);
-  const oy = c.centre.y;
-  const ox = c.centre.x;
+  const oy = E.toFixed(c.centre.y, 10);
+  const ox = E.toFixed(c.centre.x, 10);
 
   //point at 0 radians on c
   const p3 = new Point( ox + c.radius, oy);
@@ -33,16 +33,27 @@ export const arc = (p1, p2, circle) => {
   alpha1 = E.centralAngle(p3, p1, c.radius);
   alpha2 = E.centralAngle(p3, p2, c.radius);
 
-  alpha1 = (p1.y < oy) ? 2 * Math.PI - alpha1 : alpha1;
-  alpha2 = (p2.y < oy) ? 2 * Math.PI - alpha2 : alpha2;
+  //for comparison to avoid round off errors
+  const p1X = E.toFixed(p1.x, 10);
+  const p1Y = E.toFixed(p1.y, 10);
+  const p2X = E.toFixed(p2.x, 10);
+  const p2Y = E.toFixed(p2.y, 10);
+
+  //console.log('p2x: ', p2X,'ox: ', ox);
+  //console.log('p1y: ', p1Y, 'p2y: ', p2Y,'ox: ', ox);
+
+  alpha1 = (p1Y < oy) ? 2 * Math.PI - alpha1 : alpha1;
+  alpha2 = (p2Y < oy) ? 2 * Math.PI - alpha2 : alpha2;
+
+  //console.log(alpha1, alpha2);
 
   //case where p1 above and p2 below or on the line c.centre -> p3
-  if ((p1.x >= ox && p2.x >= ox) && (p1.y <= oy && p2.y >= oy)) {
+  if (!(p1X <= ox && p2X <= ox) && (p1Y <= oy && p2Y >= oy)) {
     startAngle = alpha1;
     endAngle = alpha2;
   }
   //case where p2 above and p1 below or on the line c.centre -> p3
-  else if ((p1.x >= ox && p2.x >= ox) && (p1.y >= oy && p2.y <= oy)) {
+  else if ((p1X >= ox && p2X >= ox) && (p1Y >= oy && p2Y <= oy)) {
     startAngle = alpha2;
     endAngle = alpha1;
     clockwise = true;
@@ -58,7 +69,7 @@ export const arc = (p1, p2, circle) => {
     startAngle = alpha1;
     endAngle = alpha2;
   }
-  //console.log(startAngle, endAngle);
+  //console.log(startAngle, endAngle, clockwise);
   return {
     circle: c,
     startAngle: startAngle,

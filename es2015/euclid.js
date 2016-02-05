@@ -202,7 +202,7 @@ export const normalVector = (p1, p2) => {
 //needs to take into account roundoff errors so returns true if
 //test is close to 0
 export const throughOrigin = (p1, p2) => {
-  if (p1.x === 0 && p2.x === 0) {
+  if ( toFixed(p1.x, 10) == 0 && toFixed(p2.x, 10) === 0) {
     //vertical line through centre
     return true;
   }
@@ -216,7 +216,7 @@ export const throughOrigin = (p1, p2) => {
 export const centroidOfPolygon = (points) => {
   let first = points[0],
     last = points[points.length - 1];
-  if (first.x != last.x || first.y != last.y) points.push(first);
+  if (first.x !== last.x || first.y !== last.y) points.push(first);
   let twicearea = 0,
     x = 0,
     y = 0,

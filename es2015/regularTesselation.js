@@ -22,6 +22,7 @@ from './circle';
 // *************************************************************************
 export class RegularTesselation {
   constructor(p, q, rotation, colour, maxLayers) {
+    console.log(p,q);
     this.disk = new Disk();
 
     this.p = p;
@@ -55,12 +56,6 @@ export class RegularTesselation {
   testing() {
     let wireframe = false;
     wireframe = true;
-
-    let p1 = new Point(-239.55051764498, 239.55051764498035);
-    let p2 = new Point(-270.1439571978872, 217.15456551396463);
-
-    //this.disk.drawArc(p1,p2, 45348774);
-
 
     //this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
     const poly2 = H.reflect(this.fr, this.fr[1], this.fr[2], this.disk.circle);
@@ -108,6 +103,7 @@ export class RegularTesselation {
       poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
       this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
     }
+
 
   }
 
