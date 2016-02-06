@@ -35,4 +35,14 @@ export class Point{
     else return false;
   }
 
+  //map from disk of currentRadius to unit disk
+  toUnitDisk(currentRadius){
+    return new Point(this.x/currentRadius, this.y/currentRadius);
+  }
+
+  //map from unit disk to disk of newRadius
+  fromUnitDisk(newRadius){
+    return new Point(this.x * newRadius, this.y * newRadius);
+  }
+
 }

@@ -1,5 +1,13 @@
 import * as E from './euclid';
-import { Point } from './point';
+import {
+  Point
+}
+from './point';
+
+import {
+  Circle
+}
+from './circle';
 // * ***********************************************************************
 // *
 // *   HYPERBOLIC FUNCTIONS
@@ -7,6 +15,71 @@ import { Point } from './point';
 // *   operations
 // *
 // *************************************************************************
+
+//Similar to the method developed by Ajit Datar for his HyperArt program
+export const arcV2 = (p1, p2, circle) => {
+  let clockwise = false;
+  if (E.throughOrigin(p1, p2)) {
+    return {
+      circle: circle,
+      startAngle: 0,
+      endAngle: 0,
+      clockwise: false,
+      straightLine: true,
+    }
+  }
+  const q1 = p1.toUnitDisk(circle.radius);
+  const q2 = p2.toUnitDisk(circle.radius);
+  //console.log(q1,q2);
+
+  const wp1 = poincareToWeierstrass(q1);
+  const wp2 = poincareToWeierstrass(q2);
+
+  const wcp = weierstrassCrossProduct(wp1, wp2);
+
+  //console.log(wp1, wp2, wcp);
+
+  const cx = wcp.x / wcp.z;
+  const cy = wcp.y / wcp.z;
+
+  const u1 = q1.x - cx;
+  const v1 = q1.y - cy;
+  const u2 = q2.x - cx;
+  const v2 = q2.y - cy;
+  //console.log(u1,v1,u2,v2);
+
+  const r = Math.sqrt( (u1*u1) + (v1*v1) );
+  const arcCircle = new Circle(cx*circle.radius, cy*circle.radius, r*circle.radius);
+
+  let theta = Math.atan2( (v2*u1 - v1*u2), (u1*u2 +v1*v2) );
+
+
+  let startAngle = Math.atan2(v1, u1);
+
+  let endAngle = theta;
+
+  endAngle = Math.atan2(v2, u2);
+
+  //angles are in (-pi, pi), transform to (0,2pi)
+  startAngle = (startAngle < 0) ? 2 * Math.PI + startAngle : startAngle;
+  endAngle = (endAngle < 0) ? 2 * Math.PI + endAngle : endAngle;
+
+  if(startAngle > endAngle){
+    let t = startAngle;
+    startAngle = endAngle;
+    endAngle = t;
+    clockwise = true;
+  }
+
+  //console.log(startAngle, endAngle);
+  return {
+    circle: arcCircle,
+    startAngle: startAngle,
+    endAngle: endAngle,
+    clockwise: clockwise,
+    straightLine: false
+  }
+}
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 //TODO deal with case of staight lines through centre
@@ -27,7 +100,7 @@ export const arc = (p1, p2, circle) => {
   const ox = E.toFixed(c.centre.x, 10);
 
   //point at 0 radians on c
-  const p3 = new Point( ox + c.radius, oy);
+  const p3 = new Point(ox + c.radius, oy);
 
   //calculate the position of each point in the circle
   alpha1 = E.centralAngle(p3, p1, c.radius);
@@ -49,6 +122,7 @@ export const arc = (p1, p2, circle) => {
 
   //case where p1 above and p2 below or on the line c.centre -> p3
   if (!(p1X <= ox && p2X <= ox) && (p1Y <= oy && p2Y >= oy)) {
+    //console.log('obj');
     startAngle = alpha1;
     endAngle = alpha2;
   }
@@ -89,7 +163,7 @@ export const translateX = (pointsArray, distance) => {
   for (let i = 0; i < l; i++) {
     const x = pos * pointsArray[i].x + neg * pointsArray[i].y;
     const y = neg * pointsArray[i].x + pos * pointsArray[i].y;
-    newPoints.push( new Point(x,y));
+    newPoints.push(new Point(x, y));
   }
   return newPoints;
 }
@@ -113,7 +187,7 @@ export const reflect = (pointsArray, p1, p2, circle) => {
     }
   } else {
     for (let i = 0; i < l; i++) {
-      newPoints.push(E.lineReflection(p1,p2,pointsArray[i]));
+      newPoints.push(E.lineReflection(p1, p2, pointsArray[i]));
     }
   }
   return newPoints;
@@ -130,7 +204,7 @@ export const poincareToWeierstrass = (point2D) => {
 
 export const weierstrassToPoincare = (point3D) => {
   const factor = 1 / (1 + point3D.z);
-  return new Point(factor * point3D.x,factor * point3D.y);
+  return new Point(factor * point3D.x, factor * point3D.y);
 }
 
 export const rotateAboutOriginWeierstrass = (point3D, angle) => {
@@ -143,7 +217,7 @@ export const rotateAboutOriginWeierstrass = (point3D, angle) => {
 
 export const rotateAboutOrigin = (point2D, angle) => {
   return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
-     Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
+    Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
 }
 
 export const rotatePgonAboutOrigin = (points2DArray, angle) => {
@@ -171,9 +245,29 @@ export const translatePoincare = (p1, p2) => {
   const x = p1Factor * p1.x + p2Factor * p2.x;
   const y = p1Factor * p1.y + p2Factor * p2.y;
 
-  return new Point(x,y);
+  return new Point(x, y);
 }
 
 export const inverseTranslatePoincare = (p1, p2) => {
 
+}
+
+export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
+  if(point3D_1.z === 'undefined' || point3D_2.z === 'undefined'){
+    console.error('weierstrassCrossProduct: 3D points required');
+  }
+  let r = {
+    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
+    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
+    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+  };
+
+  const norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
+  if (E.toFixed(norm, 10) == 0) {
+    console.error('weierstrassCrossProduct: division by zero error');
+  }
+  r.x = r.x / norm;
+  r.y = r.y / norm;
+  r.z = r.z / norm;
+  return r;
 }

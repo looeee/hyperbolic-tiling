@@ -10,11 +10,12 @@ var projectname = 'hyperbolic-tiling',
   sass = require('gulp-sass'),
   watch = require('gulp-watch'),
   autoprefixer = require('gulp-autoprefixer'),
-  babelify = require('babelify'),
-  through2 = require('through2'),
-  browserify = require('browserify'),
-  source = require('vinyl-source-stream'),
-  rollup     = require('gulp-rollup'),
+  //babelify = require('babelify'),
+  //through2 = require('through2'),
+  //browserify = require('browserify'),
+  //source = require('vinyl-source-stream'),
+  rollup = require('gulp-rollup'),
+  babel = require('rollup-plugin-babel'),
   livereload = require('gulp-livereload');
 
 //Put all css/scss tasks here
@@ -31,6 +32,26 @@ gulp.task('css', function() {
 
 //Put all javascript tasks here
 gulp.task('js', function() {
+  gulp.src(es2015_path + 'main.js', {
+    read: false
+  })
+  .pipe(rollup({
+    plugins: [
+      babel({
+        exclude: 'node_modules/**',
+        babelrc: false,
+        presets: ['es2015-rollup'],
+        //plugins: ['transform-class-properties'],
+      })
+    ]
+  }))
+  .pipe(gulp.dest(scripts_path))
+  .pipe(livereload());
+});
+
+/* OLD METHOD BROWSERIFY AND BABELIFY 
+//Put all javascript tasks here
+gulp.task('js', function() {
   return browserify({
     entries: es2015_path + 'main.js',
     extensions: ['.js'],
@@ -42,6 +63,8 @@ gulp.task('js', function() {
     .pipe(gulp.dest(scripts_path))
     .pipe(livereload());
 });
+*/
+
 
 //default task
 gulp.task('default', ['css', 'js'], function() {
