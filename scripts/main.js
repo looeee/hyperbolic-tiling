@@ -306,8 +306,8 @@ var arc = function arc(p1, p2, circle) {
     };
   }
   var clockwise = false;
-  var alpha1 = undefined,
-      alpha2 = undefined,
+  var alpha = undefined,
+      beta = undefined,
       startAngle = undefined,
       endAngle = undefined;
   var c = greatCircle(p1, p2, circle);
@@ -318,8 +318,8 @@ var arc = function arc(p1, p2, circle) {
   var p3 = new Point(ox + c.radius, oy);
 
   //calculate the position of each point in the circle
-  alpha1 = centralAngle(p3, p1, c.radius);
-  alpha2 = centralAngle(p3, p2, c.radius);
+  alpha = centralAngle(p3, p1, c.radius);
+  beta = centralAngle(p3, p2, c.radius);
 
   //for comparison to avoid round off errors
   var p1X = toFixed(p1.x, 10);
@@ -327,38 +327,36 @@ var arc = function arc(p1, p2, circle) {
   var p2X = toFixed(p2.x, 10);
   var p2Y = toFixed(p2.y, 10);
 
-  //console.log('p2x: ', p2X,'ox: ', ox);
-  //console.log('p1y: ', p1Y, 'p2y: ', p2Y,'ox: ', ox);
+  alpha = p1Y < oy ? 2 * Math.PI - alpha : alpha;
+  beta = p2Y < oy ? 2 * Math.PI - beta : beta;
 
-  alpha1 = p1Y < oy ? 2 * Math.PI - alpha1 : alpha1;
-  alpha2 = p2Y < oy ? 2 * Math.PI - alpha2 : alpha2;
-
-  //console.log(alpha1, alpha2);
-
-  //case where p1 above and p2 below or on the line c.centre -> p3
-  if (!(p1X <= ox && p2X <= ox) && p1Y <= oy && p2Y >= oy) {
-    //console.log('obj');
-    startAngle = alpha1;
-    endAngle = alpha2;
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //clockwise order
+  if (alpha > 3 * Math.PI / 2 && beta < Math.PI / 2) {
+    startAngle = alpha;
+    endAngle = beta;
   }
-  //case where p2 above and p1 below or on the line c.centre -> p3
-  else if (p1X >= ox && p2X >= ox && p1Y >= oy && p2Y <= oy) {
-      startAngle = alpha2;
-      endAngle = alpha1;
-      clockwise = true;
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //anticlockwise order
+  else if (beta > 3 * Math.PI / 2 && alpha < Math.PI / 2) {
+      startAngle = beta;
+      endAngle = alpha;
     }
-    //points in clockwise order
-    else if (alpha1 > alpha2) {
-        startAngle = alpha2;
-        endAngle = alpha1;
-        clockwise = true;
+    //other case where we are drawing the wrong way around the circle
+    else if (beta - alpha > Math.PI) {
+        startAngle = beta;
+        endAngle = alpha;
+      } else if (alpha - beta > Math.PI) {
+        startAngle = alpha;
+        endAngle = beta;
+      } else if (alpha > beta) {
+        startAngle = beta;
+        endAngle = alpha;
+      } else {
+        startAngle = alpha;
+        endAngle = beta;
       }
-      //points in anticlockwise order
-      else {
-          startAngle = alpha1;
-          endAngle = alpha2;
-        }
-  //console.log(startAngle, endAngle, clockwise);
+
   return {
     circle: c,
     startAngle: startAngle,
@@ -710,20 +708,20 @@ var Disk = function () {
         //line not through the origin (hyperbolic arc)
         if (!arc$$.straightLine) {
 
-          if (arc$$.clockwise) {
-            p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p2;
-          } else {
-            p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p1;
-          }
+          //if (arc.clockwise) {
+          p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p2;
+          //} else {
+          //p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
+          //}
           points.push(p);
 
           while (distance(p, vertices[(i + 1) % l]) > spacing) {
 
-            if (arc$$.clockwise) {
-              p = spacedPointOnArc(arc$$.circle, p, spacing).p2;
-            } else {
-              p = spacedPointOnArc(arc$$.circle, p, spacing).p1;
-            }
+            //if (arc.clockwise) {
+            //p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
+            //} else {
+            p = spacedPointOnArc(arc$$.circle, p, spacing).p2;
+            //}
 
             points.push(p);
           }
@@ -824,7 +822,7 @@ var RegularTesselation = function () {
 
     babelHelpers.classCallCheck(this, RegularTesselation);
 
-    //console.log(p,q);
+    console.log(p, q);
     this.disk = new Disk();
 
     this.p = p;
@@ -858,28 +856,28 @@ var RegularTesselation = function () {
     value: function testing() {
       var wireframe = false;
       wireframe = true;
+
       //let p1 = new Point(160.66832505298834, 278.2857021587673);
       //let p2 = new Point(94.98196390075151, 333.4031035749877);
 
-      //this.disk.drawArc(p1,p3,1546645647)
+      //this.disk.drawArc(p1,p2,1546645647)
       //this.disk.drawArc(p2,p3,1546645647)
 
-      var p1 = new Point(100, -100);
-      var p2 = new Point(100, 250);
-      var p3 = new Point(-150, -100);
-
       /*
-      this.disk.point(p1, 5);
-      this.disk.point(p2, 5);
-      this.disk.point(p3, 5);
-       this.disk.drawArc(p1,p2,1546645647)
-      this.disk.drawArc(p1,p3,1546645647)
-      this.disk.drawArc(p3,p2,1546645647)
+      let p1 = new Point(220, 100);
+      let p2 = new Point(-220, -250);
+      let p3 = new Point(150, -250);
+       this.disk.point(p1, 5,0x008bf9);
+      this.disk.point(p2, 5,0x31f700);
+      this.disk.point(p3, 5,0xff0033);
+       this.disk.drawArc(p1,p2,0x008bf9)
+      this.disk.drawArc(p1,p3,0x31f700)
+      this.disk.drawArc(p3,p2,0xff0033)
       */
 
       //this.disk.polygon([p1,p2,p3], E.randomInt(10000, 14777215));
 
-      var a1 = arc(p1, p2, this.disk.circle);
+      //let a1 = H.arc(p1, p2, this.disk.circle);
 
       //let a2 = H.arcV2(p1, p2, this.disk.circle);
       //console.log(a1,a2);
@@ -913,26 +911,26 @@ var RegularTesselation = function () {
       var num = this.p * 2;
       for (var i = 0; i < num; i++) {
         var poly = rotatePgonAboutOrigin(this.fr, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly2, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly3, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly4, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly5, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly6, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly7, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         poly = rotatePgonAboutOrigin(poly8, 2 * Math.PI / num * (i + 1));
         //if(i===3){
         //console.table(poly)
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
         //}
         poly = rotatePgonAboutOrigin(poly9, 2 * Math.PI / num * (i + 1));
-        this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
       }
     }
 
@@ -998,4 +996,4 @@ var RegularTesselation = function () {
 // *************************************************************************
 
 var tesselation = new RegularTesselation(randomInt(4, 12), randomInt(4, 12));
-//const tesselation = new RegularTesselation(9, 4);
+//const tesselation = new RegularTesselation(11, 9);

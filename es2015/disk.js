@@ -104,20 +104,20 @@ export class Disk {
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {
 
-        if (arc.clockwise) {
-          p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
-        } else {
-          p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
-        }
+        //if (arc.clockwise) {
+        p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
+        //} else {
+          //p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
+        //}
         points.push(p);
 
         while (E.distance(p, vertices[(i + 1) % l]) > spacing) {
 
-          if (arc.clockwise) {
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-          } else {
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
-          }
+          //if (arc.clockwise) {
+            //p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
+          //} else {
+          p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
+          //}
 
           points.push(p);
         }
