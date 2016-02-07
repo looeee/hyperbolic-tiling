@@ -40,94 +40,6 @@ var distance = function distance(p1, p2) {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
 
-//midpoint of the line segment connecting two points
-var midpoint = function midpoint(p1, p2) {
-  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-};
-
-//slope of line through p1, p2
-var slope = function slope(p1, p2) {
-  return (p2.x - p1.x) / (p2.y - p1.y);
-};
-
-//slope of line perpendicular to a line defined by p1,p2
-var perpendicularSlope = function perpendicularSlope(p1, p2) {
-  return -1 / Math.pow(slope(p1, p2), -1);
-};
-
-//intersection point of two lines defined by p1,m1 and q1,m2
-var intersection = function intersection(p1, m1, p2, m2) {
-  var c1 = undefined,
-      c2 = undefined,
-      x = undefined,
-      y = undefined;
-  if (toFixed(p1.y, 10) == 0) {
-    x = p1.x;
-    y = m2 * (p1.x - p2.x) + p2.y;
-  } else if (toFixed(p2.y, 10) == 0) {
-    x = p2.x;
-    y = m1 * (p2.x - p1.x) + p1.y;
-  } else {
-    //y intercept of first line
-    c1 = p1.y - m1 * p1.x;
-    //y intercept of second line
-    c2 = p2.y - m2 * p2.x;
-
-    x = (c2 - c1) / (m1 - m2);
-    y = m1 * x + c1;
-  }
-
-  return new Point(x, y);
-};
-
-//get the circle inverse of a point p with respect a circle radius r centre c
-var inverse = function inverse(point, circle) {
-  var c = circle.centre;
-  var r = circle.radius;
-  var alpha = r * r / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
-  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
-};
-
-//reflect p3 across the line defined by p1,p2
-var lineReflection = function lineReflection(p1, p2, p3) {
-  var m = slope(p1, p2);
-  //reflection in y axis
-  if (m > 999999 || m < -999999) {
-    return new Point(p3.x, -p3.y);
-  }
-  //reflection in x axis
-  else if (toFixed(m, 10) == 0) {
-      return new Point(-p3.x, p3.y);
-    }
-    //reflection in arbitrary line
-    else {
-        var c = p1.y - m * p1.x;
-        var d = (p3.x + (p3.y - c) * m) / (1 + m * m);
-        var x = 2 * d - p3.x;
-        var y = 2 * d * m - p3.y + 2 * c;
-        return new Point(x, y);
-      }
-};
-
-//calculate the radius and centre of the circle required to draw a line between
-//two points in the hyperbolic plane defined by the disk (r, c)
-var greatCircle = function greatCircle(p1, p2, circle) {
-  var p1Inverse = inverse(p1, circle);
-  var p2Inverse = inverse(p2, circle);
-
-  var m = midpoint(p1, p1Inverse);
-  var n = midpoint(p2, p2Inverse);
-
-  var m1 = perpendicularSlope(m, p1Inverse);
-  var m2 = perpendicularSlope(n, p2Inverse);
-
-  //centre is the centrepoint of the circle out of which the arc is made
-  var centre = intersection(m, m1, n, m2);
-  var radius = distance(centre, p1);
-
-  return new Circle(centre.x, centre.y, radius);
-};
-
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   var cx = circle.centre.x;
   var cy = circle.centre.y;
@@ -162,16 +74,6 @@ var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   } else {
     console.error('Error: line does not intersect circle!');
   }
-};
-
-//angle in radians between two points on circle of radius r
-var centralAngle = function centralAngle(p1, p2, r) {
-  //round off error can result in this being very slightly greater than 1
-  var temp = 0.5 * distance(p1, p2) / r;
-  temp = toFixed(temp, 10);
-  var res = 2 * Math.asin(temp);
-  if (isNaN(res)) res = 0;
-  return res;
 };
 
 //does the line connecting p1, p2 go through the point (0,0)?
@@ -293,110 +195,144 @@ var Circle = function Circle(centreX, centreY, radius) {
   this.radius = radius;
 };
 
-//calculate greatCircle, startAngle and endAngle for hyperbolic arc
-//TODO deal with case of staight lines through centre
+// * ***********************************************************************
+// *
+// *   HYPERBOLIC FUNCTIONS
+// *   a place to stash all the functions that are hyperbolic gemeometrical
+// *   operations
+// *
+// *************************************************************************
+
+//are the angles alpha, beta in clockwise order on unit disk?
+var clockwise = function clockwise(alpha, beta) {
+  var cw = true;
+  var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
+  var b = beta - alpha > Math.PI;
+  var c = alpha > beta && !(alpha - beta > Math.PI);
+  if (a || b || c) {
+    cw = false;
+  }
+  return cw;
+};
+
+//Similar to the method developed by Ajit Datar for his HyperArt program
+//TODO test which arc method is fastest
 var arc = function arc(p1, p2, circle) {
+  var startAngle = undefined,
+      endAngle = undefined;
   if (throughOrigin(p1, p2)) {
     return {
       circle: circle,
       startAngle: 0,
       endAngle: 0,
-      clockwise: false,
       straightLine: true
     };
   }
-  var clockwise = false;
-  var alpha = undefined,
-      beta = undefined,
-      startAngle = undefined,
-      endAngle = undefined;
-  var c = greatCircle(p1, p2, circle);
-  var oy = toFixed(c.centre.y, 10);
-  var ox = toFixed(c.centre.x, 10);
+  var q1 = p1.toUnitDisk(circle.radius);
+  var q2 = p2.toUnitDisk(circle.radius);
 
-  //point at 0 radians on c
-  var p3 = new Point(ox + c.radius, oy);
+  var wp1 = poincareToWeierstrass(q1);
+  var wp2 = poincareToWeierstrass(q2);
 
-  //calculate the position of each point in the circle
-  alpha = centralAngle(p3, p1, c.radius);
-  beta = centralAngle(p3, p2, c.radius);
+  var wcp = weierstrassCrossProduct(wp1, wp2);
 
-  //for comparison to avoid round off errors
-  var p1X = toFixed(p1.x, 10);
-  var p1Y = toFixed(p1.y, 10);
-  var p2X = toFixed(p2.x, 10);
-  var p2Y = toFixed(p2.y, 10);
+  var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
 
-  alpha = p1Y < oy ? 2 * Math.PI - alpha : alpha;
-  beta = p2Y < oy ? 2 * Math.PI - beta : beta;
+  //calculate centre of arcCircle relative to unit disk
+  var cx = wcp.x / wcp.z;
+  var cy = wcp.y / wcp.z;
 
+  //translate points to origin before calculating arctan
+  q1.x = q1.x - arcCentre.x;
+  q1.y = q1.y - arcCentre.y;
+  q2.x = q2.x - arcCentre.x;
+  q2.y = q2.y - arcCentre.y;
+
+  var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
+  var arcCircle = new Circle(arcCentre.x * circle.radius, arcCentre.y * circle.radius, r * circle.radius);
+
+  var alpha = Math.atan2(q1.y, q1.x);
+
+  var beta = Math.atan2(q2.y, q2.x);
+
+  //angles are in (-pi, pi), transform to (0,2pi)
+  alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
+  beta = beta < 0 ? 2 * Math.PI + beta : beta;
+
+  /*
   //points are above and below the line (0,0)->(0,1) on unit disk
   //clockwise order
-  if (alpha > 3 * Math.PI / 2 && beta < Math.PI / 2) {
+  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
     startAngle = alpha;
     endAngle = beta;
   }
   //points are above and below the line (0,0)->(0,1) on unit disk
   //anticlockwise order
-  else if (beta > 3 * Math.PI / 2 && alpha < Math.PI / 2) {
-      startAngle = beta;
-      endAngle = alpha;
-    }
-    //other case where we are drawing the wrong way around the circle
-    else if (beta - alpha > Math.PI) {
-        startAngle = beta;
-        endAngle = alpha;
-      } else if (alpha - beta > Math.PI) {
-        startAngle = alpha;
-        endAngle = beta;
-      } else if (alpha > beta) {
-        startAngle = beta;
-        endAngle = alpha;
-      } else {
-        startAngle = alpha;
-        endAngle = beta;
-      }
+  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  //other case where we are drawing the wrong way around the circle
+  else if(beta - alpha > Math.PI){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else if(alpha - beta > Math.PI){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  else if(alpha > beta){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else{
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  */
+  if (clockwise(alpha, beta)) {
+    startAngle = alpha;
+    endAngle = beta;
+  } else {
+    startAngle = beta;
+    endAngle = alpha;
+  }
 
   return {
-    circle: c,
+    circle: arcCircle,
     startAngle: startAngle,
     endAngle: endAngle,
-    clockwise: clockwise,
     straightLine: false
   };
 };
 
-//reflect a set of points across a hyperbolic arc
-//TODO add case where reflection is across straight line
-var reflect = function reflect(pointsArray, p1, p2, circle) {
-  var l = pointsArray.length;
-  var a = arc(p1, p2, circle);
-  var newPoints = [];
-
-  if (!a.straightLine) {
-    for (var i = 0; i < l; i++) {
-      newPoints.push(inverse(pointsArray[i], a.circle));
-    }
-  } else {
-    for (var i = 0; i < l; i++) {
-      newPoints.push(lineReflection(p1, p2, pointsArray[i]));
-    }
-  }
-  return newPoints;
+var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
+  var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
+  return {
+    x: 2 * factor * point2D.x,
+    y: 2 * factor * point2D.y,
+    z: factor * (1 + point2D.x * point2D.x + point2D.y * point2D.y)
+  };
 };
 
-var rotateAboutOrigin = function rotateAboutOrigin(point2D, angle) {
-  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y, Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
-};
-
-var rotatePgonAboutOrigin = function rotatePgonAboutOrigin(points2DArray, angle) {
-  var l = points2DArray.length;
-  var rotatedPoints2DArray = [];
-  for (var i = 0; i < l; i++) {
-    var point = rotateAboutOrigin(points2DArray[i], angle);
-    rotatedPoints2DArray.push(point);
+var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3D_2) {
+  if (point3D_1.z === 'undefined' || point3D_2.z === 'undefined') {
+    console.error('weierstrassCrossProduct: 3D points required');
   }
-  return rotatedPoints2DArray;
+  var r = {
+    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
+    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
+    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+  };
+
+  var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
+  if (toFixed(norm, 10) == 0) {
+    console.error('weierstrassCrossProduct: division by zero error');
+  }
+  r.x = r.x / norm;
+  r.y = r.y / norm;
+  r.z = r.z / norm;
+  return r;
 };
 
 //NOTE will give a warning:  Too many active WebGL contexts
@@ -857,81 +793,64 @@ var RegularTesselation = function () {
       var wireframe = false;
       wireframe = true;
 
-      //let p1 = new Point(160.66832505298834, 278.2857021587673);
-      //let p2 = new Point(94.98196390075151, 333.4031035749877);
+      var p1 = new Point(220, 100);
+      var p2 = new Point(-220, -250);
+      var p3 = new Point(150, -250);
 
-      //this.disk.drawArc(p1,p2,1546645647)
-      //this.disk.drawArc(p2,p3,1546645647)
+      this.disk.point(p1, 5, 0x008bf9);
+      this.disk.point(p2, 5, 0x31f700);
+      this.disk.point(p3, 5, 0xff0033);
 
-      /*
-      let p1 = new Point(220, 100);
-      let p2 = new Point(-220, -250);
-      let p3 = new Point(150, -250);
-       this.disk.point(p1, 5,0x008bf9);
-      this.disk.point(p2, 5,0x31f700);
-      this.disk.point(p3, 5,0xff0033);
-       this.disk.drawArc(p1,p2,0x008bf9)
-      this.disk.drawArc(p1,p3,0x31f700)
-      this.disk.drawArc(p3,p2,0xff0033)
-      */
+      //this.disk.drawArc(p1,p2,0x008bf9)
+      //this.disk.drawArc(p1,p3,0x31f700)
+      //this.disk.drawArc(p3,p2,0xff0033)
 
+      this.disk.polygonOutline([p1, p2, p3], randomInt(10000, 14777215));
       //this.disk.polygon([p1,p2,p3], E.randomInt(10000, 14777215));
 
-      //let a1 = H.arc(p1, p2, this.disk.circle);
-
-      //let a2 = H.arcV2(p1, p2, this.disk.circle);
-      //console.log(a1,a2);
-      //this.disk.drawArc(p1,p2,1546645647)
-
+      /*
       //this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
-      var poly2 = reflect(this.fr, this.fr[1], this.fr[2], this.disk.circle);
+      const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
       //this.disk.polygon(poly2, E.randomInt(10000, 14777215));
-
-      var poly3 = reflect(poly2, poly2[0], poly2[1], this.disk.circle);
+       const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
       //this.disk.polygon(poly3, E.randomInt(10000, 14777215), '', wireframe);
-
-      var poly4 = reflect(poly3, poly3[2], poly3[0], this.disk.circle);
+       const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
       //this.disk.polygon(poly4, E.randomInt(10000, 14777215), '', wireframe);
-
-      var poly5 = reflect(poly4, poly4[1], poly4[0], this.disk.circle);
+       const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
       //this.disk.polygon(poly5, E.randomInt(10000, 14777215), '', wireframe);
-
-      var poly6 = reflect(poly3, poly3[2], poly3[1], this.disk.circle);
+       const poly6 = H.reflect(poly5, poly3[0], poly3[2], this.disk.circle);
       //this.disk.polygon(poly6, E.randomInt(10000, 14777215), '', wireframe);
-
-      var poly7 = reflect(poly6, poly6[0], poly6[2], this.disk.circle);
+       const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
       //this.disk.polygon(poly7, E.randomInt(10000, 14777215), '', wireframe);
-
-      var poly8 = reflect(poly6, poly6[0], poly6[1], this.disk.circle);
+       const poly8 = H.reflect(poly7, poly6[0], poly6[2], this.disk.circle);
       //this.disk.polygon(poly8, E.randomInt(10000, 14777215), '', wireframe);
-
-      var poly9 = reflect(poly7, poly7[0], poly7[1], this.disk.circle);
+       const poly9 = H.reflect(poly8, poly7[0], poly7[1], this.disk.circle);
       //this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
-
-      var num = this.p * 2;
-      for (var i = 0; i < num; i++) {
-        var poly = rotatePgonAboutOrigin(this.fr, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly2, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly3, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly4, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly5, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly6, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly7, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
-        poly = rotatePgonAboutOrigin(poly8, 2 * Math.PI / num * (i + 1));
+       let num = this.p*2;
+      for(let i =0; i < num; i++){
+        let poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly3, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly4, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly5, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly6, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly7, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly8, (2*Math.PI/num)*(i+1));
         //if(i===3){
-        //console.table(poly)
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
+          //console.table(poly)
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
         //}
-        poly = rotatePgonAboutOrigin(poly9, 2 * Math.PI / num * (i + 1));
-        this.disk.polygonOutline(poly, randomInt(10000, 14777215), '', wireframe);
+        poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
+        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
       }
+      */
     }
 
     //calculate first point of fundamental polygon using Coxeter's method

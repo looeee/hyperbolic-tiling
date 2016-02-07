@@ -57,13 +57,6 @@ export class RegularTesselation {
     let wireframe = false;
     wireframe = true;
 
-    //let p1 = new Point(160.66832505298834, 278.2857021587673);
-    //let p2 = new Point(94.98196390075151, 333.4031035749877);
-
-    //this.disk.drawArc(p1,p2,1546645647)
-    //this.disk.drawArc(p2,p3,1546645647)
-
-    /*
     let p1 = new Point(220, 100);
     let p2 = new Point(-220, -250);
     let p3 = new Point(150, -250);
@@ -72,50 +65,44 @@ export class RegularTesselation {
     this.disk.point(p2, 5,0x31f700);
     this.disk.point(p3, 5,0xff0033);
 
-    this.disk.drawArc(p1,p2,0x008bf9)
-    this.disk.drawArc(p1,p3,0x31f700)
-    this.disk.drawArc(p3,p2,0xff0033)
-    */
+    //this.disk.drawArc(p1,p2,0x008bf9)
+    //this.disk.drawArc(p1,p3,0x31f700)
+    //this.disk.drawArc(p3,p2,0xff0033)
 
+    this.disk.polygonOutline([p1,p2,p3], E.randomInt(10000, 14777215));
     //this.disk.polygon([p1,p2,p3], E.randomInt(10000, 14777215));
 
 
-    //let a1 = H.arc(p1, p2, this.disk.circle);
-
-    //let a2 = H.arcV2(p1, p2, this.disk.circle);
-    //console.log(a1,a2);
-    //this.disk.drawArc(p1,p2,1546645647)
-
-
+    /*
     //this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
-    const poly2 = H.reflect(this.fr, this.fr[1], this.fr[2], this.disk.circle);
+    const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
     //this.disk.polygon(poly2, E.randomInt(10000, 14777215));
 
     const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
     //this.disk.polygon(poly3, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly4 = H.reflect(poly3, poly3[2], poly3[0], this.disk.circle);
+    const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
     //this.disk.polygon(poly4, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly5 = H.reflect(poly4, poly4[1], poly4[0], this.disk.circle);
+    const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
     //this.disk.polygon(poly5, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly6 = H.reflect(poly3, poly3[2], poly3[1], this.disk.circle);
+    const poly6 = H.reflect(poly5, poly3[0], poly3[2], this.disk.circle);
     //this.disk.polygon(poly6, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly7 = H.reflect(poly6, poly6[0], poly6[2], this.disk.circle);
+    const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
     //this.disk.polygon(poly7, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly8 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
+    const poly8 = H.reflect(poly7, poly6[0], poly6[2], this.disk.circle);
     //this.disk.polygon(poly8, E.randomInt(10000, 14777215), '', wireframe);
 
-    const poly9 = H.reflect(poly7, poly7[0], poly7[1], this.disk.circle);
+    const poly9 = H.reflect(poly8, poly7[0], poly7[1], this.disk.circle);
     //this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
 
     let num = this.p*2;
     for(let i =0; i < num; i++){
       let poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
-      this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
       poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
       this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
       poly = H.rotatePgonAboutOrigin(poly3, (2*Math.PI/num)*(i+1));
@@ -136,7 +123,7 @@ export class RegularTesselation {
       poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
       this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
     }
-
+    */
 
   }
 

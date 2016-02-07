@@ -16,59 +16,63 @@ from './circle';
 // *
 // *************************************************************************
 
+//are the angles alpha, beta in clockwise order on unit disk?
+const clockwise = (alpha, beta) => {
+  let cw = true;
+  const a = (beta > 3*Math.PI/2 && alpha < Math.PI/2);
+  const b = (beta - alpha > Math.PI);
+  const c = ((alpha > beta) && !(alpha - beta > Math.PI));
+  if(a || b || c){
+    cw = false;
+  }
+  return cw;
+}
+
+
 //Similar to the method developed by Ajit Datar for his HyperArt program
-export const arcV2 = (p1, p2, circle) => {
-  let clockwise = false;
+//TODO test which arc method is fastest
+export const arc = (p1, p2, circle) => {
   let startAngle, endAngle;
   if (E.throughOrigin(p1, p2)) {
     return {
       circle: circle,
       startAngle: 0,
       endAngle: 0,
-      clockwise: false,
       straightLine: true,
     }
   }
   const q1 = p1.toUnitDisk(circle.radius);
   const q2 = p2.toUnitDisk(circle.radius);
-  //console.log(q1,q2);
 
   const wp1 = poincareToWeierstrass(q1);
   const wp2 = poincareToWeierstrass(q2);
 
   const wcp = weierstrassCrossProduct(wp1, wp2);
 
-  //console.log(wp1, wp2, wcp);
+  const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
 
-  //calculate centre of arcCircle
+  //calculate centre of arcCircle relative to unit disk
   const cx = wcp.x / wcp.z;
   const cy = wcp.y / wcp.z;
 
-  //translate points to origin before calulating arctan
-  const u1 = q1.x - cx;
-  const v1 = q1.y - cy;
-  const u2 = q2.x - cx;
-  const v2 = q2.y - cy;
-  //console.log(u1,v1,u2,v2);
+  //translate points to origin before calculating arctan
+  q1.x = q1.x - arcCentre.x;
+  q1.y = q1.y - arcCentre.y;
+  q2.x = q2.x - arcCentre.x;
+  q2.y = q2.y - arcCentre.y;
 
-  const r = Math.sqrt( (u1*u1) + (v1*v1) );
-  const arcCircle = new Circle(cx*circle.radius, cy*circle.radius, r*circle.radius);
+  const r = Math.sqrt( (q1.x*q1.x) + (q1.y*q1.y) );
+  const arcCircle = new Circle(arcCentre.x*circle.radius, arcCentre.y*circle.radius, r*circle.radius);
 
-  //let theta = Math.atan2( (v2*u1 - v1*u2), (u1*u2 +v1*v2) );
-  //console.log((v2*u1 - v1*u2), (u1*u2 +v1*v2), r);
+  let alpha = Math.atan2(q1.y, q1.x);
 
-
-  let alpha = Math.atan2(v1, u1);
-
-  let beta  = Math.atan2(v2, u2);
-
-
+  let beta  = Math.atan2(q2.y, q2.x);
 
   //angles are in (-pi, pi), transform to (0,2pi)
   alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
   beta = (beta < 0) ? 2 * Math.PI + beta : beta;
-  //console.log(alpha, beta);
 
+  /*
   //points are above and below the line (0,0)->(0,1) on unit disk
   //clockwise order
   if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
@@ -98,21 +102,27 @@ export const arcV2 = (p1, p2, circle) => {
     startAngle = alpha;
     endAngle = beta;
   }
+  */
+  if(clockwise(alpha, beta)){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  else{
+    startAngle = beta;
+    endAngle = alpha;
+  }
 
-
-  //console.log(startAngle, endAngle);
   return {
     circle: arcCircle,
     startAngle: startAngle,
     endAngle: endAngle,
-    clockwise: clockwise,
     straightLine: false
   }
 }
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 //TODO deal with case of staight lines through centre
-export const arc = (p1, p2, circle) => {
+export const arcV1 = (p1, p2, circle) => {
   if (E.throughOrigin(p1, p2)) {
     return {
       circle: circle,
