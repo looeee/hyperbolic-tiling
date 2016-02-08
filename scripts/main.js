@@ -26,25 +26,6 @@ babelHelpers.createClass = function () {
 
 babelHelpers;
 
-//reflect a set of points across a hyperbolic arc
-//TODO add case where reflection is across straight line
-var reflect = function reflect(pointsArray, p1, p2, circle) {
-  var l = pointsArray.length;
-  var a = new Arc(p1, p2, circle);
-  var newPoints = [];
-
-  if (!a.straightLine) {
-    for (var i = 0; i < l; i++) {
-      newPoints.push(inverse(pointsArray[i], a.circle));
-    }
-  } else {
-    for (var i = 0; i < l; i++) {
-      newPoints.push(lineReflection(p1, p2, pointsArray[i]));
-    }
-  }
-  return newPoints;
-};
-
 var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
   var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
   return {
@@ -162,40 +143,6 @@ var distance = function distance(p1, p2) {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
 
-//slope of line through p1, p2
-var slope = function slope(p1, p2) {
-  return (p2.x - p1.x) / (p2.y - p1.y);
-};
-
-//get the circle inverse of a point p with respect a circle radius r centre c
-var inverse = function inverse(point, circle) {
-  var c = circle.centre;
-  var r = circle.radius;
-  var alpha = r * r / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
-  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
-};
-
-//reflect p3 across the line defined by p1,p2
-var lineReflection = function lineReflection(p1, p2, p3) {
-  var m = slope(p1, p2);
-  //reflection in y axis
-  if (m > 999999 || m < -999999) {
-    return new Point(p3.x, -p3.y);
-  }
-  //reflection in x axis
-  else if (toFixed(m, 10) == 0) {
-      return new Point(-p3.x, p3.y);
-    }
-    //reflection in arbitrary line
-    else {
-        var c = p1.y - m * p1.x;
-        var d = (p3.x + (p3.y - c) * m) / (1 + m * m);
-        var x = 2 * d - p3.x;
-        var y = 2 * d * m - p3.y + 2 * c;
-        return new Point(x, y);
-      }
-};
-
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   var cx = circle.centre.x;
   var cy = circle.centre.y;
@@ -285,6 +232,12 @@ var clockwise = function clockwise(alpha, beta) {
   }
   return cw;
 };
+
+// * ***********************************************************************
+// *
+// *   HYPERBOLIC ELEMENT CLASSES
+// *
+// *************************************************************************
 
 // * ***********************************************************************
 // *
@@ -430,6 +383,62 @@ var Arc = function Arc(p1, p2, circle) {
 // *   POLYGON CLASS
 // *
 // *************************************************************************
+
+//@param vertices: array of Points
+//@param circle: Circle representing current Poincare Disk dimensions
+var Polygon = function () {
+  function Polygon(vertices, circle, color, texture, wireframe) {
+    babelHelpers.classCallCheck(this, Polygon);
+
+    this.vertices = vertices;
+    this.circle = circle;
+    this.color = color;
+    this.texture = texture;
+    this.wireframe = wireframe;
+
+    this.spacedPointsOnEdges();
+  }
+
+  babelHelpers.createClass(Polygon, [{
+    key: 'spacedPointsOnEdges',
+    value: function spacedPointsOnEdges() {
+      var points = [];
+      var spacing = 5;
+      var vertices = this.vertices;
+      var l = vertices.length;
+      for (var i = 0; i < l; i++) {
+        var arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
+
+        //line not through the origin (hyperbolic arc)
+        if (!arc.straightLine) {
+          var p = undefined;
+          if (!arc.clockwise) p = spacedPointOnArc(arc.circle, vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
+          points.push(p);
+
+          while (distance(p, vertices[(i + 1) % l]) > spacing) {
+            //for(let i = 0; i< 10; i++){
+            if (!arc.clockwise) {
+              p = spacedPointOnArc(arc.circle, p, spacing).p2;
+            } else {
+              p = spacedPointOnArc(arc.circle, p, spacing).p1;
+            }
+            points.push(p);
+          }
+
+          points.push(vertices[(i + 1) % l]);
+        }
+
+        //line through origin (straight line)
+        else {
+            points.push(vertices[(i + 1) % l]);
+          }
+      }
+
+      this.points = points;
+    }
+  }]);
+  return Polygon;
+}();
 
 //NOTE will give a warning:  Too many active WebGL contexts
 //after resizing 16 times. This is a bug in threejs and can be safely ignored.
@@ -626,7 +635,7 @@ var ThreeJS = function () {
 // *   DISK CLASS
 // *   Poincare Disk representation of the hyperbolic plane
 // *   Contains any functions used to draw to the disk
-// *   (Currently using three js as drawing class)
+// *   which are then passed to ThreeJS
 // *************************************************************************
 var Disk = function () {
   function Disk() {
@@ -711,12 +720,18 @@ var Disk = function () {
       }
     }
   }, {
-    key: 'polygonOutline',
-    value: function polygonOutline(vertices, colour) {
-      var l = vertices.length;
+    key: 'drawPolygonOutline',
+    value: function drawPolygonOutline(polygon, colour) {
+      var l = polygon.vertices.length;
       for (var i = 0; i < l; i++) {
-        this.drawArc(vertices[i], vertices[(i + 1) % l], colour);
+        this.drawArc(polygon.vertices[i], polygon.vertices[(i + 1) % l], colour);
       }
+    }
+  }, {
+    key: 'drawPolygon',
+    value: function drawPolygon(polygon, color, texture, wireframe) {
+      console.log(polygon.points);
+      this.draw.polygon(polygon.points, color, texture, wireframe);
     }
 
     //create an array of points spaced equally around the arcs defining a hyperbolic
@@ -879,9 +894,9 @@ var RegularTesselation = function () {
       var wireframe = false;
       wireframe = true;
 
-      this.disk.polygon(this.fr, randomInt(10000, 14777215), '', wireframe);
-      var poly = reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
-      this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
+      this.disk.drawPolygon(this.fr, randomInt(100000, 14777215), '', wireframe);
+      //let poly = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
+      //this.disk.polygon(poly, E.randomInt(100000, 14777215), '', wireframe);
       /*
       this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
       const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
@@ -936,7 +951,7 @@ var RegularTesselation = function () {
   }, {
     key: 'fundamentalRegion',
     value: function fundamentalRegion() {
-      var radius = this.disk.circle.radius;
+      var radius = this.disk.radius;
       var s = Math.sin(Math.PI / this.p);
       var t = Math.cos(Math.PI / this.q);
       //multiply these by the disks radius (Coxeter used unit disk);
@@ -951,13 +966,13 @@ var RegularTesselation = function () {
 
       var p2 = new Point(d - r, 0);
 
-      var points = [this.disk.centre, p1, p2];
+      var vertices = [this.disk.centre, p1, p2];
 
-      return points;
+      return new Polygon(vertices, this.disk.circle);
     }
 
     //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
-    // either an elliptical or euclidean tesselation);
+    //either an elliptical or euclidean tesselation);
     //For now also require p,q > 3, as these are special cases
 
   }, {
@@ -967,7 +982,7 @@ var RegularTesselation = function () {
         console.error('maxLayers must be greater than 0');
         return true;
       } else if ((this.p - 2) * (this.q - 2) <= 4) {
-        console.error('Hyperbolic tesselations require that (p-1)(q-2) < 4!');
+        console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
         return true;
       }
       //TODO implement special cases for q = 3 or p = 3

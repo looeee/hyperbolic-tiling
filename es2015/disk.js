@@ -1,7 +1,7 @@
 import * as E from './euclid';
 import * as H from './hyperbolic';
 import {
-  Arc, Circle, Point
+  Polygon, Arc, Circle, Point
 }
 from './elements';
 import { ThreeJS } from './threejs';
@@ -11,7 +11,7 @@ import { ThreeJS } from './threejs';
 // *   DISK CLASS
 // *   Poincare Disk representation of the hyperbolic plane
 // *   Contains any functions used to draw to the disk
-// *   (Currently using three js as drawing class)
+// *   which are then passed to ThreeJS
 // *************************************************************************
 export class Disk {
   constructor() {
@@ -82,11 +82,16 @@ export class Disk {
     }
   }
 
-  polygonOutline(vertices, colour) {
-    const l = vertices.length;
+  drawPolygonOutline(polygon, colour) {
+    const l = polygon.vertices.length;
     for (let i = 0; i < l; i++) {
-      this.drawArc(vertices[i], vertices[(i + 1) % l], colour);
+      this.drawArc(polygon.vertices[i], polygon.vertices[(i + 1) % l], colour);
     }
+  }
+
+  drawPolygon(polygon, color, texture, wireframe){
+    console.log(polygon.points);
+    this.draw.polygon(polygon.points, color, texture, wireframe);
   }
 
   //create an array of points spaced equally around the arcs defining a hyperbolic

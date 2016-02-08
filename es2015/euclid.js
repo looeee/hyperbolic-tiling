@@ -1,5 +1,5 @@
 import {
-  Circle, Point
+  Polygon, Arc, Circle, Point
 }
 from './elements';
 // * ***********************************************************************

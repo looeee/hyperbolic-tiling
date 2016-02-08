@@ -6,7 +6,7 @@ import {
 from './disk';
 
 import {
-  Arc, Circle, Point
+  Polygon, Arc, Circle, Point
 }
 from './elements';
 
@@ -56,9 +56,9 @@ export class RegularTesselation {
     let wireframe = false;
     wireframe = true;
 
-    this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
-    let poly = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
-    this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
+    this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
+    //let poly = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
+    //this.disk.polygon(poly, E.randomInt(100000, 14777215), '', wireframe);
     /*
     this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
     const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
@@ -119,7 +119,7 @@ export class RegularTesselation {
 
   //calculate the fundamental polygon using Coxeter's method
   fundamentalRegion() {
-    const radius = this.disk.circle.radius;
+    const radius = this.disk.radius;
     const s = Math.sin(Math.PI / this.p);
     const t = Math.cos(Math.PI / this.q);
     //multiply these by the disks radius (Coxeter used unit disk);
@@ -135,20 +135,20 @@ export class RegularTesselation {
 
     const p2 = new Point(d-r,0);
 
-    const points = [this.disk.centre, p1, p2];
+    const vertices = [this.disk.centre, p1, p2];
 
-    return points;
+    return new Polygon(vertices, this.disk.circle);
   }
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
-  // either an elliptical or euclidean tesselation);
+  //either an elliptical or euclidean tesselation);
   //For now also require p,q > 3, as these are special cases
   checkParams() {
     if (this.maxLayers < 0 || isNaN(this.maxLayers)) {
       console.error('maxLayers must be greater than 0');
       return true;
     } else if ((this.p - 2) * (this.q - 2) <= 4) {
-      console.error('Hyperbolic tesselations require that (p-1)(q-2) < 4!');
+      console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
       return true;
     }
     //TODO implement special cases for q = 3 or p = 3

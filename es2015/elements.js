@@ -1,5 +1,13 @@
 import * as E from './euclid';
 import * as H from './hyperbolic';
+
+// * ***********************************************************************
+// *
+// *   HYPERBOLIC ELEMENT CLASSES
+// *
+// *************************************************************************
+
+
 // * ***********************************************************************
 // *
 // *   POINT CLASS
@@ -132,3 +140,55 @@ export class Arc {
 // *   POLYGON CLASS
 // *
 // *************************************************************************
+
+//@param vertices: array of Points
+//@param circle: Circle representing current Poincare Disk dimensions
+export class Polygon {
+  constructor(vertices, circle, color, texture, wireframe) {
+    this.vertices = vertices;
+    this.circle = circle;
+    this.color = color;
+    this.texture = texture;
+    this.wireframe = wireframe;
+
+    this.spacedPointsOnEdges();
+  }
+
+  spacedPointsOnEdges(){
+    const points = [];
+    const spacing = 5;
+    const vertices = this.vertices;
+    const l = vertices.length;
+    for (let i = 0; i < l; i++) {
+      const arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
+
+      //line not through the origin (hyperbolic arc)
+      if (!arc.straightLine) {
+        let p;
+        if(!arc.clockwise) p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
+        else p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
+        points.push(p);
+        
+        while (E.distance(p, vertices[(i + 1) % l]) > spacing) {
+        //for(let i = 0; i< 10; i++){
+          if(!arc.clockwise){
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
+          }
+          else{
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
+          }
+          points.push(p);
+        }
+
+        points.push(vertices[(i + 1) % l]);
+      }
+
+      //line through origin (straight line)
+      else{
+        points.push(vertices[(i + 1) % l]);
+      }
+    }
+
+    this.points = points;
+  }
+}
