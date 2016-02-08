@@ -1,6 +1,6 @@
 import * as E from './euclid';
 import {
-  Circle, Point
+  Arc, Circle, Point
 }
 from './elements';
 
@@ -11,154 +11,6 @@ from './elements';
 // *   operations
 // *
 // *************************************************************************
-
-//are the angles alpha, beta in clockwise order on unit disk?
-const clockwise = (alpha, beta) => {
-  let cw = true;
-  const a = (beta > 3*Math.PI/2 && alpha < Math.PI/2);
-  const b = (beta - alpha > Math.PI);
-  const c = ((alpha > beta) && !(alpha - beta > Math.PI));
-  if(a || b || c){
-    cw = false;
-  }
-  return cw;
-}
-
-
-//Similar to the method developed by Ajit Datar for his HyperArt program
-//TODO test which arc method is fastest
-export const arc = (p1, p2, circle) => {
-  let startAngle, endAngle;
-  if (E.throughOrigin(p1, p2)) {
-    return {
-      circle: circle,
-      startAngle: 0,
-      endAngle: 0,
-      straightLine: true,
-    }
-  }
-  const q1 = p1.toUnitDisk(circle.radius);
-  const q2 = p2.toUnitDisk(circle.radius);
-
-  const wp1 = poincareToWeierstrass(q1);
-  const wp2 = poincareToWeierstrass(q2);
-
-  const wcp = weierstrassCrossProduct(wp1, wp2);
-
-  const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
-
-  //calculate centre of arcCircle relative to unit disk
-  const cx = wcp.x / wcp.z;
-  const cy = wcp.y / wcp.z;
-
-  //translate points to origin before calculating arctan
-  q1.x = q1.x - arcCentre.x;
-  q1.y = q1.y - arcCentre.y;
-  q2.x = q2.x - arcCentre.x;
-  q2.y = q2.y - arcCentre.y;
-
-  const r = Math.sqrt( (q1.x*q1.x) + (q1.y*q1.y) );
-  const arcCircle = new Circle(arcCentre.x*circle.radius, arcCentre.y*circle.radius, r*circle.radius);
-
-  let alpha = Math.atan2(q1.y, q1.x);
-
-  let beta  = Math.atan2(q2.y, q2.x);
-
-  //angles are in (-pi, pi), transform to (0,2pi)
-  alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
-  beta = (beta < 0) ? 2 * Math.PI + beta : beta;
-
-  const cw = clockwise(alpha, beta);
-  if(cw){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  else{
-    startAngle = beta;
-    endAngle = alpha;
-  }
-
-  return {
-    circle: arcCircle,
-    startAngle: startAngle,
-    endAngle: endAngle,
-    straightLine: false,
-    clockwise: cw
-  }
-}
-
-//calculate greatCircle, startAngle and endAngle for hyperbolic arc
-//TODO deal with case of staight lines through centre
-export const arcV1 = (p1, p2, circle) => {
-  if (E.throughOrigin(p1, p2)) {
-    return {
-      circle: circle,
-      startAngle: 0,
-      endAngle: 0,
-      clockwise: false,
-      straightLine: true,
-    }
-  }
-  let clockwise = false;
-  let alpha, beta, startAngle, endAngle;
-  const c = E.greatCircle(p1, p2, circle);
-  const oy = E.toFixed(c.centre.y, 10);
-  const ox = E.toFixed(c.centre.x, 10);
-
-  //point at 0 radians on c
-  const p3 = new Point(ox + c.radius, oy);
-
-  //calculate the position of each point in the circle
-  alpha = E.centralAngle(p3, p1, c.radius);
-  beta = E.centralAngle(p3, p2, c.radius);
-
-  //for comparison to avoid round off errors
-  const p1X = E.toFixed(p1.x, 10);
-  const p1Y = E.toFixed(p1.y, 10);
-  const p2X = E.toFixed(p2.x, 10);
-  const p2Y = E.toFixed(p2.y, 10);
-
-  alpha = (p1Y < oy) ? 2 * Math.PI - alpha : alpha;
-  beta = (p2Y < oy) ? 2 * Math.PI - beta : beta;
-
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //clockwise order
-  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //anticlockwise order
-  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  //other case where we are drawing the wrong way around the circle
-  else if(beta - alpha > Math.PI){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else if(alpha - beta > Math.PI){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  else if(alpha > beta){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else{
-    startAngle = alpha;
-    endAngle = beta;
-  }
-
-  return {
-    circle: c,
-    startAngle: startAngle,
-    endAngle: endAngle,
-    clockwise: clockwise,
-    straightLine: false,
-  }
-}
 
 //translate a set of points along the x axis
 export const translateX = (pointsArray, distance) => {
@@ -185,7 +37,7 @@ export const rotation = (pointsArray, point, angle, clockwise) => {
 //TODO add case where reflection is across straight line
 export const reflect = (pointsArray, p1, p2, circle) => {
   const l = pointsArray.length;
-  const a = arc(p1, p2, circle);
+  const a = new Arc(p1, p2, circle);
   const newPoints = [];
 
   if (!a.straightLine) {
@@ -278,3 +130,77 @@ export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
   r.z = r.z / norm;
   return r;
 }
+
+/*
+//calculate greatCircle, startAngle and endAngle for hyperbolic arc
+export const arcV1 = (p1, p2, circle) => {
+  if (E.throughOrigin(p1, p2)) {
+    return {
+      circle: circle,
+      startAngle: 0,
+      endAngle: 0,
+      clockwise: false,
+      straightLine: true,
+    }
+  }
+  let clockwise = false;
+  let alpha, beta, startAngle, endAngle;
+  const c = E.greatCircle(p1, p2, circle);
+  const oy = E.toFixed(c.centre.y, 10);
+  const ox = E.toFixed(c.centre.x, 10);
+
+  //point at 0 radians on c
+  const p3 = new Point(ox + c.radius, oy);
+
+  //calculate the position of each point in the circle
+  alpha = E.centralAngle(p3, p1, c.radius);
+  beta = E.centralAngle(p3, p2, c.radius);
+
+  //for comparison to avoid round off errors
+  const p1X = E.toFixed(p1.x, 10);
+  const p1Y = E.toFixed(p1.y, 10);
+  const p2X = E.toFixed(p2.x, 10);
+  const p2Y = E.toFixed(p2.y, 10);
+
+  alpha = (p1Y < oy) ? 2 * Math.PI - alpha : alpha;
+  beta = (p2Y < oy) ? 2 * Math.PI - beta : beta;
+
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //clockwise order
+  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //anticlockwise order
+  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  //other case where we are drawing the wrong way around the circle
+  else if(beta - alpha > Math.PI){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else if(alpha - beta > Math.PI){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  else if(alpha > beta){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else{
+    startAngle = alpha;
+    endAngle = beta;
+  }
+
+  return {
+    circle: c,
+    startAngle: startAngle,
+    endAngle: endAngle,
+    clockwise: clockwise,
+    straightLine: false,
+  }
+}
+*/

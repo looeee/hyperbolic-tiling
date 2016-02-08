@@ -1,7 +1,7 @@
 import * as E from './euclid';
 import * as H from './hyperbolic';
 import {
-  Circle, Point
+  Arc, Circle, Point
 }
 from './elements';
 import { ThreeJS } from './threejs';
@@ -73,7 +73,7 @@ export class Disk {
       return false
     }
     const col = colour || 0xffffff;
-    const arc = H.arc(p1, p2, this.circle);
+    const arc = new Arc(p1, p2, this.circle);
 
     if (arc.straightLine) {
       this.draw.line(p1, p2, col);
@@ -98,7 +98,7 @@ export class Disk {
     const l = vertices.length;
     for (let i = 0; i < l; i++) {
       let p;
-      const arc = H.arc(vertices[i], vertices[(i + 1) % l], this.circle);
+      const arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
 
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {

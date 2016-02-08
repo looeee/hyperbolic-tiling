@@ -6,7 +6,7 @@ import {
 from './disk';
 
 import {
-  Circle, Point
+  Arc, Circle, Point
 }
 from './elements';
 

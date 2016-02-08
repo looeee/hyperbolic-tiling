@@ -261,3 +261,15 @@ export const randomInt = (min, max) => {
 export const toFixed = (number, places) => {
   return parseFloat(number.toFixed(places));
 }
+
+//are the angles alpha, beta in clockwise order on unit disk?
+export const clockwise = (alpha, beta) => {
+  let cw = true;
+  const a = (beta > 3*Math.PI/2 && alpha < Math.PI/2);
+  const b = (beta - alpha > Math.PI);
+  const c = ((alpha > beta) && !(alpha - beta > Math.PI));
+  if(a || b || c){
+    cw = false;
+  }
+  return cw;
+}

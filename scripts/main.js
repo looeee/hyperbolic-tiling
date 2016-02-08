@@ -26,6 +26,128 @@ babelHelpers.createClass = function () {
 
 babelHelpers;
 
+//reflect a set of points across a hyperbolic arc
+//TODO add case where reflection is across straight line
+var reflect = function reflect(pointsArray, p1, p2, circle) {
+  var l = pointsArray.length;
+  var a = new Arc(p1, p2, circle);
+  var newPoints = [];
+
+  if (!a.straightLine) {
+    for (var i = 0; i < l; i++) {
+      newPoints.push(inverse(pointsArray[i], a.circle));
+    }
+  } else {
+    for (var i = 0; i < l; i++) {
+      newPoints.push(lineReflection(p1, p2, pointsArray[i]));
+    }
+  }
+  return newPoints;
+};
+
+var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
+  var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
+  return {
+    x: 2 * factor * point2D.x,
+    y: 2 * factor * point2D.y,
+    z: factor * (1 + point2D.x * point2D.x + point2D.y * point2D.y)
+  };
+};
+
+var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3D_2) {
+  if (point3D_1.z === 'undefined' || point3D_2.z === 'undefined') {
+    console.error('weierstrassCrossProduct: 3D points required');
+  }
+  var r = {
+    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
+    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
+    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+  };
+
+  var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
+  if (toFixed(norm, 10) == 0) {
+    console.error('weierstrassCrossProduct: division by zero error');
+  }
+  r.x = r.x / norm;
+  r.y = r.y / norm;
+  r.z = r.z / norm;
+  return r;
+};
+
+/*
+//calculate greatCircle, startAngle and endAngle for hyperbolic arc
+export const arcV1 = (p1, p2, circle) => {
+  if (E.throughOrigin(p1, p2)) {
+    return {
+      circle: circle,
+      startAngle: 0,
+      endAngle: 0,
+      clockwise: false,
+      straightLine: true,
+    }
+  }
+  let clockwise = false;
+  let alpha, beta, startAngle, endAngle;
+  const c = E.greatCircle(p1, p2, circle);
+  const oy = E.toFixed(c.centre.y, 10);
+  const ox = E.toFixed(c.centre.x, 10);
+
+  //point at 0 radians on c
+  const p3 = new Point(ox + c.radius, oy);
+
+  //calculate the position of each point in the circle
+  alpha = E.centralAngle(p3, p1, c.radius);
+  beta = E.centralAngle(p3, p2, c.radius);
+
+  //for comparison to avoid round off errors
+  const p1X = E.toFixed(p1.x, 10);
+  const p1Y = E.toFixed(p1.y, 10);
+  const p2X = E.toFixed(p2.x, 10);
+  const p2Y = E.toFixed(p2.y, 10);
+
+  alpha = (p1Y < oy) ? 2 * Math.PI - alpha : alpha;
+  beta = (p2Y < oy) ? 2 * Math.PI - beta : beta;
+
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //clockwise order
+  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //anticlockwise order
+  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  //other case where we are drawing the wrong way around the circle
+  else if(beta - alpha > Math.PI){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else if(alpha - beta > Math.PI){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  else if(alpha > beta){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else{
+    startAngle = alpha;
+    endAngle = beta;
+  }
+
+  return {
+    circle: c,
+    startAngle: startAngle,
+    endAngle: endAngle,
+    clockwise: clockwise,
+    straightLine: false,
+  }
+}
+*/
+
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
@@ -152,6 +274,18 @@ var toFixed = function toFixed(number, places) {
   return parseFloat(number.toFixed(places));
 };
 
+//are the angles alpha, beta in clockwise order on unit disk?
+var clockwise = function clockwise(alpha, beta) {
+  var cw = true;
+  var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
+  var b = beta - alpha > Math.PI;
+  var c = alpha > beta && !(alpha - beta > Math.PI);
+  if (a || b || c) {
+    cw = false;
+  }
+  return cw;
+};
+
 // * ***********************************************************************
 // *
 // *   POINT CLASS
@@ -231,133 +365,71 @@ var Circle = function Circle(centreX, centreY, radius) {
 
 // * ***********************************************************************
 // *
-// *   HYPERBOLIC FUNCTIONS
-// *   a place to stash all the functions that are hyperbolic gemeometrical
-// *   operations
+// *   ARC CLASS
 // *
 // *************************************************************************
 
-//are the angles alpha, beta in clockwise order on unit disk?
-var clockwise = function clockwise(alpha, beta) {
-  var cw = true;
-  var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
-  var b = beta - alpha > Math.PI;
-  var c = alpha > beta && !(alpha - beta > Math.PI);
-  if (a || b || c) {
-    cw = false;
-  }
-  return cw;
-};
+var Arc = function Arc(p1, p2, circle) {
+  babelHelpers.classCallCheck(this, Arc);
 
-//Similar to the method developed by Ajit Datar for his HyperArt program
-//TODO test which arc method is fastest
-var arc = function arc(p1, p2, circle) {
-  var startAngle = undefined,
-      endAngle = undefined;
   if (throughOrigin(p1, p2)) {
-    return {
-      circle: circle,
-      startAngle: 0,
-      endAngle: 0,
-      straightLine: true
-    };
-  }
-  var q1 = p1.toUnitDisk(circle.radius);
-  var q2 = p2.toUnitDisk(circle.radius);
-
-  var wp1 = poincareToWeierstrass(q1);
-  var wp2 = poincareToWeierstrass(q2);
-
-  var wcp = weierstrassCrossProduct(wp1, wp2);
-
-  var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
-
-  //calculate centre of arcCircle relative to unit disk
-  var cx = wcp.x / wcp.z;
-  var cy = wcp.y / wcp.z;
-
-  //translate points to origin before calculating arctan
-  q1.x = q1.x - arcCentre.x;
-  q1.y = q1.y - arcCentre.y;
-  q2.x = q2.x - arcCentre.x;
-  q2.y = q2.y - arcCentre.y;
-
-  var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
-  var arcCircle = new Circle(arcCentre.x * circle.radius, arcCentre.y * circle.radius, r * circle.radius);
-
-  var alpha = Math.atan2(q1.y, q1.x);
-
-  var beta = Math.atan2(q2.y, q2.x);
-
-  //angles are in (-pi, pi), transform to (0,2pi)
-  alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
-  beta = beta < 0 ? 2 * Math.PI + beta : beta;
-
-  var cw = clockwise(alpha, beta);
-  if (cw) {
-    startAngle = alpha;
-    endAngle = beta;
+    this.circle = circle;
+    this.startAngle = 0;
+    this.endAngle = 0;
+    this.clockwise = false;
+    this.straightLine = true;
   } else {
-    startAngle = beta;
-    endAngle = alpha;
-  }
+    var q1 = p1.toUnitDisk(circle.radius);
+    var q2 = p2.toUnitDisk(circle.radius);
 
-  return {
-    circle: arcCircle,
-    startAngle: startAngle,
-    endAngle: endAngle,
-    straightLine: false,
-    clockwise: cw
-  };
-};
+    var wp1 = poincareToWeierstrass(q1);
+    var wp2 = poincareToWeierstrass(q2);
 
-//reflect a set of points across a hyperbolic arc
-//TODO add case where reflection is across straight line
-var reflect = function reflect(pointsArray, p1, p2, circle) {
-  var l = pointsArray.length;
-  var a = arc(p1, p2, circle);
-  var newPoints = [];
+    var wcp = weierstrassCrossProduct(wp1, wp2);
 
-  if (!a.straightLine) {
-    for (var i = 0; i < l; i++) {
-      newPoints.push(inverse(pointsArray[i], a.circle));
+    var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
+
+    //calculate centre of arcCircle relative to unit disk
+    var cx = wcp.x / wcp.z;
+    var cy = wcp.y / wcp.z;
+
+    //translate points to origin before calculating arctan
+    q1.x = q1.x - arcCentre.x;
+    q1.y = q1.y - arcCentre.y;
+    q2.x = q2.x - arcCentre.x;
+    q2.y = q2.y - arcCentre.y;
+
+    var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
+    var arcCircle = new Circle(arcCentre.x * circle.radius, arcCentre.y * circle.radius, r * circle.radius);
+
+    var alpha = Math.atan2(q1.y, q1.x);
+
+    var beta = Math.atan2(q2.y, q2.x);
+
+    //angles are in (-pi, pi), transform to (0,2pi)
+    alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
+    beta = beta < 0 ? 2 * Math.PI + beta : beta;
+
+    var cw = clockwise(alpha, beta);
+    if (cw) {
+      this.startAngle = alpha;
+      this.endAngle = beta;
+    } else {
+      this.startAngle = beta;
+      this.endAngle = alpha;
     }
-  } else {
-    for (var i = 0; i < l; i++) {
-      newPoints.push(lineReflection(p1, p2, pointsArray[i]));
-    }
+
+    this.circle = arcCircle;
+    this.clockwise = cw;
+    this.straightLine = false;
   }
-  return newPoints;
 };
 
-var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
-  var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
-  return {
-    x: 2 * factor * point2D.x,
-    y: 2 * factor * point2D.y,
-    z: factor * (1 + point2D.x * point2D.x + point2D.y * point2D.y)
-  };
-};
-
-var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3D_2) {
-  if (point3D_1.z === 'undefined' || point3D_2.z === 'undefined') {
-    console.error('weierstrassCrossProduct: 3D points required');
-  }
-  var r = {
-    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
-    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
-  };
-
-  var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
-  if (toFixed(norm, 10) == 0) {
-    console.error('weierstrassCrossProduct: division by zero error');
-  }
-  r.x = r.x / norm;
-  r.y = r.y / norm;
-  r.z = r.z / norm;
-  return r;
-};
+// * ***********************************************************************
+// *
+// *   POLYGON CLASS
+// *
+// *************************************************************************
 
 //NOTE will give a warning:  Too many active WebGL contexts
 //after resizing 16 times. This is a bug in threejs and can be safely ignored.
@@ -630,12 +702,12 @@ var Disk = function () {
         return false;
       }
       var col = colour || 0xffffff;
-      var arc$$ = arc(p1, p2, this.circle);
+      var arc = new Arc(p1, p2, this.circle);
 
-      if (arc$$.straightLine) {
+      if (arc.straightLine) {
         this.draw.line(p1, p2, col);
       } else {
-        this.draw.segment(arc$$.circle, arc$$.startAngle, arc$$.endAngle, colour);
+        this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, colour);
       }
     }
   }, {
@@ -659,19 +731,19 @@ var Disk = function () {
       var l = vertices.length;
       for (var i = 0; i < l; i++) {
         var p = undefined;
-        var arc$$ = arc(vertices[i], vertices[(i + 1) % l], this.circle);
+        var arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
 
         //line not through the origin (hyperbolic arc)
-        if (!arc$$.straightLine) {
-          if (!arc$$.clockwise) p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p2;else p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p1;
+        if (!arc.straightLine) {
+          if (!arc.clockwise) p = spacedPointOnArc(arc.circle, vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
           points.push(p);
 
           while (distance(p, vertices[(i + 1) % l]) > spacing) {
             //for(let i = 0; i< 10; i++){
-            if (!arc$$.clockwise) {
-              p = spacedPointOnArc(arc$$.circle, p, spacing).p2;
+            if (!arc.clockwise) {
+              p = spacedPointOnArc(arc.circle, p, spacing).p2;
             } else {
-              p = spacedPointOnArc(arc$$.circle, p, spacing).p1;
+              p = spacedPointOnArc(arc.circle, p, spacing).p1;
             }
             points.push(p);
           }
