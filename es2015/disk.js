@@ -92,7 +92,6 @@ export class Disk {
   //create an array of points spaced equally around the arcs defining a hyperbolic
   //polygon and pass these to ThreeJS.polygon()
   //TODO make spacing a function of final resolution
-  //TODO check whether vertices are in the right order
   polygon(vertices, color, texture, wireframe) {
     const points = [];
     const spacing = 5;
@@ -103,24 +102,22 @@ export class Disk {
 
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {
-
-        //if (arc.clockwise) {
-        p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
-        //} else {
-          //p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
-        //}
+        if(!arc.clockwise) p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
+        else p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
         points.push(p);
 
+
         while (E.distance(p, vertices[(i + 1) % l]) > spacing) {
-
-          //if (arc.clockwise) {
-            //p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-          //} else {
-          p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-          //}
-
+        //for(let i = 0; i< 10; i++){
+          if(!arc.clockwise){
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
+          }
+          else{
+            p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
+          }
           points.push(p);
         }
+
         points.push(vertices[(i + 1) % l]);
       }
 
@@ -129,9 +126,8 @@ export class Disk {
         points.push(vertices[(i + 1) % l]);
       }
     }
-
     for(let point of points){
-      //this.point(point,2,0x10ded8);
+      //if(point) this.point(point,2,0x10ded8);
     }
 
     this.draw.polygon(points, color, texture, wireframe);

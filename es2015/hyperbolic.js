@@ -72,38 +72,8 @@ export const arc = (p1, p2, circle) => {
   alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
   beta = (beta < 0) ? 2 * Math.PI + beta : beta;
 
-  /*
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //clockwise order
-  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //anticlockwise order
-  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  //other case where we are drawing the wrong way around the circle
-  else if(beta - alpha > Math.PI){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else if(alpha - beta > Math.PI){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  else if(alpha > beta){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else{
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  */
-  if(clockwise(alpha, beta)){
+  const cw = clockwise(alpha, beta);
+  if(cw){
     startAngle = alpha;
     endAngle = beta;
   }
@@ -111,12 +81,13 @@ export const arc = (p1, p2, circle) => {
     startAngle = beta;
     endAngle = alpha;
   }
-
+  
   return {
     circle: arcCircle,
     startAngle: startAngle,
     endAngle: endAngle,
-    straightLine: false
+    straightLine: false,
+    clockwise: cw
   }
 }
 

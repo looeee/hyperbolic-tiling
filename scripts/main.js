@@ -40,6 +40,40 @@ var distance = function distance(p1, p2) {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
 
+//slope of line through p1, p2
+var slope = function slope(p1, p2) {
+  return (p2.x - p1.x) / (p2.y - p1.y);
+};
+
+//get the circle inverse of a point p with respect a circle radius r centre c
+var inverse = function inverse(point, circle) {
+  var c = circle.centre;
+  var r = circle.radius;
+  var alpha = r * r / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
+};
+
+//reflect p3 across the line defined by p1,p2
+var lineReflection = function lineReflection(p1, p2, p3) {
+  var m = slope(p1, p2);
+  //reflection in y axis
+  if (m > 999999 || m < -999999) {
+    return new Point(p3.x, -p3.y);
+  }
+  //reflection in x axis
+  else if (toFixed(m, 10) == 0) {
+      return new Point(-p3.x, p3.y);
+    }
+    //reflection in arbitrary line
+    else {
+        var c = p1.y - m * p1.x;
+        var d = (p3.x + (p3.y - c) * m) / (1 + m * m);
+        var x = 2 * d - p3.x;
+        var y = 2 * d * m - p3.y + 2 * c;
+        return new Point(x, y);
+      }
+};
+
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   var cx = circle.centre.x;
   var cy = circle.centre.y;
@@ -259,38 +293,8 @@ var arc = function arc(p1, p2, circle) {
   alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
   beta = beta < 0 ? 2 * Math.PI + beta : beta;
 
-  /*
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //clockwise order
-  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //anticlockwise order
-  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  //other case where we are drawing the wrong way around the circle
-  else if(beta - alpha > Math.PI){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else if(alpha - beta > Math.PI){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  else if(alpha > beta){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else{
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  */
-  if (clockwise(alpha, beta)) {
+  var cw = clockwise(alpha, beta);
+  if (cw) {
     startAngle = alpha;
     endAngle = beta;
   } else {
@@ -302,8 +306,28 @@ var arc = function arc(p1, p2, circle) {
     circle: arcCircle,
     startAngle: startAngle,
     endAngle: endAngle,
-    straightLine: false
+    straightLine: false,
+    clockwise: cw
   };
+};
+
+//reflect a set of points across a hyperbolic arc
+//TODO add case where reflection is across straight line
+var reflect = function reflect(pointsArray, p1, p2, circle) {
+  var l = pointsArray.length;
+  var a = arc(p1, p2, circle);
+  var newPoints = [];
+
+  if (!a.straightLine) {
+    for (var i = 0; i < l; i++) {
+      newPoints.push(inverse(pointsArray[i], a.circle));
+    }
+  } else {
+    for (var i = 0; i < l; i++) {
+      newPoints.push(lineReflection(p1, p2, pointsArray[i]));
+    }
+  }
+  return newPoints;
 };
 
 var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
@@ -629,7 +653,6 @@ var Disk = function () {
     //create an array of points spaced equally around the arcs defining a hyperbolic
     //polygon and pass these to ThreeJS.polygon()
     //TODO make spacing a function of final resolution
-    //TODO check whether vertices are in the right order
 
   }, {
     key: 'polygon',
@@ -643,24 +666,19 @@ var Disk = function () {
 
         //line not through the origin (hyperbolic arc)
         if (!arc$$.straightLine) {
-
-          //if (arc.clockwise) {
-          p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p2;
-          //} else {
-          //p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
-          //}
+          if (!arc$$.clockwise) p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p2;else p = spacedPointOnArc(arc$$.circle, vertices[i], spacing).p1;
           points.push(p);
 
           while (distance(p, vertices[(i + 1) % l]) > spacing) {
-
-            //if (arc.clockwise) {
-            //p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-            //} else {
-            p = spacedPointOnArc(arc$$.circle, p, spacing).p2;
-            //}
-
+            //for(let i = 0; i< 10; i++){
+            if (!arc$$.clockwise) {
+              p = spacedPointOnArc(arc$$.circle, p, spacing).p2;
+            } else {
+              p = spacedPointOnArc(arc$$.circle, p, spacing).p1;
+            }
             points.push(p);
           }
+
           points.push(vertices[(i + 1) % l]);
         }
 
@@ -669,14 +687,13 @@ var Disk = function () {
             points.push(vertices[(i + 1) % l]);
           }
       }
-
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
         for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          //this.point(point,2,0x10ded8);
+          //if(point) this.point(point,2,0x10ded8);
 
           var point = _step.value;
         }
@@ -793,23 +810,11 @@ var RegularTesselation = function () {
       var wireframe = false;
       wireframe = true;
 
-      var p1 = new Point(220, 100);
-      var p2 = new Point(-220, -250);
-      var p3 = new Point(150, -250);
-
-      this.disk.point(p1, 5, 0x008bf9);
-      this.disk.point(p2, 5, 0x31f700);
-      this.disk.point(p3, 5, 0xff0033);
-
-      //this.disk.drawArc(p1,p2,0x008bf9)
-      //this.disk.drawArc(p1,p3,0x31f700)
-      //this.disk.drawArc(p3,p2,0xff0033)
-
-      this.disk.polygonOutline([p1, p2, p3], randomInt(10000, 14777215));
-      //this.disk.polygon([p1,p2,p3], E.randomInt(10000, 14777215));
-
+      this.disk.polygon(this.fr, randomInt(10000, 14777215), '', wireframe);
+      var poly = reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
+      this.disk.polygon(poly, randomInt(10000, 14777215), '', wireframe);
       /*
-      //this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
+      this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
       const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
       //this.disk.polygon(poly2, E.randomInt(10000, 14777215));
        const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
@@ -826,29 +831,26 @@ var RegularTesselation = function () {
       //this.disk.polygon(poly8, E.randomInt(10000, 14777215), '', wireframe);
        const poly9 = H.reflect(poly8, poly7[0], poly7[1], this.disk.circle);
       //this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
-       let num = this.p*2;
+        let num = 0;//this.p*2;
       for(let i =0; i < num; i++){
         let poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
         this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly3, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly4, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly5, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly6, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly7, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly8, (2*Math.PI/num)*(i+1));
-        //if(i===3){
-          //console.table(poly)
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
-        //}
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
         poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
-        this.disk.polygonOutline(poly, E.randomInt(10000, 14777215), '', wireframe);
+        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
       }
       */
     }
@@ -914,5 +916,5 @@ var RegularTesselation = function () {
 // *
 // *************************************************************************
 
-var tesselation = new RegularTesselation(randomInt(4, 12), randomInt(4, 12));
+var tesselation = new RegularTesselation(randomInt(4, 8), randomInt(4, 8));
 //const tesselation = new RegularTesselation(11, 9);

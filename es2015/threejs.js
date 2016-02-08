@@ -52,7 +52,9 @@ export class ThreeJS {
     this.camera.position.y = 0;
 
     this.camera.position.z = 1;
+
   }
+
 
   initLighting() {
     const ambientLight = new THREE.AmbientLight(0xffffff);
