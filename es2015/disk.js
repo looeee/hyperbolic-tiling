@@ -90,52 +90,7 @@ export class Disk {
   }
 
   drawPolygon(polygon, color, texture, wireframe){
-    console.log(polygon.points);
     this.draw.polygon(polygon.points, color, texture, wireframe);
-  }
-
-  //create an array of points spaced equally around the arcs defining a hyperbolic
-  //polygon and pass these to ThreeJS.polygon()
-  //TODO make spacing a function of final resolution
-  polygon(vertices, color, texture, wireframe) {
-    const points = [];
-    const spacing = 5;
-    const l = vertices.length;
-    for (let i = 0; i < l; i++) {
-      let p;
-      const arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
-
-      //line not through the origin (hyperbolic arc)
-      if (!arc.straightLine) {
-        if(!arc.clockwise) p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p2;
-        else p = E.spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
-        points.push(p);
-
-
-        while (E.distance(p, vertices[(i + 1) % l]) > spacing) {
-        //for(let i = 0; i< 10; i++){
-          if(!arc.clockwise){
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-          }
-          else{
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
-          }
-          points.push(p);
-        }
-
-        points.push(vertices[(i + 1) % l]);
-      }
-
-      //line through origin (straight line)
-      else{
-        points.push(vertices[(i + 1) % l]);
-      }
-    }
-    for(let point of points){
-      //if(point) this.point(point,2,0x10ded8);
-    }
-
-    this.draw.polygon(points, color, texture, wireframe);
   }
 
   //return true if any of the points is not in the disk

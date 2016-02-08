@@ -55,10 +55,13 @@ export class RegularTesselation {
   testing() {
     let wireframe = false;
     wireframe = true;
-
     this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
-    //let poly = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
-    //this.disk.polygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+    let poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+    this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+
+    poly = this.fr.rotateAboutOrigin(Math.PI/3);
+    this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+
     /*
     this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
     const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);

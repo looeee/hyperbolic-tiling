@@ -273,3 +273,8 @@ export const clockwise = (alpha, beta) => {
   }
   return cw;
 }
+
+export const rotatePointAboutOrigin = (point2D, angle) => {
+  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
+    Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
+}

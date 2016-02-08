@@ -33,25 +33,6 @@ export const rotation = (pointsArray, point, angle, clockwise) => {
 
 }
 
-//reflect a set of points across a hyperbolic arc
-//TODO add case where reflection is across straight line
-export const reflect = (pointsArray, p1, p2, circle) => {
-  const l = pointsArray.length;
-  const a = new Arc(p1, p2, circle);
-  const newPoints = [];
-
-  if (!a.straightLine) {
-    for (let i = 0; i < l; i++) {
-      newPoints.push(E.inverse(pointsArray[i], a.circle));
-    }
-  } else {
-    for (let i = 0; i < l; i++) {
-      newPoints.push(E.lineReflection(p1, p2, pointsArray[i]));
-    }
-  }
-  return newPoints;
-}
-
 export const poincareToWeierstrass = (point2D) => {
   const factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
   return {
@@ -72,21 +53,6 @@ export const rotateAboutOriginWeierstrass = (point3D, angle) => {
     y: Math.sin(angle) * point3D.x + Math.cos(angle) * point3D.y,
     z: point3D.z
   }
-}
-
-export const rotateAboutOrigin = (point2D, angle) => {
-  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
-    Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
-}
-
-export const rotatePgonAboutOrigin = (points2DArray, angle) => {
-  const l = points2DArray.length;
-  const rotatedPoints2DArray = [];
-  for (let i = 0; i < l; i++) {
-    let point = rotateAboutOrigin(points2DArray[i], angle);
-    rotatedPoints2DArray.push(point);
-  }
-  return rotatedPoints2DArray;
 }
 
 //when the point p1 is translated to the origin, the point p2
@@ -132,6 +98,26 @@ export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
 }
 
 /*
+//reflect a set of points across a hyperbolic arc
+//TODO add case where reflection is across straight line
+//NOTE: added to Polgyon class
+export const reflect = (pointsArray, p1, p2, circle) => {
+  const l = pointsArray.length;
+  const a = new Arc(p1, p2, circle);
+  const newPoints = [];
+
+  if (!a.straightLine) {
+    for (let i = 0; i < l; i++) {
+      newPoints.push(E.inverse(pointsArray[i], a.circle));
+    }
+  } else {
+    for (let i = 0; i < l; i++) {
+      newPoints.push(E.lineReflection(p1, p2, pointsArray[i]));
+    }
+  }
+  return newPoints;
+}
+
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 export const arcV1 = (p1, p2, circle) => {
   if (E.throughOrigin(p1, p2)) {

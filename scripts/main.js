@@ -56,6 +56,26 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
 };
 
 /*
+//reflect a set of points across a hyperbolic arc
+//TODO add case where reflection is across straight line
+//NOTE: added to Polgyon class
+export const reflect = (pointsArray, p1, p2, circle) => {
+  const l = pointsArray.length;
+  const a = new Arc(p1, p2, circle);
+  const newPoints = [];
+
+  if (!a.straightLine) {
+    for (let i = 0; i < l; i++) {
+      newPoints.push(E.inverse(pointsArray[i], a.circle));
+    }
+  } else {
+    for (let i = 0; i < l; i++) {
+      newPoints.push(E.lineReflection(p1, p2, pointsArray[i]));
+    }
+  }
+  return newPoints;
+}
+
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 export const arcV1 = (p1, p2, circle) => {
   if (E.throughOrigin(p1, p2)) {
@@ -141,6 +161,40 @@ export const arcV1 = (p1, p2, circle) => {
 //distance between two points
 var distance = function distance(p1, p2) {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+};
+
+//slope of line through p1, p2
+var slope = function slope(p1, p2) {
+  return (p2.x - p1.x) / (p2.y - p1.y);
+};
+
+//get the circle inverse of a point p with respect a circle radius r centre c
+var inverse = function inverse(point, circle) {
+  var c = circle.centre;
+  var r = circle.radius;
+  var alpha = r * r / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
+};
+
+//reflect p3 across the line defined by p1,p2
+var lineReflection = function lineReflection(p1, p2, p3) {
+  var m = slope(p1, p2);
+  //reflection in y axis
+  if (m > 999999 || m < -999999) {
+    return new Point(p3.x, -p3.y);
+  }
+  //reflection in x axis
+  else if (toFixed(m, 10) == 0) {
+      return new Point(-p3.x, p3.y);
+    }
+    //reflection in arbitrary line
+    else {
+        var c = p1.y - m * p1.x;
+        var d = (p3.x + (p3.y - c) * m) / (1 + m * m);
+        var x = 2 * d - p3.x;
+        var y = 2 * d * m - p3.y + 2 * c;
+        return new Point(x, y);
+      }
 };
 
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
@@ -231,6 +285,10 @@ var clockwise = function clockwise(alpha, beta) {
     cw = false;
   }
   return cw;
+};
+
+var rotatePointAboutOrigin = function rotatePointAboutOrigin(point2D, angle) {
+  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y, Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
 };
 
 // * ***********************************************************************
@@ -387,54 +445,147 @@ var Arc = function Arc(p1, p2, circle) {
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 var Polygon = function () {
-  function Polygon(vertices, circle, color, texture, wireframe) {
+  function Polygon(vertices, circle) {
     babelHelpers.classCallCheck(this, Polygon);
 
     this.vertices = vertices;
     this.circle = circle;
-    this.color = color;
-    this.texture = texture;
-    this.wireframe = wireframe;
+    this.points = [];
 
     this.spacedPointsOnEdges();
   }
 
+  //TODO: make spacing function of resolution
+
   babelHelpers.createClass(Polygon, [{
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
-      var points = [];
       var spacing = 5;
-      var vertices = this.vertices;
-      var l = vertices.length;
+      var l = this.vertices.length;
       for (var i = 0; i < l; i++) {
-        var arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
+        var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.circle);
 
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
           var p = undefined;
-          if (!arc.clockwise) p = spacedPointOnArc(arc.circle, vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
-          points.push(p);
+          if (!arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
+          this.points.push(p);
 
-          while (distance(p, vertices[(i + 1) % l]) > spacing) {
-            //for(let i = 0; i< 10; i++){
+          while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
             if (!arc.clockwise) {
               p = spacedPointOnArc(arc.circle, p, spacing).p2;
             } else {
               p = spacedPointOnArc(arc.circle, p, spacing).p1;
             }
-            points.push(p);
+            this.points.push(p);
           }
 
-          points.push(vertices[(i + 1) % l]);
+          this.points.push(this.vertices[(i + 1) % l]);
         }
 
         //line through origin (straight line)
         else {
-            points.push(vertices[(i + 1) % l]);
+            this.points.push(this.vertices[(i + 1) % l]);
           }
       }
+    }
 
-      this.points = points;
+    //reflect vertices of the polygon over the arc defined by p1, p1
+    //and create a new polygon from the reflected vertices
+    //NOTE: reflect vertices rather than all points on edge as the
+    //resulting polygon may be smaller or larger so it makes more sense
+    //to recalculate the points
+
+  }, {
+    key: 'reflect',
+    value: function reflect(p1, p2) {
+      var a = new Arc(p1, p2, this.circle);
+      var vertices = [];
+
+      if (!a.straightLine) {
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = this.vertices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var v = _step.value;
+
+            vertices.push(inverse(v, a.circle));
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+      } else {
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+          for (var _iterator2 = this.vertices[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var v = _step2.value;
+
+            vertices.push(lineReflection(p1, p2, v));
+          }
+        } catch (err) {
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+              _iterator2.return();
+            }
+          } finally {
+            if (_didIteratorError2) {
+              throw _iteratorError2;
+            }
+          }
+        }
+      }
+      return new Polygon(vertices, this.circle);
+    }
+  }, {
+    key: 'rotateAboutOrigin',
+    value: function rotateAboutOrigin(angle) {
+      var vertices = [];
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = this.vertices[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var v = _step3.value;
+
+          var point = rotatePointAboutOrigin(v, angle);
+          vertices.push(point);
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+
+      return new Polygon(vertices, this.circle);
     }
   }]);
   return Polygon;
@@ -730,73 +881,7 @@ var Disk = function () {
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
-      console.log(polygon.points);
       this.draw.polygon(polygon.points, color, texture, wireframe);
-    }
-
-    //create an array of points spaced equally around the arcs defining a hyperbolic
-    //polygon and pass these to ThreeJS.polygon()
-    //TODO make spacing a function of final resolution
-
-  }, {
-    key: 'polygon',
-    value: function polygon(vertices, color, texture, wireframe) {
-      var points = [];
-      var spacing = 5;
-      var l = vertices.length;
-      for (var i = 0; i < l; i++) {
-        var p = undefined;
-        var arc = new Arc(vertices[i], vertices[(i + 1) % l], this.circle);
-
-        //line not through the origin (hyperbolic arc)
-        if (!arc.straightLine) {
-          if (!arc.clockwise) p = spacedPointOnArc(arc.circle, vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, vertices[i], spacing).p1;
-          points.push(p);
-
-          while (distance(p, vertices[(i + 1) % l]) > spacing) {
-            //for(let i = 0; i< 10; i++){
-            if (!arc.clockwise) {
-              p = spacedPointOnArc(arc.circle, p, spacing).p2;
-            } else {
-              p = spacedPointOnArc(arc.circle, p, spacing).p1;
-            }
-            points.push(p);
-          }
-
-          points.push(vertices[(i + 1) % l]);
-        }
-
-        //line through origin (straight line)
-        else {
-            points.push(vertices[(i + 1) % l]);
-          }
-      }
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          //if(point) this.point(point,2,0x10ded8);
-
-          var point = _step.value;
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      this.draw.polygon(points, color, texture, wireframe);
     }
 
     //return true if any of the points is not in the disk
@@ -811,13 +896,13 @@ var Disk = function () {
         points[_key] = arguments[_key];
       }
 
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
       try {
-        for (var _iterator2 = points[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var point = _step2.value;
+        for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var point = _step.value;
 
           if (distance(point, this.centre) > r) {
             console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
@@ -825,16 +910,16 @@ var Disk = function () {
           }
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _didIteratorError = true;
+        _iteratorError = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
           }
         } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
+          if (_didIteratorError) {
+            throw _iteratorError;
           }
         }
       }
@@ -893,10 +978,13 @@ var RegularTesselation = function () {
     value: function testing() {
       var wireframe = false;
       wireframe = true;
-
       this.disk.drawPolygon(this.fr, randomInt(100000, 14777215), '', wireframe);
-      //let poly = H.reflect(this.fr, this.fr[0], this.fr[2], this.disk.circle);
-      //this.disk.polygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+      var poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+      this.disk.drawPolygon(poly, randomInt(100000, 14777215), '', wireframe);
+
+      poly = this.fr.rotateAboutOrigin(Math.PI / 3);
+      this.disk.drawPolygon(poly, randomInt(100000, 14777215), '', wireframe);
+
       /*
       this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
       const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
