@@ -1,9 +1,9 @@
 import * as E from './euclid';
-//TODO create circle class and refactor
-//TODO window.removeEventListener('load'); not working in firefox
-//TODO apparently .toFixed() returns a string
-
 import { RegularTesselation } from './regularTesselation';
+
+//TODO window.removeEventListener('load'); not working in firefox
+
+
 
 // * ***********************************************************************
 // *

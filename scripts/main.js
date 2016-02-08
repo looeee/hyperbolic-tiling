@@ -582,10 +582,7 @@ var Disk = function () {
       //draw largest circle possible given window dims
       this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
-      this.circle = {
-        centre: this.centre,
-        radius: this.radius
-      };
+      this.circle = new Circle(this.centre.x, this.centre.y, this.radius);
 
       //smaller circle for testing
       //this.radius = this.radius / 2;
@@ -855,7 +852,14 @@ var RegularTesselation = function () {
       */
     }
 
-    //calculate first point of fundamental polygon using Coxeter's method
+    //calculate the central polygon which is made up of transformed copies
+    //of the fundamental region
+
+  }, {
+    key: 'centralPolygon',
+    value: function centralPolygon() {}
+
+    //calculate the fundamental polygon using Coxeter's method
 
   }, {
     key: 'fundamentalRegion',
@@ -909,6 +913,8 @@ var RegularTesselation = function () {
   }]);
   return RegularTesselation;
 }();
+
+//TODO window.removeEventListener('load'); not working in firefox
 
 // * ***********************************************************************
 // *

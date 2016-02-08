@@ -1,12 +1,7 @@
 import {
-  Point
+  Circle, Point
 }
-from './point';
-
-import {
-  Circle
-}
-from './circle';
+from './elements';
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS

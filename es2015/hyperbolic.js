@@ -1,13 +1,9 @@
 import * as E from './euclid';
 import {
-  Point
+  Circle, Point
 }
-from './point';
+from './elements';
 
-import {
-  Circle
-}
-from './circle';
 // * ***********************************************************************
 // *
 // *   HYPERBOLIC FUNCTIONS
@@ -81,7 +77,7 @@ export const arc = (p1, p2, circle) => {
     startAngle = beta;
     endAngle = alpha;
   }
-  
+
   return {
     circle: arcCircle,
     startAngle: startAngle,

@@ -1,6 +1,9 @@
 import * as E from './euclid';
 import * as H from './hyperbolic';
-import { Point } from './point';
+import {
+  Circle, Point
+}
+from './elements';
 import { ThreeJS } from './threejs';
 
 // * ***********************************************************************
@@ -31,10 +34,7 @@ export class Disk {
     //draw largest circle possible given window dims
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
-    this.circle = {
-      centre: this.centre,
-      radius: this.radius
-    }
+    this.circle = new Circle(this.centre.x, this.centre.y, this.radius);
 
     //smaller circle for testing
     //this.radius = this.radius / 2;

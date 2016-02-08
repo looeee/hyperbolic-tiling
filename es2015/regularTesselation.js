@@ -1,15 +1,14 @@
 import * as E from './euclid';
 import * as H from './hyperbolic';
-import { Point } from './point';
 import {
   Disk
 }
 from './disk';
 
 import {
-  Circle
+  Circle, Point
 }
-from './circle';
+from './elements';
 
 
 // * ***********************************************************************
@@ -112,7 +111,13 @@ export class RegularTesselation {
 
   }
 
-  //calculate first point of fundamental polygon using Coxeter's method
+  //calculate the central polygon which is made up of transformed copies
+  //of the fundamental region
+  centralPolygon(){
+
+  }
+
+  //calculate the fundamental polygon using Coxeter's method
   fundamentalRegion() {
     const radius = this.disk.circle.radius;
     const s = Math.sin(Math.PI / this.p);
