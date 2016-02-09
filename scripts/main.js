@@ -642,12 +642,12 @@ var ThreeJS = function () {
   babelHelpers.createClass(ThreeJS, [{
     key: 'init',
     value: function init() {
-      this.scene = new THREE.Scene();
+      if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
 
       this.initLighting();
 
-      this.axes();
+      //this.axes();
 
       this.initRenderer();
     }
@@ -655,26 +655,24 @@ var ThreeJS = function () {
     key: 'reset',
     value: function reset() {
       cancelAnimationFrame(this.id); // Stop the animation
-      this.scene = null;
+      this.clearScene();
       this.projector = null;
       this.camera = null;
-      this.controls = null;
 
-      var element = document.getElementsByTagName('canvas');
-      for (var index = element.length - 1; index >= 0; index--) {
-        element[index].parentNode.removeChild(element[index]);
-      }
       this.init();
+    }
+  }, {
+    key: 'clearScene',
+    value: function clearScene() {
+      for (var i = this.scene.children.length - 1; i >= 0; i--) {
+        this.scene.remove(this.scene.children[i]);
+      }
     }
   }, {
     key: 'initCamera',
     value: function initCamera() {
       this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
       this.scene.add(this.camera);
-      this.camera.position.x = 0;
-      this.camera.position.y = 0;
-
-      this.camera.position.z = 1;
     }
   }, {
     key: 'initLighting',
@@ -690,10 +688,10 @@ var ThreeJS = function () {
           antialias: true
         });
         this.renderer.setClearColor(0xffffff, 1.0);
+        document.body.appendChild(this.renderer.domElement);
       }
 
       this.renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(this.renderer.domElement);
 
       this.render();
     }

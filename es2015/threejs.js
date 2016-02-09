@@ -16,38 +16,35 @@ export class ThreeJS {
   }
 
   init() {
-    this.scene = new THREE.Scene();
+    if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
 
     this.initLighting();
 
-    this.axes();
+    //this.axes();
 
     this.initRenderer();
   }
 
   reset() {
     cancelAnimationFrame(this.id); // Stop the animation
-    this.scene = null;
+    this.clearScene();
     this.projector = null;
     this.camera = null;
-    this.controls = null;
 
-    const element = document.getElementsByTagName('canvas');
-    for (let index = element.length - 1; index >= 0; index--) {
-      element[index].parentNode.removeChild(element[index]);
-    }
     this.init();
+  }
+
+  clearScene(){
+    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      this.scene.remove(this.scene.children[i]);
+    }
   }
 
   initCamera() {
     this.camera = new THREE.OrthographicCamera(window.innerWidth / -2,
       window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
     this.scene.add(this.camera);
-    this.camera.position.x = 0;
-    this.camera.position.y = 0;
-
-    this.camera.position.z = 1;
   }
 
   initLighting() {
@@ -56,15 +53,15 @@ export class ThreeJS {
   }
 
   initRenderer() {
-    if(this.renderer === undefined){
+    if (this.renderer === undefined) {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
       });
       this.renderer.setClearColor(0xffffff, 1.0);
+      document.body.appendChild(this.renderer.domElement);
     }
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(this.renderer.domElement);
 
     this.render();
   }
@@ -130,7 +127,7 @@ export class ThreeJS {
       //poly.moveTo(vertices[i].x, vertices[i].y);
       //poly.lineTo(centre.x, centre.y);
       //poly.moveTo(vertices[i].x, vertices[i].y);
-      poly.lineTo(vertices[(i+1)%l].x, vertices[(i+1)%l].y);
+      poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
     }
     //console.log(poly);
     let geometry = new THREE.ShapeGeometry(poly);
@@ -158,7 +155,7 @@ export class ThreeJS {
   }
 
   createMesh(geometry, color, imageURL, wireframe) {
-    if(wireframe === undefined) wireframe = false;
+    if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
     const material = new THREE.MeshBasicMaterial({
