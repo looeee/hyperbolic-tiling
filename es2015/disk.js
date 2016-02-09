@@ -92,12 +92,9 @@ export class Disk {
   drawPolygon(polygon, color, texture, wireframe){
     this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
     //TESTING
-    for(let point of polygon.points){
-      this.drawPoint(point, 2);
-    }
-    this.drawPoint(polygon.points[0], 6, 0xa31a1a);
-    this.drawPoint(polygon.points[1], 4);
-    this.drawPoint(polygon.points[polygon.points.length-1], 4);
+    //for(let point of polygon.points){
+    //  this.drawPoint(point, 2);
+    //}
   }
 
   //return true if any of the points is not in the disk

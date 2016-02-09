@@ -128,7 +128,6 @@ export class ThreeJS {
 
     const poly = new THREE.Shape();
 
-
     poly.moveTo(vertices[0].x, vertices[0].y);
     for (let i = 0; i < l; i++) {
       //poly.moveTo(vertices[i].x, vertices[i].y);
@@ -136,7 +135,7 @@ export class ThreeJS {
       //poly.moveTo(vertices[i].x, vertices[i].y);
       poly.lineTo(vertices[(i+1)%l].x, vertices[(i+1)%l].y);
     }
-    console.log(poly);
+    //console.log(poly);
     let geometry = new THREE.ShapeGeometry(poly);
 
     /*

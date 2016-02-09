@@ -776,7 +776,7 @@ var ThreeJS = function () {
         //poly.moveTo(vertices[i].x, vertices[i].y);
         poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
       }
-      console.log(poly);
+      //console.log(poly);
       var geometry = new THREE.ShapeGeometry(poly);
 
       /*
@@ -944,34 +944,9 @@ var Disk = function () {
     value: function drawPolygon(polygon, color, texture, wireframe) {
       this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
       //TESTING
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = polygon.points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var point = _step.value;
-
-          this.drawPoint(point, 2);
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      this.drawPoint(polygon.points[0], 6, 0xa31a1a);
-      this.drawPoint(polygon.points[1], 4);
-      this.drawPoint(polygon.points[polygon.points.length - 1], 4);
+      //for(let point of polygon.points){
+      //  this.drawPoint(point, 2);
+      //}
     }
 
     //return true if any of the points is not in the disk
@@ -986,13 +961,13 @@ var Disk = function () {
         points[_key] = arguments[_key];
       }
 
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
       try {
-        for (var _iterator2 = points[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var point = _step2.value;
+        for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var point = _step.value;
 
           if (distance(point, this.centre) > r) {
             console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
@@ -1000,16 +975,16 @@ var Disk = function () {
           }
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _didIteratorError = true;
+        _iteratorError = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
           }
         } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
+          if (_didIteratorError) {
+            throw _iteratorError;
           }
         }
       }
@@ -1034,6 +1009,8 @@ var RegularTesselation = function () {
 
     babelHelpers.classCallCheck(this, RegularTesselation);
 
+    this.wireframe = false;
+    this.wireframe = true;
     console.log(p, q);
     this.disk = new Disk();
 
@@ -1061,35 +1038,63 @@ var RegularTesselation = function () {
     key: 'init',
     value: function init() {
       this.fr = this.fundamentalRegion();
+      this.centralPolygon();
       this.testing();
     }
   }, {
     key: 'testing',
-    value: function testing() {
-      var wireframe = false;
-      wireframe = true;
+    value: function testing() {}
 
-      var p1 = new Point(-200, 150);
-      var p2 = new Point(100, -200);
-      var p3 = new Point(290, -20);
-      var pgon = new Polygon([p1, p2, p3], this.disk.circle);
-      this.disk.drawPolygon(pgon, randomInt(900000, 14777215), '', wireframe);
+    /*
+    let p1 = new Point(-200, 150);
+    let p2 = new Point(100, -200);
+    let p3 = new Point(290, -20);
+    let pgon = new Polygon([p1,p2,p3], this.disk.circle);
+    this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
+    */
 
-      //this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
-
-      //let poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
-      //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
-
-      //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
-      //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
-    }
+    //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
+    //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
 
     //calculate the central polygon which is made up of transformed copies
     //of the fundamental region
 
   }, {
     key: 'centralPolygon',
-    value: function centralPolygon() {}
+    value: function centralPolygon() {
+      this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+      this.layerZero = [this.fr, this.frCopy];
+
+      for (var i = 0; i < this.p; i++) {
+        this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
+        this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
+      }
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.layerZero[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var pgon = _step.value;
+
+          this.disk.drawPolygon(pgon, randomInt(1900000, 14777215), '', this.wireframe);
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
 
     //calculate the fundamental polygon using Coxeter's method
 

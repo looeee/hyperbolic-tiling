@@ -21,6 +21,8 @@ from './elements';
 // *************************************************************************
 export class RegularTesselation {
   constructor(p, q, rotation, colour, maxLayers) {
+    this.wireframe = false;
+    this.wireframe = true;
     console.log(p,q);
     this.disk = new Disk();
 
@@ -49,24 +51,20 @@ export class RegularTesselation {
 
   init() {
     this.fr = this.fundamentalRegion();
+    this.centralPolygon();
     this.testing();
   }
 
   testing() {
-    let wireframe = false;
-    wireframe = true;
 
+    /*
     let p1 = new Point(-200, 150);
     let p2 = new Point(100, -200);
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3], this.disk.circle);
     this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
+    */
 
-
-    //this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
-
-    //let poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
-    //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
 
     //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
     //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
@@ -76,7 +74,17 @@ export class RegularTesselation {
   //calculate the central polygon which is made up of transformed copies
   //of the fundamental region
   centralPolygon(){
+    this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+    this.layerZero = [this.fr, this.frCopy];
 
+    for(let i = 0; i < this.p; i++){
+      this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2*Math.PI/this.p*i));
+      this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2*Math.PI/this.p*i));
+    }
+
+    for(let pgon of this.layerZero){
+      this.disk.drawPolygon(pgon, E.randomInt(1900000, 14777215), '', this.wireframe);
+    }
   }
 
   //calculate the fundamental polygon using Coxeter's method
