@@ -619,6 +619,102 @@ var Polygon = function () {
   return Polygon;
 }();
 
+var Parameters = function () {
+  function Parameters(p, q) {
+    babelHelpers.classCallCheck(this, Parameters);
+
+    this.p = p;
+    this.q = q;
+
+    this.minExposure = q - 2;
+    this.maxExposure = q - 1;
+  }
+
+  babelHelpers.createClass(Parameters, [{
+    key: 'exposure',
+    value: function exposure(layer, vertexNum, pgonNum) {
+      if (layer === 0) {
+        if (pgonNum === 0) {
+          //layer 0, pgon 0
+          if (this.q === 3) return this.maxExposure;else return this.minExposure;
+        } else return this.maxExposure; //layer 0, pgon != 0
+      } else {
+          //layer != 0
+          if (vertexNum === 0 && pgonNum === 0) {
+            return this.minExposure;
+          } else if (vertexNum === 0) {
+            if (this.q !== 3) return this.maxExposure;else return this.minExposure;
+          } else if (pgonNum === 0) {
+            if (this.q !== 3) return this.minExposure;else return this.maxExposure;
+          } else return this.maxExposure;
+        }
+    }
+  }, {
+    key: 'pSkip',
+    value: function pSkip(exposure) {
+      if (exposure === this.minExposure) {
+        if (this.q !== 3) return 1;else return 3;
+      } else if (exposure === this.maxExposure) {
+        if (this.p === 3) return 1;else if (this.q === 3) return 2;else return 0;
+      } else {
+        console.error('pSkip: wrong exposure value!');
+        return false;
+      }
+    }
+  }, {
+    key: 'qSkip',
+    value: function qSkip(exposure, vertexNum) {
+      if (exposure === this.minExposure) {
+        if (vertexNum === 0) {
+          if (this.q !== 3) return -1;else return 0;
+        } else {
+          if (this.p === 3) return -1;else return 0;
+        }
+      } else if (exposure === this.maxExposure) {
+        if (vertexNum === 0) {
+          if (this.p === 3 || this.q === 3) return 0;else return -1;
+        } else return 0;
+      } else {
+        console.error('qSkip: wrong exposure value!');
+        return false;
+      }
+    }
+  }, {
+    key: 'verticesToDo',
+    value: function verticesToDo(exposure) {
+      if (exposure === this.minExposure) {
+        if (this.p === 3) return 1;else if (this.q === 3) return this.p - 5;else return this.p - 3;
+      } else if (exposure === this.maxExposure) {
+        if (this.p === 3) return 1;else if (this.q === 3) return this.p - 4;else return this.p - 2;
+      } else {
+        console.error('verticesToDo: wrong exposure value!');
+        return false;
+      }
+    }
+  }, {
+    key: 'pgonsToDO',
+    value: function pgonsToDO(exposure, vertexNum) {
+      if (exposure === this.minExposure) {
+        if (vertexNum === 0) {
+          if (this.p === 3) return this.q - 4;else if (this.q === 3) return 1;else return this.q - 3;
+        } else {
+          if (this.p === 3) return this.q - 4;else if (this.q === 3) return 1;else return this.q - 2;
+        }
+      } else if (exposure === this.maxExposure) {
+        if (vertexNum === 0) {
+          if (this.p === 3) return this.q - 3;else if (this.q === 3) return 1;else return this.q - 3;
+        } else {
+          if (this.p === 3) return this.q - 3;else if (this.q === 3) return 1;else return this.q - 2;
+        }
+      } else {
+        console.error('pgonsToDO: wrong exposure value!');
+        return false;
+      }
+    }
+  }]);
+  return Parameters;
+}();
+
 // * ***********************************************************************
 // *
 // *  THREE JS CLASS
@@ -985,7 +1081,7 @@ var Disk = function () {
 // *
 // *************************************************************************
 var RegularTesselation = function () {
-  function RegularTesselation(p, q, rotation, colour, maxLayers) {
+  function RegularTesselation(p, q, maxLayers) {
     var _this = this;
 
     babelHelpers.classCallCheck(this, RegularTesselation);
@@ -997,9 +1093,9 @@ var RegularTesselation = function () {
 
     this.p = p;
     this.q = q;
-    this.colour = colour || 'black';
-    this.rotation = rotation || 0;
     this.maxLayers = maxLayers || 5;
+
+    this.params = new Parameters(p, q);
 
     if (this.checkParams()) {
       return false;
@@ -1019,6 +1115,8 @@ var RegularTesselation = function () {
     value: function init() {
       this.fr = this.fundamentalRegion();
       this.centralPolygon();
+      if (this.mayLayers > 1) this.generateLayers();
+
       //this.testing();
     }
   }, {
@@ -1030,6 +1128,9 @@ var RegularTesselation = function () {
       var pgon = new Polygon([p1, p2, p3], this.disk.circle);
       this.disk.drawPolygon(pgon, randomInt(900000, 14777215), '', wireframe);
     }
+  }, {
+    key: 'generateLayers',
+    value: function generateLayers() {}
 
     //calculate the central polygon which is made up of transformed copies
     //of the fundamental region
@@ -1071,7 +1172,8 @@ var RegularTesselation = function () {
       }
     }
 
-    //calculate the fundamental polygon using Coxeter's method
+    //calculate the fundamental region (triangle out of which Layer 0 is built)
+    //using Coxeter's method
 
   }, {
     key: 'fundamentalRegion',

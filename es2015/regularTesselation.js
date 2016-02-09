@@ -10,6 +10,8 @@ import {
 }
 from './elements';
 
+import {Parameters} from './parameters';
+
 
 // * ***********************************************************************
 // *    TESSELATION CLASS
@@ -20,7 +22,7 @@ from './elements';
 // *
 // *************************************************************************
 export class RegularTesselation {
-  constructor(p, q, rotation, colour, maxLayers) {
+  constructor(p, q, maxLayers) {
     this.wireframe = false;
     this.wireframe = true;
     console.log(p,q);
@@ -28,9 +30,9 @@ export class RegularTesselation {
 
     this.p = p;
     this.q = q;
-    this.colour = colour || 'black';
-    this.rotation = rotation || 0;
     this.maxLayers = maxLayers || 5;
+
+    this.params = new Parameters(p,q);
 
     if (this.checkParams()) {
       return false;
@@ -51,6 +53,8 @@ export class RegularTesselation {
   init() {
     this.fr = this.fundamentalRegion();
     this.centralPolygon();
+    if(this.mayLayers > 1) this.generateLayers();
+
     //this.testing();
   }
 
@@ -60,6 +64,10 @@ export class RegularTesselation {
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3], this.disk.circle);
     this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
+
+  }
+
+  generateLayers(){
 
   }
 
@@ -79,7 +87,8 @@ export class RegularTesselation {
     }
   }
 
-  //calculate the fundamental polygon using Coxeter's method
+  //calculate the fundamental region (triangle out of which Layer 0 is built)
+  //using Coxeter's method
   fundamentalRegion() {
     const radius = this.disk.radius;
     const s = Math.sin(Math.PI / this.p);
