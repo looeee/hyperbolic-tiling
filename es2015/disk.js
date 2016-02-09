@@ -39,12 +39,6 @@ export class Disk {
     //this.radius = this.radius / 2;
 
     this.drawDisk();
-
-    //this.testing();
-  }
-
-  testing() {
-
   }
 
   //draw the disk background
@@ -54,15 +48,6 @@ export class Disk {
 
   drawPoint(centre, radius, color) {
     this.draw.disk(centre, radius, color, false);
-  }
-
-  //draw a hyperbolic line between two points on the boundary circle
-  //TODO: fix!
-  line(p1, p2, color) {
-    //const c = E.greatCircle(p1, p2, this.radius, this.centre);
-    //const points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
-
-    this.drawArc(points.p1, points.p2, color)
   }
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
@@ -82,6 +67,10 @@ export class Disk {
   }
 
   drawPolygonOutline(polygon, colour) {
+    //check that the points are in the disk
+    if (this.checkPoints(polygon.vertices)) {
+      return false
+    }
     const l = polygon.vertices.length;
     for (let i = 0; i < l; i++) {
       this.drawArc(polygon.vertices[i], polygon.vertices[(i + 1) % l], colour);
@@ -89,6 +78,10 @@ export class Disk {
   }
 
   drawPolygon(polygon, color, texture, wireframe){
+    //check that the points are in the disk
+    if (this.checkPoints(polygon.vertices)) {
+      return false
+    }
     this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
     //TESTING
     //for(let point of polygon.points){
@@ -98,6 +91,9 @@ export class Disk {
 
   //return true if any of the points is not in the disk
   checkPoints(...points) {
+    //pass in either a list of points or an array
+    if(points[0] instanceof Array) points = points[0];
+
     const r = this.radius;
     let test = false;
     for (let point of points) {

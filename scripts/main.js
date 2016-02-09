@@ -619,6 +619,12 @@ var Polygon = function () {
   return Polygon;
 }();
 
+// * ***********************************************************************
+// *
+// *  PARAMETERS CLASS
+// *
+// *************************************************************************
+
 var Parameters = function () {
   function Parameters(p, q) {
     babelHelpers.classCallCheck(this, Parameters);
@@ -958,12 +964,7 @@ var Disk = function () {
       //this.radius = this.radius / 2;
 
       this.drawDisk();
-
-      //this.testing();
     }
-  }, {
-    key: 'testing',
-    value: function testing() {}
 
     //draw the disk background
 
@@ -976,18 +977,6 @@ var Disk = function () {
     key: 'drawPoint',
     value: function drawPoint(centre, radius, color) {
       this.draw.disk(centre, radius, color, false);
-    }
-
-    //draw a hyperbolic line between two points on the boundary circle
-    //TODO: fix!
-
-  }, {
-    key: 'line',
-    value: function line(p1, p2, color) {
-      //const c = E.greatCircle(p1, p2, this.radius, this.centre);
-      //const points = E.circleIntersect(this.centre, c.centre, this.radius, c.radius);
-
-      this.drawArc(points.p1, points.p2, color);
     }
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
@@ -1011,6 +1000,10 @@ var Disk = function () {
   }, {
     key: 'drawPolygonOutline',
     value: function drawPolygonOutline(polygon, colour) {
+      //check that the points are in the disk
+      if (this.checkPoints(polygon.vertices)) {
+        return false;
+      }
       var l = polygon.vertices.length;
       for (var i = 0; i < l; i++) {
         this.drawArc(polygon.vertices[i], polygon.vertices[(i + 1) % l], colour);
@@ -1019,6 +1012,10 @@ var Disk = function () {
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
+      //check that the points are in the disk
+      if (this.checkPoints(polygon.vertices)) {
+        return false;
+      }
       this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
       //TESTING
       //for(let point of polygon.points){
@@ -1031,13 +1028,15 @@ var Disk = function () {
   }, {
     key: 'checkPoints',
     value: function checkPoints() {
-      var r = this.radius;
-      var test = false;
-
       for (var _len = arguments.length, points = Array(_len), _key = 0; _key < _len; _key++) {
         points[_key] = arguments[_key];
       }
 
+      //pass in either a list of points or an array
+      if (points[0] instanceof Array) points = points[0];
+
+      var r = this.radius;
+      var test = false;
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -1211,18 +1210,16 @@ var RegularTesselation = function () {
       } else if ((this.p - 2) * (this.q - 2) <= 4) {
         console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
         return true;
-      }
-      //TODO implement special cases for q = 3 or p = 3
-      else if (this.q <= 3 || isNaN(this.q)) {
-          console.error('Tesselation error: at least 3 p-gons must meet \
+      } else if (this.q < 3 || isNaN(this.q)) {
+        console.error('Tesselation error: at least 3 p-gons must meet \
                     at each vertex!');
-          return true;
-        } else if (this.p <= 3 || isNaN(this.p)) {
-          console.error('Tesselation error: polygon needs at least 3 sides!');
-          return true;
-        } else {
-          return false;
-        }
+        return true;
+      } else if (this.p < 3 || isNaN(this.p)) {
+        console.error('Tesselation error: polygon needs at least 3 sides!');
+        return true;
+      } else {
+        return false;
+      }
     }
   }]);
   return RegularTesselation;

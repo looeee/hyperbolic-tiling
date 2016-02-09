@@ -122,12 +122,11 @@ export class RegularTesselation {
       console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
       return true;
     }
-    //TODO implement special cases for q = 3 or p = 3
-    else if (this.q <= 3 || isNaN(this.q)) {
+    else if (this.q < 3 || isNaN(this.q)) {
       console.error('Tesselation error: at least 3 p-gons must meet \
                     at each vertex!');
       return true;
-    } else if (this.p <= 3 || isNaN(this.p)) {
+    } else if (this.p < 3 || isNaN(this.p)) {
       console.error('Tesselation error: polygon needs at least 3 sides!');
       return true;
     } else {
