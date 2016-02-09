@@ -56,27 +56,10 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
 };
 
 /*
-//reflect a set of points across a hyperbolic arc
-//TODO add case where reflection is across straight line
-//NOTE: added to Polgyon class
-export const reflect = (pointsArray, p1, p2, circle) => {
-  const l = pointsArray.length;
-  const a = new Arc(p1, p2, circle);
-  const newPoints = [];
-
-  if (!a.straightLine) {
-    for (let i = 0; i < l; i++) {
-      newPoints.push(E.inverse(pointsArray[i], a.circle));
-    }
-  } else {
-    for (let i = 0; i < l; i++) {
-      newPoints.push(E.lineReflection(p1, p2, pointsArray[i]));
-    }
-  }
-  return newPoints;
-}
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
+NOTE: Old version, new version is in Arc class
+TODO: test which is faster
 export const arcV1 = (p1, p2, circle) => {
   if (E.throughOrigin(p1, p2)) {
     return {
@@ -229,7 +212,8 @@ var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   } else if (d2 === r) {
     return p;
   } else {
-    console.error('Error: line does not intersect circle!');
+    console.warn('Warning: line does not intersect circle!');
+    return false;
   }
 };
 
@@ -635,8 +619,6 @@ var Polygon = function () {
   return Polygon;
 }();
 
-//NOTE will give a warning:  Too many active WebGL contexts
-//after resizing 16 times. This is a bug in threejs and can be safely ignored.
 // * ***********************************************************************
 // *
 // *  THREE JS CLASS
@@ -649,7 +631,6 @@ var ThreeJS = function () {
     babelHelpers.classCallCheck(this, ThreeJS);
 
     window.addEventListener('load', function (event) {
-      //window.removeEventListener('load');
       _this.init();
     }, false);
 
@@ -704,10 +685,13 @@ var ThreeJS = function () {
   }, {
     key: 'initRenderer',
     value: function initRenderer() {
-      this.renderer = new THREE.WebGLRenderer({
-        antialias: true
-      });
-      this.renderer.setClearColor(0xffffff, 1.0);
+      if (this.renderer === undefined) {
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: true
+        });
+        this.renderer.setClearColor(0xffffff, 1.0);
+      }
+
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(this.renderer.domElement);
 
@@ -858,7 +842,6 @@ var Disk = function () {
     this.draw = new ThreeJS();
 
     window.addEventListener('load', function (event) {
-      //window.removeEventListener('load');
       _this.init();
     }, false);
 
@@ -1025,7 +1008,6 @@ var RegularTesselation = function () {
     }
 
     window.addEventListener('load', function (event) {
-      //window.removeEventListener('load');
       _this.init();
     }, false);
 
@@ -1039,22 +1021,17 @@ var RegularTesselation = function () {
     value: function init() {
       this.fr = this.fundamentalRegion();
       this.centralPolygon();
-      this.testing();
+      //this.testing();
     }
   }, {
     key: 'testing',
-    value: function testing() {}
-
-    /*
-    let p1 = new Point(-200, 150);
-    let p2 = new Point(100, -200);
-    let p3 = new Point(290, -20);
-    let pgon = new Polygon([p1,p2,p3], this.disk.circle);
-    this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
-    */
-
-    //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
-    //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+    value: function testing() {
+      var p1 = new Point(-200, 150);
+      var p2 = new Point(100, -200);
+      var p3 = new Point(290, -20);
+      var pgon = new Polygon([p1, p2, p3], this.disk.circle);
+      this.disk.drawPolygon(pgon, randomInt(900000, 14777215), '', wireframe);
+    }
 
     //calculate the central polygon which is made up of transformed copies
     //of the fundamental region
@@ -1150,8 +1127,6 @@ var RegularTesselation = function () {
   }]);
   return RegularTesselation;
 }();
-
-//TODO window.removeEventListener('load'); not working in firefox
 
 // * ***********************************************************************
 // *

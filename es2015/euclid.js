@@ -1,5 +1,5 @@
 import {
-  Polygon, Arc, Circle, Point
+  Arc, Circle, Point
 }
 from './elements';
 // * ***********************************************************************
@@ -173,7 +173,8 @@ export const circleLineIntersect = (circle, p1, p2) => {
   } else if (d2 === r) {
     return p;
   } else {
-    console.error('Error: line does not intersect circle!');
+    console.warn('Warning: line does not intersect circle!');
+    return false;
   }
 }
 

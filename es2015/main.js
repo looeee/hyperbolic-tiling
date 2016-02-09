@@ -1,10 +1,6 @@
 import * as E from './euclid';
 import { RegularTesselation } from './regularTesselation';
 
-//TODO window.removeEventListener('load'); not working in firefox
-
-
-
 // * ***********************************************************************
 // *
 // *   SETUP

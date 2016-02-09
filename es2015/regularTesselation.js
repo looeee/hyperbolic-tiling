@@ -37,7 +37,6 @@ export class RegularTesselation {
     }
 
     window.addEventListener('load', (event) => {
-      //window.removeEventListener('load');
       this.init();
     }, false);
 
@@ -52,22 +51,15 @@ export class RegularTesselation {
   init() {
     this.fr = this.fundamentalRegion();
     this.centralPolygon();
-    this.testing();
+    //this.testing();
   }
 
   testing() {
-
-    /*
     let p1 = new Point(-200, 150);
     let p2 = new Point(100, -200);
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3], this.disk.circle);
     this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
-    */
-
-
-    //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
-    //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
 
   }
 

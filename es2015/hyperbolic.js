@@ -27,12 +27,6 @@ export const translateX = (pointsArray, distance) => {
   return newPoints;
 }
 
-//rotate a set of points about a point by a given angle
-//clockwise defaults to false
-export const rotation = (pointsArray, point, angle, clockwise) => {
-
-}
-
 export const poincareToWeierstrass = (point2D) => {
   const factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
   return {
@@ -45,14 +39,6 @@ export const poincareToWeierstrass = (point2D) => {
 export const weierstrassToPoincare = (point3D) => {
   const factor = 1 / (1 + point3D.z);
   return new Point(factor * point3D.x, factor * point3D.y);
-}
-
-export const rotateAboutOriginWeierstrass = (point3D, angle) => {
-  return {
-    x: Math.cos(angle) * point3D.x - Math.sin(angle) * point3D.y,
-    y: Math.sin(angle) * point3D.x + Math.cos(angle) * point3D.y,
-    z: point3D.z
-  }
 }
 
 //when the point p1 is translated to the origin, the point p2
@@ -71,10 +57,6 @@ export const translatePoincare = (p1, p2) => {
   const y = p1Factor * p1.y + p2Factor * p2.y;
 
   return new Point(x, y);
-}
-
-export const inverseTranslatePoincare = (p1, p2) => {
-
 }
 
 export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
@@ -98,27 +80,10 @@ export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
 }
 
 /*
-//reflect a set of points across a hyperbolic arc
-//TODO add case where reflection is across straight line
-//NOTE: added to Polgyon class
-export const reflect = (pointsArray, p1, p2, circle) => {
-  const l = pointsArray.length;
-  const a = new Arc(p1, p2, circle);
-  const newPoints = [];
-
-  if (!a.straightLine) {
-    for (let i = 0; i < l; i++) {
-      newPoints.push(E.inverse(pointsArray[i], a.circle));
-    }
-  } else {
-    for (let i = 0; i < l; i++) {
-      newPoints.push(E.lineReflection(p1, p2, pointsArray[i]));
-    }
-  }
-  return newPoints;
-}
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
+NOTE: Old version, new version is in Arc class
+TODO: test which is faster
 export const arcV1 = (p1, p2, circle) => {
   if (E.throughOrigin(p1, p2)) {
     return {
