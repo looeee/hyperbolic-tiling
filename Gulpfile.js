@@ -44,12 +44,14 @@ gulp.task('js', function() {
         //plugins: ['transform-class-properties'],
       })
     ]
-  }))
+  })
+  .on('error', console.log)
+  )
   .pipe(gulp.dest(scripts_path))
   .pipe(livereload());
 });
 
-/* OLD METHOD BROWSERIFY AND BABELIFY 
+/* OLD METHOD BROWSERIFY AND BABELIFY
 //Put all javascript tasks here
 gulp.task('js', function() {
   return browserify({

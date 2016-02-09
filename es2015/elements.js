@@ -148,20 +148,24 @@ export class Polygon {
     this.vertices = vertices;
     this.circle = circle;
     this.points = [];
-
+    this.centre = this.barycentre();
     this.spacedPointsOnEdges();
   }
 
   //TODO: make spacing function of resolution
+  //TODO: space points along straight edges
   spacedPointsOnEdges(){
     const spacing = 5;
     const l = this.vertices.length;
+
+    this.points.push(this.vertices[0]);
+
     for (let i = 0; i < l; i++) {
+      let p;
       const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.circle);
 
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {
-        let p;
         if(!arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
         else p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
         this.points.push(p);
@@ -176,12 +180,20 @@ export class Polygon {
           this.points.push(p);
         }
 
-        this.points.push(this.vertices[(i + 1) % l]);
+        if((i + 1) % l !== 0){
+          this.points.push(this.vertices[(i + 1) % l]);
+        }
       }
 
       //line through origin (straight line)
       else{
-        this.points.push(this.vertices[(i + 1) % l]);
+        p = E.spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
+        this.points.push(p);
+        while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
+          p = E.spacedPointOnLine(p, this.vertices[i], spacing).p1;
+          this.points.push(p);
+        }
+        //this.points.push(this.vertices[(i + 1) % l]);
       }
     }
   }
@@ -214,6 +226,25 @@ export class Polygon {
       vertices.push(point);
     }
     return new Polygon(vertices, this.circle);
+  }
+
+  //find the barycentre of a non-self-intersecting polygon
+  barycentre(){
+    const l = this.vertices.length;
+    const first = this.vertices[0];
+    const last = this.vertices[l - 1];
+
+    let twicearea = 0, x = 0, y = 0, p1, p2, f;
+    for (let i = 0, j = l - 1; i < l; j = i++) {
+      p1 = this.vertices[i];
+      p2 = this.vertices[j];
+      f = p1.x * p2.y - p2.x * p1.y;
+      twicearea += f;
+      x += (p1.x + p2.x) * f;
+      y += (p1.y + p2.y) * f;
+    }
+    f = twicearea * 3;
+    return new Point( x / f, y / f);
   }
 
 }

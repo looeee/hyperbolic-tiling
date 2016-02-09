@@ -265,6 +265,11 @@ var spacedPointOnArc = function spacedPointOnArc(circle, point, spacing) {
   };
 };
 
+var spacedPointOnLine = function spacedPointOnLine(point1, point2, spacing) {
+  var circle = new Circle(point1.x, point1.y, spacing);
+  return points = circleLineIntersect(circle, point1, point2);
+};
+
 var randomInt = function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 };
@@ -451,23 +456,27 @@ var Polygon = function () {
     this.vertices = vertices;
     this.circle = circle;
     this.points = [];
-
+    this.centre = this.barycentre();
     this.spacedPointsOnEdges();
   }
 
   //TODO: make spacing function of resolution
+  //TODO: space points along straight edges
 
   babelHelpers.createClass(Polygon, [{
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
       var spacing = 5;
       var l = this.vertices.length;
+
+      this.points.push(this.vertices[0]);
+
       for (var i = 0; i < l; i++) {
+        var p = undefined;
         var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.circle);
 
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
-          var p = undefined;
           if (!arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
           this.points.push(p);
 
@@ -480,12 +489,20 @@ var Polygon = function () {
             this.points.push(p);
           }
 
-          this.points.push(this.vertices[(i + 1) % l]);
+          if ((i + 1) % l !== 0) {
+            this.points.push(this.vertices[(i + 1) % l]);
+          }
         }
 
         //line through origin (straight line)
         else {
-            this.points.push(this.vertices[(i + 1) % l]);
+            p = spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
+            this.points.push(p);
+            while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
+              p = spacedPointOnLine(p, this.vertices[i], spacing).p1;
+              this.points.push(p);
+            }
+            //this.points.push(this.vertices[(i + 1) % l]);
           }
       }
     }
@@ -587,6 +604,33 @@ var Polygon = function () {
 
       return new Polygon(vertices, this.circle);
     }
+
+    //find the barycentre of a non-self-intersecting polygon
+
+  }, {
+    key: 'barycentre',
+    value: function barycentre() {
+      var l = this.vertices.length;
+      var first = this.vertices[0];
+      var last = this.vertices[l - 1];
+
+      var twicearea = 0,
+          x = 0,
+          y = 0,
+          p1 = undefined,
+          p2 = undefined,
+          f = undefined;
+      for (var i = 0, j = l - 1; i < l; j = i++) {
+        p1 = this.vertices[i];
+        p2 = this.vertices[j];
+        f = p1.x * p2.y - p2.x * p1.y;
+        twicearea += f;
+        x += (p1.x + p2.x) * f;
+        y += (p1.y + p2.y) * f;
+      }
+      f = twicearea * 3;
+      return new Point(x / f, y / f);
+    }
   }]);
   return Polygon;
 }();
@@ -683,13 +727,12 @@ var ThreeJS = function () {
     }
   }, {
     key: 'segment',
-    value: function segment(circle, alpha, offset, color) {
+    value: function segment(circle, startAngle, endAngle, color) {
       if (color === undefined) color = 0xffffff;
 
       var curve = new THREE.EllipseCurve(circle.centre.x, circle.centre.y, // ax, aY
       circle.radius, circle.radius, // xRadius, yRadius
-      alpha, offset, // aStartAngle, aEndAngle
-      false // aClockwise
+      startAngle, endAngle, false // aClockwise
       );
 
       var points = curve.getSpacedPoints(100);
@@ -720,20 +763,38 @@ var ThreeJS = function () {
     }
   }, {
     key: 'polygon',
-    value: function polygon(vertices, color, texture, wireframe) {
+    value: function polygon(vertices, centre, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
+      var l = vertices.length;
 
       var poly = new THREE.Shape();
+
       poly.moveTo(vertices[0].x, vertices[0].y);
-
-      for (var i = 1; i < vertices.length; i++) {
-        poly.lineTo(vertices[i].x, vertices[i].y);
+      for (var i = 0; i < l; i++) {
+        //poly.moveTo(vertices[i].x, vertices[i].y);
+        //poly.lineTo(centre.x, centre.y);
+        //poly.moveTo(vertices[i].x, vertices[i].y);
+        poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
       }
-
-      poly.lineTo(vertices[0].x, vertices[0].y);
-
+      console.log(poly);
       var geometry = new THREE.ShapeGeometry(poly);
 
+      /*
+      const geometry = new THREE.Geometry();
+       //vertex 0 = polygon barycentre
+      geometry.vertices.push(new THREE.Vector3(centre.x, centre.y, 0));
+      //push first vertex to vertices array
+      //This means that when the next vertex is pushed in the loop
+      //we can also create the first face triangle
+      geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
+       for(let i = 1; i < l; i++){
+        geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
+        geometry.faces.push( new THREE.Face3( 0, i, i+1 ) );
+      }
+       //push the final faces
+      geometry.faces.push( new THREE.Face3( 0, l, 1 ) );
+      console.log(geometry);
+      */
       this.scene.add(this.createMesh(geometry, color, texture, wireframe));
     }
   }, {
@@ -835,8 +896,8 @@ var Disk = function () {
       this.draw.disk(this.centre, this.radius, 0x000000);
     }
   }, {
-    key: 'point',
-    value: function point(centre, radius, color) {
+    key: 'drawPoint',
+    value: function drawPoint(centre, radius, color) {
       this.draw.disk(centre, radius, color, false);
     }
 
@@ -881,7 +942,36 @@ var Disk = function () {
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
-      this.draw.polygon(polygon.points, color, texture, wireframe);
+      this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
+      //TESTING
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = polygon.points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var point = _step.value;
+
+          this.drawPoint(point, 2);
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      this.drawPoint(polygon.points[0], 6, 0xa31a1a);
+      this.drawPoint(polygon.points[1], 4);
+      this.drawPoint(polygon.points[polygon.points.length - 1], 4);
     }
 
     //return true if any of the points is not in the disk
@@ -896,13 +986,13 @@ var Disk = function () {
         points[_key] = arguments[_key];
       }
 
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var point = _step.value;
+        for (var _iterator2 = points[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var point = _step2.value;
 
           if (distance(point, this.centre) > r) {
             console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
@@ -910,16 +1000,16 @@ var Disk = function () {
           }
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
           }
         } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
+          if (_didIteratorError2) {
+            throw _iteratorError2;
           }
         }
       }
@@ -978,53 +1068,20 @@ var RegularTesselation = function () {
     value: function testing() {
       var wireframe = false;
       wireframe = true;
-      this.disk.drawPolygon(this.fr, randomInt(100000, 14777215), '', wireframe);
-      var poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
-      this.disk.drawPolygon(poly, randomInt(100000, 14777215), '', wireframe);
 
-      poly = this.fr.rotateAboutOrigin(Math.PI / 3);
-      this.disk.drawPolygon(poly, randomInt(100000, 14777215), '', wireframe);
+      var p1 = new Point(-200, 150);
+      var p2 = new Point(100, -200);
+      var p3 = new Point(290, -20);
+      var pgon = new Polygon([p1, p2, p3], this.disk.circle);
+      this.disk.drawPolygon(pgon, randomInt(900000, 14777215), '', wireframe);
 
-      /*
-      this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
-      const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
-      //this.disk.polygon(poly2, E.randomInt(10000, 14777215));
-       const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
-      //this.disk.polygon(poly3, E.randomInt(10000, 14777215), '', wireframe);
-       const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
-      //this.disk.polygon(poly4, E.randomInt(10000, 14777215), '', wireframe);
-       const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
-      //this.disk.polygon(poly5, E.randomInt(10000, 14777215), '', wireframe);
-       const poly6 = H.reflect(poly5, poly3[0], poly3[2], this.disk.circle);
-      //this.disk.polygon(poly6, E.randomInt(10000, 14777215), '', wireframe);
-       const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
-      //this.disk.polygon(poly7, E.randomInt(10000, 14777215), '', wireframe);
-       const poly8 = H.reflect(poly7, poly6[0], poly6[2], this.disk.circle);
-      //this.disk.polygon(poly8, E.randomInt(10000, 14777215), '', wireframe);
-       const poly9 = H.reflect(poly8, poly7[0], poly7[1], this.disk.circle);
-      //this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
-        let num = 0;//this.p*2;
-      for(let i =0; i < num; i++){
-        let poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly3, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly4, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly5, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly6, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly7, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly8, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-        poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
-        this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      }
-      */
+      //this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
+
+      //let poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+      //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+
+      //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
+      //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
     }
 
     //calculate the central polygon which is made up of transformed copies
@@ -1097,5 +1154,10 @@ var RegularTesselation = function () {
 // *
 // *************************************************************************
 
-var tesselation = new RegularTesselation(randomInt(4, 8), randomInt(4, 8));
+var p = randomInt(4, 8);
+var q = randomInt(4, 8);
+
+if (p === 4 && q === 4) p = 5;
+
+var tesselation = new RegularTesselation(p, q);
 //const tesselation = new RegularTesselation(11, 9);

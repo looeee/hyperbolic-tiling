@@ -53,7 +53,7 @@ export class Disk {
     this.draw.disk(this.centre, this.radius, 0x000000);
   }
 
-  point(centre, radius, color) {
+  drawPoint(centre, radius, color) {
     this.draw.disk(centre, radius, color, false);
   }
 
@@ -90,7 +90,14 @@ export class Disk {
   }
 
   drawPolygon(polygon, color, texture, wireframe){
-    this.draw.polygon(polygon.points, color, texture, wireframe);
+    this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
+    //TESTING
+    for(let point of polygon.points){
+      this.drawPoint(point, 2);
+    }
+    this.drawPoint(polygon.points[0], 6, 0xa31a1a);
+    this.drawPoint(polygon.points[1], 4);
+    this.drawPoint(polygon.points[polygon.points.length-1], 4);
   }
 
   //return true if any of the points is not in the disk

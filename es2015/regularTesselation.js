@@ -55,62 +55,21 @@ export class RegularTesselation {
   testing() {
     let wireframe = false;
     wireframe = true;
-    this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
-    let poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
-    this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
 
-    poly = this.fr.rotateAboutOrigin(Math.PI/3);
-    this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
-
-    /*
-    this.disk.polygon(this.fr, E.randomInt(10000, 14777215), '', wireframe);
-    const poly2 = H.reflect(this.fr, this.fr[2], this.fr[1], this.disk.circle);
-    //this.disk.polygon(poly2, E.randomInt(10000, 14777215));
-
-    const poly3 = H.reflect(poly2, poly2[0], poly2[1], this.disk.circle);
-    //this.disk.polygon(poly3, E.randomInt(10000, 14777215), '', wireframe);
-
-    const poly4 = H.reflect(poly3, poly3[0], poly3[2], this.disk.circle);
-    //this.disk.polygon(poly4, E.randomInt(10000, 14777215), '', wireframe);
-
-    const poly5 = H.reflect(poly4, poly4[0], poly4[1], this.disk.circle);
-    //this.disk.polygon(poly5, E.randomInt(10000, 14777215), '', wireframe);
-
-    const poly6 = H.reflect(poly5, poly3[0], poly3[2], this.disk.circle);
-    //this.disk.polygon(poly6, E.randomInt(10000, 14777215), '', wireframe);
-
-    const poly7 = H.reflect(poly6, poly6[0], poly6[1], this.disk.circle);
-    //this.disk.polygon(poly7, E.randomInt(10000, 14777215), '', wireframe);
-
-    const poly8 = H.reflect(poly7, poly6[0], poly6[2], this.disk.circle);
-    //this.disk.polygon(poly8, E.randomInt(10000, 14777215), '', wireframe);
-
-    const poly9 = H.reflect(poly8, poly7[0], poly7[1], this.disk.circle);
-    //this.disk.polygon(poly9, E.randomInt(10000, 14777215), '', wireframe);
+    let p1 = new Point(-200, 150);
+    let p2 = new Point(100, -200);
+    let p3 = new Point(290, -20);
+    let pgon = new Polygon([p1,p2,p3], this.disk.circle);
+    this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
 
 
-    let num = 0;//this.p*2;
-    for(let i =0; i < num; i++){
-      let poly = H.rotatePgonAboutOrigin(this.fr, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly2, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly3, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly4, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly5, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly6, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly7, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly8, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-      poly = H.rotatePgonAboutOrigin(poly9, (2*Math.PI/num)*(i+1));
-      this.disk.polygon(poly, E.randomInt(10000, 14777215), '', wireframe);
-    }
-    */
+    //this.disk.drawPolygon(this.fr, E.randomInt(100000, 14777215), '', wireframe);
+
+    //let poly = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+    //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
+
+    //poly = this.fr.rotateAboutOrigin(E.randomFloat(0,2*Math.PI));
+    //this.disk.drawPolygon(poly, E.randomInt(100000, 14777215), '', wireframe);
 
   }
 

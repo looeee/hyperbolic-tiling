@@ -207,28 +207,6 @@ export const throughOrigin = (p1, p2) => {
   else return false;
 }
 
-//find the centroid of a non-self-intersecting polygon
-export const centroidOfPolygon = (points) => {
-  let first = points[0],
-    last = points[points.length - 1];
-  if (first.x !== last.x || first.y !== last.y) points.push(first);
-  let twicearea = 0,
-    x = 0,
-    y = 0,
-    nPts = points.length,
-    p1, p2, f;
-  for (var i = 0, j = nPts - 1; i < nPts; j = i++) {
-    p1 = points[i];
-    p2 = points[j];
-    f = p1.x * p2.y - p2.x * p1.y;
-    twicearea += f;
-    x += (p1.x + p2.x) * f;
-    y += (p1.y + p2.y) * f;
-  }
-  f = twicearea * 3;
-  return new Point( x / f, y / f);
-}
-
 //find a point at a distance d along the circumference of
 //a circle of radius r, centre c from a point also
 //on the circumference
@@ -246,6 +224,11 @@ export const spacedPointOnArc = (circle, point, spacing) => {
     p1: new Point(xPos, yPos),
     p2: new Point(xNeg,yNeg)
   }
+}
+
+export const spacedPointOnLine = (point1, point2, spacing) => {
+  const circle = new Circle(point1.x, point1.y, spacing);
+  return points = circleLineIntersect(circle, point1, point2);
 }
 
 export const randomFloat = (min, max) => {

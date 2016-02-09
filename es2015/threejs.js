@@ -83,13 +83,13 @@ export class ThreeJS {
     this.scene.add(circle);
   }
 
-  segment(circle, alpha, offset, color) {
+  segment(circle, startAngle, endAngle, color) {
     if (color === undefined) color = 0xffffff;
 
     const curve = new THREE.EllipseCurve(
       circle.centre.x, circle.centre.y, // ax, aY
       circle.radius, circle.radius, // xRadius, yRadius
-      alpha, offset, // aStartAngle, aEndAngle
+      startAngle, endAngle,
       false // aClockwise
     );
 
@@ -122,20 +122,42 @@ export class ThreeJS {
     this.scene.add(l);
   }
 
-  polygon(vertices, color, texture, wireframe) {
+  polygon(vertices, centre, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
+    const l = vertices.length;
 
     const poly = new THREE.Shape();
-    poly.moveTo(vertices[0].x, vertices[0].y);
 
-    for (let i = 1; i < vertices.length; i++) {
-      poly.lineTo(vertices[i].x, vertices[i].y)
+
+    poly.moveTo(vertices[0].x, vertices[0].y);
+    for (let i = 0; i < l; i++) {
+      //poly.moveTo(vertices[i].x, vertices[i].y);
+      //poly.lineTo(centre.x, centre.y);
+      //poly.moveTo(vertices[i].x, vertices[i].y);
+      poly.lineTo(vertices[(i+1)%l].x, vertices[(i+1)%l].y);
+    }
+    console.log(poly);
+    let geometry = new THREE.ShapeGeometry(poly);
+
+    /*
+    const geometry = new THREE.Geometry();
+
+    //vertex 0 = polygon barycentre
+    geometry.vertices.push(new THREE.Vector3(centre.x, centre.y, 0));
+    //push first vertex to vertices array
+    //This means that when the next vertex is pushed in the loop
+    //we can also create the first face triangle
+    geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
+
+    for(let i = 1; i < l; i++){
+      geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
+      geometry.faces.push( new THREE.Face3( 0, i, i+1 ) );
     }
 
-    poly.lineTo(vertices[0].x, vertices[0].y);
-
-    const geometry = new THREE.ShapeGeometry(poly);
-
+    //push the final faces
+    geometry.faces.push( new THREE.Face3( 0, l, 1 ) );
+    console.log(geometry);
+    */
     this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
@@ -174,5 +196,98 @@ export class ThreeJS {
 
     this.renderer.render(this.scene, this.camera);
   }
+
+}
+
+
+/*
+ * Checks for duplicate vertices with hashmap.
+ * Duplicated vertices are removed
+ * and faces' vertices are updated.
+ */
+
+const mergeVertices = (shape) => {
+
+  var verticesMap = {}; // Hashmap for looking up vertices by position coordinates (and making sure they are unique)
+  var unique = [], changes = [];
+
+  var v, key;
+  var precisionPoints = 4; // number of decimal points, e.g. 4 for epsilon of 0.0001
+  var precision = Math.pow( 10, precisionPoints );
+  var i, il, face;
+  var indices, j, jl;
+
+  for ( i = 0, il = this.vertices.length; i < il; i ++ ) {
+
+    v = this.vertices[ i ];
+    key = Math.round( v.x * precision ) + '_' + Math.round( v.y * precision ) + '_' + Math.round( v.z * precision );
+
+    if ( verticesMap[ key ] === undefined ) {
+
+      verticesMap[ key ] = i;
+      unique.push( this.vertices[ i ] );
+      changes[ i ] = unique.length - 1;
+
+    } else {
+
+      //console.log('Duplicate vertex found. ', i, ' could be using ', verticesMap[key]);
+      changes[ i ] = changes[ verticesMap[ key ] ];
+
+    }
+
+  }
+
+
+  // if faces are completely degenerate after merging vertices, we
+  // have to remove them from the geometry.
+  var faceIndicesToRemove = [];
+
+  for ( i = 0, il = this.faces.length; i < il; i ++ ) {
+
+    face = this.faces[ i ];
+
+    face.a = changes[ face.a ];
+    face.b = changes[ face.b ];
+    face.c = changes[ face.c ];
+
+    indices = [ face.a, face.b, face.c ];
+
+    var dupIndex = - 1;
+
+    // if any duplicate vertices are found in a Face3
+    // we have to remove the face as nothing can be saved
+    for ( var n = 0; n < 3; n ++ ) {
+
+      if ( indices[ n ] === indices[ ( n + 1 ) % 3 ] ) {
+
+        dupIndex = n;
+        faceIndicesToRemove.push( i );
+        break;
+
+      }
+
+    }
+
+  }
+
+  for ( i = faceIndicesToRemove.length - 1; i >= 0; i -- ) {
+
+    var idx = faceIndicesToRemove[ i ];
+
+    this.faces.splice( idx, 1 );
+
+    for ( j = 0, jl = this.faceVertexUvs.length; j < jl; j ++ ) {
+
+      this.faceVertexUvs[ j ].splice( idx, 1 );
+
+    }
+
+  }
+
+  // Use unique set of vertices
+
+  var diff = this.vertices.length - unique.length;
+  this.vertices = unique;
+  return diff;
 
 }
