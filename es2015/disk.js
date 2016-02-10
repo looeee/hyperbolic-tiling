@@ -15,7 +15,6 @@ import { ThreeJS } from './threejs';
 // *************************************************************************
 export class Disk {
   constructor() {
-    console.log(window.radius);
     this.draw = new ThreeJS();
 
     this.init();
@@ -97,7 +96,7 @@ export class Disk {
     let test = false;
     for (let point of points) {
       if (E.distance(point, this.centre) > r) {
-        //console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
+        console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
         test = true;
       }
     }

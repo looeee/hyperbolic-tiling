@@ -50,15 +50,16 @@ export class Point {
   }
 
   //map from unit disk to disk of newRadius
-  fromUnitDisk(newRadius) {
+  fromUnitDisk() {
     return new Point(this.x * window.radius , this.y * window.radius );
   }
 
   transform(transform){
     const mat = transform.matrix;
-    const x = this.x * mat[0][0] + this.y * mat[0][1];
-    const y = this.x * mat[1][0] + this.y * mat[1][1];
-    return new Point(x, y);
+    const p = this.toUnitDisk();
+    p.x = p.x * mat[0][0] + p.y * mat[0][1];
+    p.y = p.x * mat[1][0] + p.y * mat[1][1];
+    return p.fromUnitDisk();
   }
 }
 
@@ -150,9 +151,8 @@ export class Arc {
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 export class Polygon {
-  constructor(vertices, circle) {
+  constructor(vertices) {
     this.vertices = vertices;
-    this.circle = circle;
     this.points = [];
     this.centre = this.barycentre();
     this.spacedPointsOnEdges();
@@ -168,7 +168,7 @@ export class Polygon {
 
     for (let i = 0; i < l; i++) {
       let p;
-      const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.circle);
+      const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
 
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {
@@ -222,7 +222,7 @@ export class Polygon {
         vertices.push(E.lineReflection(p1, p2, v));
       }
     }
-    return new Polygon(vertices, this.circle);
+    return new Polygon(vertices);
   }
 
   rotateAboutOrigin(angle){
@@ -231,7 +231,7 @@ export class Polygon {
       let point = E.rotatePointAboutOrigin(v, angle);
       vertices.push(point);
     }
-    return new Polygon(vertices, this.circle);
+    return new Polygon(vertices);
   }
 
   transform(transform){
@@ -240,7 +240,7 @@ export class Polygon {
       newVertices.push(v.transform(transform));
     }
 
-    return new Polygon(newVertices, this.circle);
+    return new Polygon(newVertices);
   }
 
   //find the barycentre of a non-self-intersecting polygon

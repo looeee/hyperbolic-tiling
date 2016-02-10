@@ -263,16 +263,17 @@ var Point = function () {
 
   }, {
     key: 'fromUnitDisk',
-    value: function fromUnitDisk(newRadius) {
+    value: function fromUnitDisk() {
       return new Point(this.x * window.radius, this.y * window.radius);
     }
   }, {
     key: 'transform',
     value: function transform(_transform) {
       var mat = _transform.matrix;
-      var x = this.x * mat[0][0] + this.y * mat[0][1];
-      var y = this.x * mat[1][0] + this.y * mat[1][1];
-      return new Point(x, y);
+      var p = this.toUnitDisk();
+      p.x = p.x * mat[0][0] + p.y * mat[0][1];
+      p.y = p.x * mat[1][0] + p.y * mat[1][1];
+      return p.fromUnitDisk();
     }
   }]);
   return Point;
@@ -360,11 +361,10 @@ var Arc = function Arc(p1, p2) {
 //@param circle: Circle representing current Poincare Disk dimensions
 
 var Polygon = function () {
-  function Polygon(vertices, circle) {
+  function Polygon(vertices) {
     babelHelpers.classCallCheck(this, Polygon);
 
     this.vertices = vertices;
-    this.circle = circle;
     this.points = [];
     this.centre = this.barycentre();
     this.spacedPointsOnEdges();
@@ -383,7 +383,7 @@ var Polygon = function () {
 
       for (var i = 0; i < l; i++) {
         var p = undefined;
-        var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.circle);
+        var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
 
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
@@ -480,7 +480,7 @@ var Polygon = function () {
           }
         }
       }
-      return new Polygon(vertices, this.circle);
+      return new Polygon(vertices);
     }
   }, {
     key: 'rotateAboutOrigin',
@@ -512,7 +512,7 @@ var Polygon = function () {
         }
       }
 
-      return new Polygon(vertices, this.circle);
+      return new Polygon(vertices);
     }
   }, {
     key: 'transform',
@@ -543,7 +543,7 @@ var Polygon = function () {
         }
       }
 
-      return new Polygon(newVertices, this.circle);
+      return new Polygon(newVertices);
     }
 
     //find the barycentre of a non-self-intersecting polygon
@@ -1102,7 +1102,6 @@ var Disk = function () {
 
     babelHelpers.classCallCheck(this, Disk);
 
-    console.log(window.radius);
     this.draw = new ThreeJS();
 
     this.init();
@@ -1208,7 +1207,7 @@ var Disk = function () {
           var point = _step.value;
 
           if (distance(point, this.centre) > r) {
-            //console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
+            console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
             test = true;
           }
         }
@@ -1292,7 +1291,7 @@ var RegularTesselation = function () {
       var p2 = new Point(100, -200);
 
       var p3 = new Point(290, -20);
-      var pgon = new Polygon([p1, p2, p3], this.disk.circle);
+      var pgon = new Polygon([p1, p2, p3]);
       this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
 
       var poly = pgon.transform(this.transforms.edgeBisectorReflection);
@@ -1473,7 +1472,7 @@ var RegularTesselation = function () {
 
       var vertices = [this.disk.centre, p1, p2];
 
-      return new Polygon(vertices, this.disk.circle);
+      return new Polygon(vertices);
     }
 
     //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is

@@ -68,7 +68,7 @@ export class RegularTesselation {
     let p2 = new Point(100, -200);
 
     let p3 = new Point(290, -20);
-    let pgon = new Polygon([p1,p2,p3], this.disk.circle);
+    let pgon = new Polygon([p1,p2,p3]);
     this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
 
     let poly = pgon.transform(this.transforms.edgeBisectorReflection)
@@ -180,7 +180,7 @@ export class RegularTesselation {
 
     const vertices = [this.disk.centre, p1, p2];
 
-    return new Polygon(vertices, this.disk.circle);
+    return new Polygon(vertices);
   }
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
