@@ -10,7 +10,7 @@ import {
 }
 from './elements';
 
-import {Transformations, Parameters} from './helpers';
+import {Transform, Transformations, Parameters} from './helpers';
 
 
 // * ***********************************************************************
@@ -75,7 +75,53 @@ export class RegularTesselation {
 
   generateLayers(){
     for (let i = 0; i < this.p; i++) {
-      
+      let qTransform = this.transforms.edgeTransforms[i];
+      for (let j = 0; j < this.q - 2; j++) {
+        if((this.p === 3) && (this.q -3 === j) ){
+          //TODO: transform central polygon accordingly
+        }
+        else{
+          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
+        }
+        if( (-1 % p) !== 0){
+          qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+        }
+      }
+    }
+  }
+
+  layerRecursion(exposure, layer, transform){
+    if(layer >= this.maxLayers) return;
+
+    let pSkip = this.params.pSkip(exposure);
+    let verticesToDo = this.params.verticesTodo(exposure);
+
+    for (let i = 0; i < verticesToDo; i++) {
+      let pTransform = this.transforms.shiftTrans(transform, pSkip);
+      let qTransform;
+
+      let qSkip = this.params.qSkip(exposure,i);
+      if(qSkip % this.p !== 0){
+        qTransform = this.transforms.shiftTrans(pTransform, qSkip);
+      }
+      else{
+        qTransform = pTransform;
+      }
+
+      let pgonsToDo = this.params.pgonsTodo(exposure, i);
+
+      for (let j = 0; j < pgonsToDo; j++) {
+        if( (this.p === 3) && ( j === pgonsToDo - 1)){
+          //TODO: transform polygon accordingly
+        }
+        else{
+          this.layerRecursion(this.params.exposure(layer, i, j), layer+1, qTransform);
+        }
+        if( (-1 % p) !== 0 ){
+          qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+        }
+      }
+      pskip = (pskip + 1) % this.p;
     }
   }
 

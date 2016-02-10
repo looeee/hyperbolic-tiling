@@ -783,7 +783,7 @@ var Transformations = function () {
 
     this.initPgonRotations();
     this.initEdges();
-    this.initEdgeTransformations();
+    this.initEdgeTransforms();
   }
 
   babelHelpers.createClass(Transformations, [{
@@ -854,9 +854,9 @@ var Transformations = function () {
       };
     }
   }, {
-    key: 'initEdgeTransformations',
-    value: function initEdgeTransformations() {
-      this.edgeTransformations = [];
+    key: 'initEdgeTransforms',
+    value: function initEdgeTransforms() {
+      this.edgeTransforms = [];
 
       for (var i = 0; i < this.p; i++) {
         var adj = this.edges[i].adjacentEdge;
@@ -864,37 +864,29 @@ var Transformations = function () {
         if (this.edges[i].orientation === -1) {
           var mat = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
           mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj]);
-          this.edgeTransformations[i] = new Transform(mat);
+          this.edgeTransforms[i] = new Transform(mat);
         }
         //Case 2: rotation
         else if (this.edges[i].orientation === 1) {
             var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
             mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-            this.edgeTransformations[i] = new Transform(mat);
+            this.edgeTransforms[i] = new Transform(mat);
           } else {
             console.error('Error: invalid orientation value');
             console.error(this.edges[i]);
           }
-        this.edgeTransformations[i].orientation = this.edges[adj].orientation;
-        this.edgeTransformations[i].position = adj;
+        this.edgeTransforms[i].orientation = this.edges[adj].orientation;
+        this.edgeTransforms[i].position = adj;
       }
-      console.log(this.edgeTransformations);
     }
   }, {
     key: 'shiftTrans',
-    value: function shiftTrans(transformation, shift) {
-      var newEdge = (transformation.position + transformation.orientation * shift + 2 * this.p) % this.p;
+    value: function shiftTrans(transform, shift) {
+      var newEdge = (transform.position + transform.orientation * shift + 2 * this.p) % this.p;
       if (newEdge < 0 || newEdge > p - 1) {
         console.error('Error: shiftTran newEdge out of range.');
       }
-      var mat = multiplyMatrices(transformation.m, this.edgeTransformations[newEdge].m);
-      var position = this.edgeTransformations[newEdge].position;
-      var orientation = 1; //rotation
-      if (transformation.orientation * this.edgeTransformations[newEdge].orientation < 0) {
-        orientation = -1;
-      }
-
-      return { m: mat, orientation: orientation, position: position };
+      return transform.multiply(this.edgeTransforms[newEdge]);
     }
   }]);
   return Transformations;
@@ -979,8 +971,8 @@ var Parameters = function () {
       }
     }
   }, {
-    key: 'pgonsToDO',
-    value: function pgonsToDO(exposure, vertexNum) {
+    key: 'pgonsToDo',
+    value: function pgonsToDo(exposure, vertexNum) {
       if (exposure === this.minExposure) {
         if (vertexNum === 0) {
           if (this.p === 3) return this.q - 4;else if (this.q === 3) return 1;else return this.q - 3;
@@ -994,7 +986,7 @@ var Parameters = function () {
           if (this.p === 3) return this.q - 3;else if (this.q === 3) return 1;else return this.q - 2;
         }
       } else {
-        console.error('pgonsToDO: wrong exposure value!');
+        console.error('pgonsToDo: wrong exposure value!');
         return false;
       }
     }
@@ -1427,7 +1419,53 @@ var RegularTesselation = function () {
   }, {
     key: 'generateLayers',
     value: function generateLayers() {
-      for (var i = 0; i < this.p; i++) {}
+      for (var i = 0; i < this.p; i++) {
+        var qTransform = this.transforms.edgeTransforms[i];
+        for (var j = 0; j < this.q - 2; j++) {
+          if (this.p === 3 && this.q - 3 === j) {
+            //TODO: transform central polygon accordingly
+          } else {
+              this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
+            }
+          if (-1 % p !== 0) {
+            qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+          }
+        }
+      }
+    }
+  }, {
+    key: 'layerRecursion',
+    value: function layerRecursion(exposure, layer, transform) {
+      if (layer >= this.maxLayers) return;
+
+      var pSkip = this.params.pSkip(exposure);
+      var verticesToDo = this.params.verticesTodo(exposure);
+
+      for (var i = 0; i < verticesToDo; i++) {
+        var pTransform = this.transforms.shiftTrans(transform, pSkip);
+        var qTransform = undefined;
+
+        var qSkip = this.params.qSkip(exposure, i);
+        if (qSkip % this.p !== 0) {
+          qTransform = this.transforms.shiftTrans(pTransform, qSkip);
+        } else {
+          qTransform = pTransform;
+        }
+
+        var pgonsToDo = this.params.pgonsTodo(exposure, i);
+
+        for (var j = 0; j < pgonsToDo; j++) {
+          if (this.p === 3 && j === pgonsToDo - 1) {
+            //TODO: transform polygon accordingly
+          } else {
+              this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+            }
+          if (-1 % p !== 0) {
+            qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+          }
+        }
+        pskip = (pskip + 1) % this.p;
+      }
     }
 
     //calculate the central polygon which is made up of transformed copies

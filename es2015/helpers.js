@@ -96,7 +96,7 @@ export class Transformations {
 
     this.initPgonRotations();
     this.initEdges();
-    this.initEdgeTransformations();
+    this.initEdgeTransforms();
 
   }
 
@@ -162,8 +162,8 @@ export class Transformations {
     }
   }
 
-  initEdgeTransformations(){
-    this.edgeTransformations = [];
+  initEdgeTransforms(){
+    this.edgeTransforms = [];
 
     for (let i = 0; i < this.p; i++) {
       const adj = this.edges[i].adjacentEdge;
@@ -171,37 +171,29 @@ export class Transformations {
       if(this.edges[i].orientation === -1){
         let mat = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
         mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj]);
-        this.edgeTransformations[i] = new Transform(mat);
+        this.edgeTransforms[i] = new Transform(mat);
       }
       //Case 2: rotation
       else if(this.edges[i].orientation === 1){
         let mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
         mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-        this.edgeTransformations[i] = new Transform(mat);
+        this.edgeTransforms[i] = new Transform(mat);
       }
       else{
         console.error('Error: invalid orientation value');
         console.error(this.edges[i]);
       }
-      this.edgeTransformations[i].orientation = this.edges[adj].orientation;
-      this.edgeTransformations[i].position = adj;
+      this.edgeTransforms[i].orientation = this.edges[adj].orientation;
+      this.edgeTransforms[i].position = adj;
     }
-    console.log(this.edgeTransformations);
   }
 
-  shiftTrans(transformation, shift){
-    const newEdge = (transformation.position + transformation.orientation*shift + 2*this.p) % this.p;
+  shiftTrans(transform, shift){
+    const newEdge = (transform.position + transform.orientation*shift + 2*this.p) % this.p;
     if(newEdge <0 || newEdge > (p-1) ){
       console.error('Error: shiftTran newEdge out of range.')
     }
-    const mat = multiplyMatrices(transformation.m, this.edgeTransformations[newEdge].m);
-    const position = this.edgeTransformations[newEdge].position;
-    let orientation = 1; //rotation
-    if(transformation.orientation * this.edgeTransformations[newEdge].orientation <0){
-      orientation = -1;
-    }
-
-    return {m: mat, orientation: orientation, position: position};
+    return transform.multiply(this.edgeTransforms[newEdge]);
   }
 }
 
@@ -288,7 +280,7 @@ export class Parameters {
     }
   }
 
-  pgonsToDO(exposure, vertexNum) {
+  pgonsToDo(exposure, vertexNum) {
     if (exposure === this.minExposure) {
       if (vertexNum === 0) {
         if (this.p === 3) return this.q - 4;
@@ -310,7 +302,7 @@ export class Parameters {
         else return this.q - 2;
       }
     } else {
-      console.error('pgonsToDO: wrong exposure value!')
+      console.error('pgonsToDo: wrong exposure value!')
       return false;
     }
   }
