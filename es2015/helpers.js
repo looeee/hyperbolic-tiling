@@ -13,33 +13,198 @@ const multiplyMatrices = (m1, m2) => {
   return result;
 }
 
+//create nxn identityMatrix
+const identityMatrix = (n) => {
+  return Array.apply(null, new Array(n)).map(function(x, i, a) {
+    return a.map(function(y, k) {
+      return i === k ? 1 : 0;
+    })
+  });
+}
+
+
 //TESTING
 //let a = [[8, 3], [2, 4], [3, 6]];
 //let b = [[1, 2, 3], [4, 6, 8]];
 
 // * ***********************************************************************
 // *
+// *  TRANSFORM CLASS
+// *
+// *************************************************************************
+export class Transform {
+  constructor(matrix, orientation, position) {
+    this.matrix = matrix || identityMatrix(3);
+    this.orientation = orientation;
+    this.position = position;
+
+    this.checkParams();
+  }
+
+  multiply(transform){
+    if(!transform instanceof Transform){
+      console.error('Error: ' + transform + 'is not a Transform');
+      return false;
+    }
+    const mat = multiplyMatrices(trans.m, this.m);
+    const position = transform.position;
+    let orientation = 1; //rotation
+    if(transform.orientation * this.orientation < 0){
+      orientation = -1;
+    }
+    return new transform(mat, orientation, position);
+  }
+
+  checkParams(){
+    if(this.orientation !== -1 || this.orientation !== 1){
+      console.error('Transform Error: orientation must be either -1 (reflection) or 1 (rotation)');
+    }
+  }
+}
+
+// * ***********************************************************************
+// *
 // *  TRANSFORMATIONS CLASS
 // *
 // *************************************************************************
+
+//orientation
+//reflection = -1
+//rotation = 1
 export class Transformations {
   constructor(p, q) {
+    this.p = p;
+    this.q = q;
     const PI = Math.PI;
-    this.sinp = Math.sin(PI / p);
     this.cosp = Math.cos(PI / p);
+    this.sinp = Math.sin(PI / p);
     this.cos2p = Math.cos(2 * PI / p);
     this.sin2p = Math.sin(2 * PI / p);
     this.coshq = Math.cos(PI / q) / this.sinp;
     this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
-    this.cosh2q = 2 * this.coshq * this.coshq -1;
+    this.cosh2q = 2 * this.coshq * this.coshq - 1;
     this.sinh2q = 2 * this.sinhq * this.coshq;
-    this.cosh2 = 1 / (this.sinp/this.cosp) * Math.sin(PI/q);
-    this.sinh2 = Math.sqrt( this.cosh2 * this.cosh2 -1);
+    this.cosh2 = 1 / (this.sinp / this.cosp) * Math.sin(PI / q);
+    this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
     this.rad2 = this.sinh2 / (this.cosh2 + 1);
     this.x2pt = this.sinhq / (this.coshq + 1);
     this.xqpt = this.cosp * this.rad2;
     this.yqpt = this.sinp * this.rad2;
 
+    this.initEdgeReflection();
+    this.initEdgeBisectorReflection();
+
+    this.rot2 = multiplyMatrices(this.edgeReflection, this.edgeBisectorReflection);
+
+    this.initPgonRotations();
+    this.initEdges();
+    this.initEdgeTransformations();
+
+  }
+
+  initEdgeReflection() {
+    this.edgeReflection = {m: identityMatrix(3)};
+    this.edgeReflection.m[0][0] = -this.cosh2q;
+    this.edgeReflection.m[0][2] = this.sinh2q;
+    this.edgeReflection.m[2][0] = -this.sinh2q;
+    this.edgeReflection.m[2][2] = this.cosh2q;
+    this.edgeReflection.orientation = -1; //reflection
+  }
+
+  initEdgeBisectorReflection() {
+    this.edgeBisectorReflection = {m: identityMatrix(3)};
+    this.edgeBisectorReflection.m[1][1] = -1;
+    this.edgeBisectorReflection.orientation = -1; //reflection
+  }
+
+  initPgonRotations() {
+    this.rotatePolygonCW = [];
+    this.rotatePolygonCCW = [];
+    for (let i = 0; i < this.p; i++) {
+      this.rotatePolygonCW[i] = {m: identityMatrix(3)};
+      this.rotatePolygonCW[i].m[0][0] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].m[0][1] = -Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].m[1][0] = Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].m[1][1] = Math.cos(2 * i * Math.PI / this.p);
+
+      this.rotatePolygonCCW[i] = {m: identityMatrix(3)};
+      this.rotatePolygonCCW[i].m[0][0] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].m[0][1] = Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].m[1][0] = -Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].m[1][1] = Math.cos(2 * i * Math.PI / this.p);
+    }
+  }
+
+  //orientation: 0 -> reflection, 1 -> rotation
+  initEdges(){
+    //this.edges = [];
+    //for (let i = 0; i < this.p; i++) {
+    //  edges.push({
+    //    orientation: 0,
+    //    adjEdgeID: 0,
+    //  })
+    //}
+
+    //TESTING: hard code for {4,5} tesselation
+    this.edges = [];
+    this.edges[0] = {
+      orientation: 1,
+      adjacentEdge: 0
+    };
+    this.edges[1] = {
+      orientation: 1,
+      adjacentEdge: 1
+    }
+    this.edges[2] = {
+      orientation: 1,
+      adjacentEdge: 2
+    }
+    this.edges[3] = {
+      orientation: 1,
+      adjacentEdge: 3
+    }
+  }
+
+  initEdgeTransformations(){
+    this.edgeTransformations = [];
+
+    for (let i = 0; i < this.p; i++) {
+      this.edgeTransformations[i] = {};
+      const adj = this.edges[i].adjacentEdge;
+      //Case 1: reflection
+      if(this.edges[i].orientation === -1){
+        let res = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
+        res = multiplyMatrices(res, this.rotatePolygonCCW[adj]);
+        this.edgeTransformations[i].m = res;
+      }
+      //Case 2: rotation
+      else if(this.edges[i].orientation === 1){
+        let res = multiplyMatrices(this.rotatePolygonCW[i], this.rot2);
+        res = multiplyMatrices(res, this.rotatePolygonCCW[adj]);
+        this.edgeTransformations[i].m = res;
+      }
+      else{
+        console.error('Error: invalid orientation value');
+        console.error(this.edges[i]);
+      }
+      this.edgeTransformations[i].orientation = this.edges[adj].orientation;
+      this.edgeTransformations[i].position = adj;
+    }
+  }
+
+  shiftTrans(transformation, shift){
+    const newEdge = (transformation.position + transformation.orientation*shift + 2*this.p) % this.p;
+    if(newEdge <0 || newEdge > (p-1) ){
+      console.error('Error: shiftTran newEdge out of range.')
+    }
+    const mat = multiplyMatrices(transformation.m, this.edgeTransformations[newEdge].m);
+    const position = this.edgeTransformations[newEdge].position;
+    let orientation = 1; //rotation
+    if(transformation.orientation * this.edgeTransformations[newEdge].orientation <0){
+      orientation = -1;
+    }
+
+    return {m: mat, orientation: orientation, position: position};
   }
 }
 

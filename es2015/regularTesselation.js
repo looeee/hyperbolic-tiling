@@ -52,11 +52,11 @@ export class RegularTesselation {
   }
 
   init() {
-    //this.fr = this.fundamentalRegion();
-    //this.centralPolygon();
-    //if(this.mayLayers > 1) this.generateLayers();
+    this.fr = this.fundamentalRegion();
+    this.centralPolygon();
+    if(this.mayLayers > 1) this.generateLayers();
 
-    this.testing();
+    //this.testing();
   }
 
   testing() {
@@ -74,7 +74,9 @@ export class RegularTesselation {
   }
 
   generateLayers(){
-
+    for (let i = 0; i < this.p; i++) {
+      
+    }
   }
 
   //calculate the central polygon which is made up of transformed copies

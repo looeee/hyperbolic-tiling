@@ -677,34 +677,232 @@ var Polygon = function () {
   return Polygon;
 }();
 
+var multiplyMatrices = function multiplyMatrices(m1, m2) {
+  var result = [];
+  for (var i = 0; i < m1.length; i++) {
+    result[i] = [];
+    for (var j = 0; j < m2[0].length; j++) {
+      var sum = 0;
+      for (var k = 0; k < m1[0].length; k++) {
+        sum += m1[i][k] * m2[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+};
+
+//create nxn identityMatrix
+var identityMatrix = function identityMatrix(n) {
+  return Array.apply(null, new Array(n)).map(function (x, i, a) {
+    return a.map(function (y, k) {
+      return i === k ? 1 : 0;
+    });
+  });
+};
+
 //TESTING
 //let a = [[8, 3], [2, 4], [3, 6]];
 //let b = [[1, 2, 3], [4, 6, 8]];
 
 // * ***********************************************************************
 // *
+// *  TRANSFORM CLASS
+// *
+// *************************************************************************
+var Transform = function () {
+  function Transform(matrix, orientation, position) {
+    babelHelpers.classCallCheck(this, Transform);
+
+    this.matrix = matrix || identityMatrix(3);
+    this.orientation = orientation;
+    this.position = position;
+
+    this.checkParams();
+  }
+
+  babelHelpers.createClass(Transform, [{
+    key: 'multiply',
+    value: function multiply(transform) {
+      if (!transform instanceof Transform) {
+        console.error('Error: ' + transform + 'is not a Transform');
+        return false;
+      }
+      var mat = multiplyMatrices(trans.m, this.m);
+      var position = transform.position;
+      var orientation = 1; //rotation
+      if (transform.orientation * this.orientation < 0) {
+        orientation = -1;
+      }
+      return new transform(mat, orientation, position);
+    }
+  }, {
+    key: 'checkParams',
+    value: function checkParams() {
+      if (this.orientation !== -1 || this.orientation !== 1) {
+        console.error('Transform Error: orientation must be either -1 (reflection) or 1 (rotation)');
+      }
+    }
+  }]);
+  return Transform;
+}();
+
+// * ***********************************************************************
+// *
 // *  TRANSFORMATIONS CLASS
 // *
 // *************************************************************************
-var Transformations = function Transformations(p, q) {
-  babelHelpers.classCallCheck(this, Transformations);
 
-  var PI = Math.PI;
-  this.sinp = Math.sin(PI / p);
-  this.cosp = Math.cos(PI / p);
-  this.cos2p = Math.cos(2 * PI / p);
-  this.sin2p = Math.sin(2 * PI / p);
-  this.coshq = Math.cos(PI / q) / this.sinp;
-  this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
-  this.cosh2q = 2 * this.coshq * this.coshq - 1;
-  this.sinh2q = 2 * this.sinhq * this.coshq;
-  this.cosh2 = 1 / (this.sinp / this.cosp) * Math.sin(PI / q);
-  this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
-  this.rad2 = this.sinh2 / (this.cosh2 + 1);
-  this.x2pt = this.sinhq / (this.coshq + 1);
-  this.xqpt = this.cosp * this.rad2;
-  this.yqpt = this.sinp * this.rad2;
-};
+//orientation
+//reflection = -1
+//rotation = 1
+var Transformations = function () {
+  function Transformations(p, q) {
+    babelHelpers.classCallCheck(this, Transformations);
+
+    this.p = p;
+    this.q = q;
+    var PI = Math.PI;
+    this.cosp = Math.cos(PI / p);
+    this.sinp = Math.sin(PI / p);
+    this.cos2p = Math.cos(2 * PI / p);
+    this.sin2p = Math.sin(2 * PI / p);
+    this.coshq = Math.cos(PI / q) / this.sinp;
+    this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
+    this.cosh2q = 2 * this.coshq * this.coshq - 1;
+    this.sinh2q = 2 * this.sinhq * this.coshq;
+    this.cosh2 = 1 / (this.sinp / this.cosp) * Math.sin(PI / q);
+    this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
+    this.rad2 = this.sinh2 / (this.cosh2 + 1);
+    this.x2pt = this.sinhq / (this.coshq + 1);
+    this.xqpt = this.cosp * this.rad2;
+    this.yqpt = this.sinp * this.rad2;
+
+    this.initEdgeReflection();
+    this.initEdgeBisectorReflection();
+
+    this.rot2 = multiplyMatrices(this.edgeReflection, this.edgeBisectorReflection);
+
+    this.initPgonRotations();
+    this.initEdges();
+    this.initEdgeTransformations();
+  }
+
+  babelHelpers.createClass(Transformations, [{
+    key: 'initEdgeReflection',
+    value: function initEdgeReflection() {
+      this.edgeReflection = { m: identityMatrix(3) };
+      this.edgeReflection.m[0][0] = -this.cosh2q;
+      this.edgeReflection.m[0][2] = this.sinh2q;
+      this.edgeReflection.m[2][0] = -this.sinh2q;
+      this.edgeReflection.m[2][2] = this.cosh2q;
+      this.edgeReflection.orientation = -1; //reflection
+    }
+  }, {
+    key: 'initEdgeBisectorReflection',
+    value: function initEdgeBisectorReflection() {
+      this.edgeBisectorReflection = { m: identityMatrix(3) };
+      this.edgeBisectorReflection.m[1][1] = -1;
+      this.edgeBisectorReflection.orientation = -1; //reflection
+    }
+  }, {
+    key: 'initPgonRotations',
+    value: function initPgonRotations() {
+      this.rotatePolygonCW = [];
+      this.rotatePolygonCCW = [];
+      for (var i = 0; i < this.p; i++) {
+        this.rotatePolygonCW[i] = { m: identityMatrix(3) };
+        this.rotatePolygonCW[i].m[0][0] = Math.cos(2 * i * Math.PI / this.p);
+        this.rotatePolygonCW[i].m[0][1] = -Math.sin(2 * i * Math.PI / this.p);
+        this.rotatePolygonCW[i].m[1][0] = Math.sin(2 * i * Math.PI / this.p);
+        this.rotatePolygonCW[i].m[1][1] = Math.cos(2 * i * Math.PI / this.p);
+
+        this.rotatePolygonCCW[i] = { m: identityMatrix(3) };
+        this.rotatePolygonCCW[i].m[0][0] = Math.cos(2 * i * Math.PI / this.p);
+        this.rotatePolygonCCW[i].m[0][1] = Math.sin(2 * i * Math.PI / this.p);
+        this.rotatePolygonCCW[i].m[1][0] = -Math.sin(2 * i * Math.PI / this.p);
+        this.rotatePolygonCCW[i].m[1][1] = Math.cos(2 * i * Math.PI / this.p);
+      }
+    }
+
+    //orientation: 0 -> reflection, 1 -> rotation
+
+  }, {
+    key: 'initEdges',
+    value: function initEdges() {
+      //this.edges = [];
+      //for (let i = 0; i < this.p; i++) {
+      //  edges.push({
+      //    orientation: 0,
+      //    adjEdgeID: 0,
+      //  })
+      //}
+
+      //TESTING: hard code for {4,5} tesselation
+      this.edges = [];
+      this.edges[0] = {
+        orientation: 1,
+        adjacentEdge: 0
+      };
+      this.edges[1] = {
+        orientation: 1,
+        adjacentEdge: 1
+      };
+      this.edges[2] = {
+        orientation: 1,
+        adjacentEdge: 2
+      };
+      this.edges[3] = {
+        orientation: 1,
+        adjacentEdge: 3
+      };
+    }
+  }, {
+    key: 'initEdgeTransformations',
+    value: function initEdgeTransformations() {
+      this.edgeTransformations = [];
+
+      for (var i = 0; i < this.p; i++) {
+        this.edgeTransformations[i] = {};
+        var adj = this.edges[i].adjacentEdge;
+        //Case 1: reflection
+        if (this.edges[i].orientation === -1) {
+          var res = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
+          res = multiplyMatrices(res, this.rotatePolygonCCW[adj]);
+          this.edgeTransformations[i].m = res;
+        }
+        //Case 2: rotation
+        else if (this.edges[i].orientation === 1) {
+            var res = multiplyMatrices(this.rotatePolygonCW[i], this.rot2);
+            res = multiplyMatrices(res, this.rotatePolygonCCW[adj]);
+            this.edgeTransformations[i].m = res;
+          } else {
+            console.error('Error: invalid orientation value');
+            console.error(this.edges[i]);
+          }
+        this.edgeTransformations[i].orientation = this.edges[adj].orientation;
+        this.edgeTransformations[i].position = adj;
+      }
+    }
+  }, {
+    key: 'shiftTrans',
+    value: function shiftTrans(transformation, shift) {
+      var newEdge = (transformation.position + transformation.orientation * shift + 2 * this.p) % this.p;
+      if (newEdge < 0 || newEdge > p - 1) {
+        console.error('Error: shiftTran newEdge out of range.');
+      }
+      var mat = multiplyMatrices(transformation.m, this.edgeTransformations[newEdge].m);
+      var position = this.edgeTransformations[newEdge].position;
+      var orientation = 1; //rotation
+      if (transformation.orientation * this.edgeTransformations[newEdge].orientation < 0) {
+        orientation = -1;
+      }
+
+      return { m: mat, orientation: orientation, position: position };
+    }
+  }]);
+  return Transformations;
+}();
 
 // * ***********************************************************************
 // *
@@ -1210,11 +1408,11 @@ var RegularTesselation = function () {
   babelHelpers.createClass(RegularTesselation, [{
     key: 'init',
     value: function init() {
-      //this.fr = this.fundamentalRegion();
-      //this.centralPolygon();
-      //if(this.mayLayers > 1) this.generateLayers();
+      this.fr = this.fundamentalRegion();
+      this.centralPolygon();
+      if (this.mayLayers > 1) this.generateLayers();
 
-      this.testing();
+      //this.testing();
     }
   }, {
     key: 'testing',
@@ -1232,7 +1430,9 @@ var RegularTesselation = function () {
     }
   }, {
     key: 'generateLayers',
-    value: function generateLayers() {}
+    value: function generateLayers() {
+      for (var i = 0; i < this.p; i++) {}
+    }
 
     //calculate the central polygon which is made up of transformed copies
     //of the fundamental region
@@ -1334,10 +1534,10 @@ var RegularTesselation = function () {
 // *
 // *************************************************************************
 
-var p = randomInt(4, 8);
+var p$1 = randomInt(4, 8);
 var q = randomInt(4, 8);
 
-if (p === 4 && q === 4) p = 5;
+if (p$1 === 4 && q === 4) p$1 = 5;
 
-var tesselation = new RegularTesselation(p, q);
-//const tesselation = new RegularTesselation(11, 9);
+//const tesselation = new RegularTesselation(p, q);
+var tesselation = new RegularTesselation(4, 5);
