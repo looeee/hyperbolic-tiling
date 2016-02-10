@@ -54,6 +54,12 @@ export class Point {
     return new Point(this.x * newRadius, this.y * newRadius);
   }
 
+  transform(transform){
+    const mat = transform.matrix;
+    const x = this.x * mat[0][0] + this.y * mat[0][1];
+    const y = this.x * mat[1][0] + this.y * mat[1][1];
+    return new Point(x, y);
+  }
 }
 
 // * ***********************************************************************
@@ -226,6 +232,15 @@ export class Polygon {
       vertices.push(point);
     }
     return new Polygon(vertices, this.circle);
+  }
+
+  transform(transform){
+    const newVertices = [];
+    for(v of this.vertices){
+      newVertices.push(v.transform(transform));
+    }
+
+    return new Polygon(newVertices, this.circle);
   }
 
   //find the barycentre of a non-self-intersecting polygon

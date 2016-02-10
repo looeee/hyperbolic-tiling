@@ -401,15 +401,17 @@ var Point = function () {
     value: function fromUnitDisk(newRadius) {
       return new Point(this.x * newRadius, this.y * newRadius);
     }
+  }, {
+    key: 'transform',
+    value: function transform(_transform) {
+      var mat = _transform.matrix;
+      var x = this.x * mat[0][0] + this.y * mat[0][1];
+      var y = this.x * mat[1][0] + this.y * mat[1][1];
+      return new Point(x, y);
+    }
   }]);
   return Point;
 }();
-
-// * ***********************************************************************
-// *
-// *   CIRCLE CLASS
-// *
-// *************************************************************************
 
 var Circle = function Circle(centreX, centreY, radius) {
   babelHelpers.classCallCheck(this, Circle);
@@ -491,6 +493,7 @@ var Arc = function Arc(p1, p2, circle) {
 
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
+
 var Polygon = function () {
   function Polygon(vertices, circle) {
     babelHelpers.classCallCheck(this, Polygon);
@@ -568,9 +571,9 @@ var Polygon = function () {
 
         try {
           for (var _iterator = this.vertices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var v = _step.value;
+            var _v = _step.value;
 
-            vertices.push(inverse(v, a.circle));
+            vertices.push(inverse(_v, a.circle));
           }
         } catch (err) {
           _didIteratorError = true;
@@ -593,9 +596,9 @@ var Polygon = function () {
 
         try {
           for (var _iterator2 = this.vertices[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var v = _step2.value;
+            var _v2 = _step2.value;
 
-            vertices.push(lineReflection(p1, p2, v));
+            vertices.push(lineReflection(p1, p2, _v2));
           }
         } catch (err) {
           _didIteratorError2 = true;
@@ -624,9 +627,9 @@ var Polygon = function () {
 
       try {
         for (var _iterator3 = this.vertices[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var v = _step3.value;
+          var _v3 = _step3.value;
 
-          var point = rotatePointAboutOrigin(v, angle);
+          var point = rotatePointAboutOrigin(_v3, angle);
           vertices.push(point);
         }
       } catch (err) {
@@ -645,6 +648,37 @@ var Polygon = function () {
       }
 
       return new Polygon(vertices, this.circle);
+    }
+  }, {
+    key: 'transform',
+    value: function transform(_transform2) {
+      var newVertices = [];
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
+
+      try {
+        for (var _iterator4 = this.vertices[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          v = _step4.value;
+
+          newVertices.push(v.transform(_transform2));
+        }
+      } catch (err) {
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
+          }
+        } finally {
+          if (_didIteratorError4) {
+            throw _iteratorError4;
+          }
+        }
+      }
+
+      return new Polygon(newVertices, this.circle);
     }
 
     //find the barycentre of a non-self-intersecting polygon
@@ -1397,16 +1431,19 @@ var RegularTesselation = function () {
     key: 'init',
     value: function init() {
       this.fr = this.fundamentalRegion();
-      this.centralPolygon();
-      if (this.mayLayers > 1) this.generateLayers();
+      //this.centralPolygon();
+      //if(this.mayLayers > 1) this.generateLayers();
 
-      //this.testing();
+      this.testing();
     }
   }, {
     key: 'testing',
     value: function testing() {
+      //TODO: this.transforms.edgeReflection broken!
+      //TODO: this.transforms.edgeTransforms[0] + [2] broken!
       var wireframe = false;
       var pattern = './images/textures/pattern1.png';
+      pattern = '';
       var p1 = new Point(-200, 150);
       var p2 = new Point(100, -200);
 
@@ -1415,6 +1452,9 @@ var RegularTesselation = function () {
       var p3 = new Point(290, -20);
       var pgon = new Polygon([p1, p2, p3], this.disk.circle);
       this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
+
+      var poly = pgon.transform(this.transforms.edgeBisectorReflection);
+      this.disk.drawPolygon(poly, 0xffffff, pattern, wireframe);
     }
   }, {
     key: 'generateLayers',

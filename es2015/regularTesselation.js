@@ -53,15 +53,18 @@ export class RegularTesselation {
 
   init() {
     this.fr = this.fundamentalRegion();
-    this.centralPolygon();
-    if(this.mayLayers > 1) this.generateLayers();
+    //this.centralPolygon();
+    //if(this.mayLayers > 1) this.generateLayers();
 
-    //this.testing();
+    this.testing();
   }
 
   testing() {
+    //TODO: this.transforms.edgeReflection broken!
+    //TODO: this.transforms.edgeTransforms[0] + [2] broken!
     let wireframe = false;
     let pattern = './images/textures/pattern1.png';
+    pattern = '';
     let p1 = new Point(-200, 150);
     let p2 = new Point(100, -200);
 
@@ -70,6 +73,9 @@ export class RegularTesselation {
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3], this.disk.circle);
     this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
+
+    let poly = pgon.transform(this.transforms.edgeBisectorReflection)
+    this.disk.drawPolygon(poly, 0xffffff, pattern, wireframe);
 
   }
 
