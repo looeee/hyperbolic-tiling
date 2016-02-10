@@ -270,10 +270,16 @@ var Point = function () {
     key: 'transform',
     value: function transform(_transform) {
       var mat = _transform.matrix;
-      var p = this.toUnitDisk();
+      /*
+      const p = this.toUnitDisk();
       p.x = p.x * mat[0][0] + p.y * mat[0][1];
       p.y = p.x * mat[1][0] + p.y * mat[1][1];
       return p.fromUnitDisk();
+      */
+
+      var x = this.x * mat[0][0] + this.y * mat[0][1];
+      var y = this.x * mat[1][0] + this.y * mat[1][1];
+      return new Point(x, y);
     }
   }]);
   return Point;
@@ -600,10 +606,6 @@ var identityMatrix = function identityMatrix(n) {
   });
 };
 
-//TESTING
-//let a = [[8, 3], [2, 4], [3, 6]];
-//let b = [[1, 2, 3], [4, 6, 8]];
-
 // * ***********************************************************************
 // *
 // *  TRANSFORM CLASS
@@ -616,8 +618,6 @@ var Transform = function () {
     this.matrix = matrix || identityMatrix(3);
     this.orientation = orientation;
     this.position = position || false; //position not always required
-
-    //this.checkParams();
   }
 
   babelHelpers.createClass(Transform, [{
@@ -634,13 +634,6 @@ var Transform = function () {
         orientation = -1;
       }
       return new Transform(mat, orientation, position);
-    }
-  }, {
-    key: 'checkParams',
-    value: function checkParams() {
-      if (this.orientation !== -1 || this.orientation !== 1) {
-        console.error('Transform Error: orientation must be either -1 (reflection) or 1 (rotation)');
-      }
     }
   }]);
   return Transform;
@@ -660,18 +653,29 @@ var Transformations = function () {
     this.p = p;
     this.q = q;
     var PI = Math.PI;
+
     this.cosp = Math.cos(PI / p);
     this.sinp = Math.sin(PI / p);
+
+    this.cosq = Math.cos(PI / q);
+    this.sinq = Math.sin(PI / q);
+
     this.cos2p = Math.cos(2 * PI / p);
     this.sin2p = Math.sin(2 * PI / p);
-    this.coshq = Math.cos(PI / q) / this.sinp;
-    this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
-    this.cosh2q = 2 * this.coshq * this.coshq - 1;
-    this.sinh2q = 2 * this.sinhq * this.coshq;
-    this.cosh2 = 1 / (this.sinp / this.cosp) * Math.sin(PI / q);
+
+    this.coshq = Math.cosh(PI / q); //Math.cos(PI / q) / this.sinp;
+    this.sinhq = Math.sinh(PI / q); //Math.sqrt(this.coshq * this.coshq - 1);
+
+    this.cosh2q = Math.cosh(2 * PI / q); //2 * this.coshq * this.coshq - 1;
+    this.sinh2q = Math.sinh(2 * PI / q); //2 * this.sinhq * this.coshq;
+
+    this.cosh2 = 1 / (Math.tan(PI / p) * Math.tan(PI / q)); //1 / ((this.sinp / this.cosp) * (this.sinq / this.cosq));
+
     this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
+
     this.rad2 = this.sinh2 / (this.cosh2 + 1);
     this.x2pt = this.sinhq / (this.coshq + 1);
+
     this.xqpt = this.cosp * this.rad2;
     this.yqpt = this.sinp * this.rad2;
 
@@ -687,21 +691,29 @@ var Transformations = function () {
     this.identity = new Transform(identityMatrix(3));
   }
 
+  //TESTED: Not working!
+
   babelHelpers.createClass(Transformations, [{
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
       this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -this.cosh2q;
-      this.edgeReflection.matrix[0][2] = this.sinh2q;
-      this.edgeReflection.matrix[2][0] = -this.sinh2q;
-      this.edgeReflection.matrix[2][2] = this.cosh2q;
+      this.edgeReflection.matrix[0][0] = -this.coshq;
+      this.edgeReflection.matrix[0][2] = this.sinhq;
+      this.edgeReflection.matrix[2][0] = -this.sinhq;
+      this.edgeReflection.matrix[2][2] = this.coshq;
     }
+
+    //TESTED: working
+
   }, {
     key: 'initEdgeBisectorReflection',
     value: function initEdgeBisectorReflection() {
       this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
       this.edgeBisectorReflection.matrix[1][1] = -1;
     }
+
+    //TESTED: working
+
   }, {
     key: 'initPgonRotations',
     value: function initPgonRotations() {
@@ -735,6 +747,9 @@ var Transformations = function () {
         });
       }
     }
+
+    //TESTED: not working!
+
   }, {
     key: 'initEdgeTransforms',
     value: function initEdgeTransforms() {
@@ -1284,7 +1299,7 @@ var RegularTesselation = function () {
     value: function testing() {
       //TODO: this.transforms.edgeReflection broken!
       //TODO: this.transforms.edgeTransforms[0] + [2] broken!
-      var wireframe = false;
+      var wireframe = true;
       var pattern = './images/textures/pattern1.png';
       pattern = '';
       var p1 = new Point(-200, 150);
@@ -1292,10 +1307,10 @@ var RegularTesselation = function () {
 
       var p3 = new Point(290, -20);
       var pgon = new Polygon([p1, p2, p3]);
-      this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
+      this.disk.drawPolygon(this.fr, 0xffffff, pattern, wireframe);
 
-      var poly = pgon.transform(this.transforms.edgeBisectorReflection);
-      this.disk.drawPolygon(poly, 0xffffff, pattern, wireframe);
+      var poly = this.fr.transform(this.transforms.edgeReflection);
+      this.disk.drawPolygon(poly, 0x5c30e0, pattern, wireframe);
     }
   }, {
     key: 'generatePattern',
@@ -1339,7 +1354,7 @@ var RegularTesselation = function () {
         for (var _iterator2 = pgonArray[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
           var _pgon = _step2.value;
 
-          this.disk.drawPolygon(_pgon, randomInt(1900000, 14777215), '', this.wireframe);
+          this.disk.drawPolygon(_pgon, randomInt(1000, 14777215), '', this.wireframe);
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -1412,6 +1427,7 @@ var RegularTesselation = function () {
 
     //calculate the central polygon which is made up of transformed copies
     //of the fundamental region
+    //TODO: refactor this to use Transforms
 
   }, {
     key: 'centralPolygon',
@@ -1505,6 +1521,22 @@ var RegularTesselation = function () {
 
 // * ***********************************************************************
 // *
+// *   POLYFILLS
+// *
+// *************************************************************************
+
+Math.sinh = Math.sinh || function (x) {
+  var y = Math.exp(x);
+  return (y - 1 / y) / 2;
+};
+
+Math.cosh = Math.cosh || function (x) {
+  var y = Math.exp(x);
+  return (y + 1 / y) / 2;
+};
+
+// * ***********************************************************************
+// *
 // *   SETUP
 // *
 // *************************************************************************
@@ -1514,11 +1546,12 @@ var q = randomInt(4, 8);
 
 if (p === 4 && q === 4) p = 5;
 
+//Run after load to get window width and height
 window.addEventListener('load', function (event) {
   //global variable to hold the radius as this must be calculated on load and is
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-  var tesselation = new RegularTesselation(4, 5, 2);
-}, false);
 
-//const tesselation = new RegularTesselation(p, q, 2);
+  var tesselation = new RegularTesselation(4, 5, 1);
+  //const tesselation = new RegularTesselation(p, q, 2);
+}, false);

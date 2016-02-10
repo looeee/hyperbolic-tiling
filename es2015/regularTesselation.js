@@ -61,7 +61,7 @@ export class RegularTesselation {
   testing() {
     //TODO: this.transforms.edgeReflection broken!
     //TODO: this.transforms.edgeTransforms[0] + [2] broken!
-    let wireframe = false;
+    let wireframe = true;
     let pattern = './images/textures/pattern1.png';
     pattern = '';
     let p1 = new Point(-200, 150);
@@ -69,10 +69,10 @@ export class RegularTesselation {
 
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3]);
-    this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
+    this.disk.drawPolygon(this.fr, 0xffffff, pattern, wireframe);
 
-    let poly = pgon.transform(this.transforms.edgeBisectorReflection)
-    this.disk.drawPolygon(poly, 0xffffff, pattern, wireframe);
+    let poly = this.fr.transform(this.transforms.edgeReflection);
+    this.disk.drawPolygon(poly, 0x5c30e0, pattern, wireframe);
 
   }
 
@@ -86,7 +86,7 @@ export class RegularTesselation {
 
   drawPattern(pgonArray){
     for(let pgon of pgonArray){
-      this.disk.drawPolygon(pgon, E.randomInt(1900000, 14777215), '', this.wireframe);
+      this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
     }
   }
 
@@ -146,6 +146,7 @@ export class RegularTesselation {
 
   //calculate the central polygon which is made up of transformed copies
   //of the fundamental region
+  //TODO: refactor this to use Transforms
   centralPolygon(){
     this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
     this.layerZero = [this.fr, this.frCopy];

@@ -23,9 +23,7 @@ const identityMatrix = (n) => {
 }
 
 
-//TESTING
-//let a = [[8, 3], [2, 4], [3, 6]];
-//let b = [[1, 2, 3], [4, 6, 8]];
+
 
 // * ***********************************************************************
 // *
@@ -38,7 +36,6 @@ export class Transform {
     this.orientation = orientation;
     this.position = position || false; //position not always required
 
-    //this.checkParams();
   }
 
   multiply(transform){
@@ -54,12 +51,6 @@ export class Transform {
     }
     return new Transform(mat, orientation, position);
   }
-
-  checkParams(){
-    if(this.orientation !== -1 || this.orientation !== 1){
-      console.error('Transform Error: orientation must be either -1 (reflection) or 1 (rotation)');
-    }
-  }
 }
 
 // * ***********************************************************************
@@ -74,18 +65,29 @@ export class Transformations {
     this.p = p;
     this.q = q;
     const PI = Math.PI;
+
     this.cosp = Math.cos(PI / p);
     this.sinp = Math.sin(PI / p);
+
+    this.cosq = Math.cos(PI / q);
+    this.sinq = Math.sin(PI / q);
+
     this.cos2p = Math.cos(2 * PI / p);
     this.sin2p = Math.sin(2 * PI / p);
-    this.coshq = Math.cos(PI / q) / this.sinp;
-    this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
-    this.cosh2q = 2 * this.coshq * this.coshq - 1;
-    this.sinh2q = 2 * this.sinhq * this.coshq;
-    this.cosh2 = 1 / (this.sinp / this.cosp) * Math.sin(PI / q);
+
+    this.coshq = Math.cosh(PI / q);//Math.cos(PI / q) / this.sinp;
+    this.sinhq = Math.sinh(PI / q);//Math.sqrt(this.coshq * this.coshq - 1);
+
+    this.cosh2q = Math.cosh(2 * PI / q);//2 * this.coshq * this.coshq - 1;
+    this.sinh2q = Math.sinh(2 * PI / q);//2 * this.sinhq * this.coshq;
+
+    this.cosh2 = 1/(Math.tan(PI / p)*Math.tan(PI / q)) //1 / ((this.sinp / this.cosp) * (this.sinq / this.cosq));
+
     this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
+
     this.rad2 = this.sinh2 / (this.cosh2 + 1);
     this.x2pt = this.sinhq / (this.coshq + 1);
+
     this.xqpt = this.cosp * this.rad2;
     this.yqpt = this.sinp * this.rad2;
 
@@ -102,20 +104,23 @@ export class Transformations {
 
   }
 
+  //TESTED: Not working!
   initEdgeReflection() {
     this.edgeReflection = new Transform(identityMatrix(3), -1);
-    this.edgeReflection.matrix[0][0] = -this.cosh2q;
-    this.edgeReflection.matrix[0][2] = this.sinh2q;
-    this.edgeReflection.matrix[2][0] = -this.sinh2q;
-    this.edgeReflection.matrix[2][2] = this.cosh2q;
+    this.edgeReflection.matrix[0][0] = -this.coshq;
+    this.edgeReflection.matrix[0][2] = this.sinhq;
+    this.edgeReflection.matrix[2][0] = -this.sinhq;
+    this.edgeReflection.matrix[2][2] = this.coshq;
 
   }
 
+  //TESTED: working
   initEdgeBisectorReflection() {
     this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
     this.edgeBisectorReflection.matrix[1][1] = -1;
   }
 
+  //TESTED: working
   initPgonRotations() {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
@@ -147,6 +152,7 @@ export class Transformations {
 
   }
 
+  //TESTED: not working!
   initEdgeTransforms(){
     this.edgeTransforms = [];
 

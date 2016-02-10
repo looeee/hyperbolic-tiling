@@ -56,10 +56,16 @@ export class Point {
 
   transform(transform){
     const mat = transform.matrix;
+    /*
     const p = this.toUnitDisk();
     p.x = p.x * mat[0][0] + p.y * mat[0][1];
     p.y = p.x * mat[1][0] + p.y * mat[1][1];
     return p.fromUnitDisk();
+    */
+
+    const x = this.x * mat[0][0] + this.y * mat[0][1];
+    const y = this.x * mat[1][0] + this.y * mat[1][1];
+    return new Point(x, y);
   }
 }
 
