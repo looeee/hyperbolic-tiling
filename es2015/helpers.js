@@ -36,9 +36,9 @@ export class Transform {
   constructor(matrix, orientation, position) {
     this.matrix = matrix || identityMatrix(3);
     this.orientation = orientation;
-    this.position = position;
+    this.position = position || false; //position not always required
 
-    this.checkParams();
+    //this.checkParams();
   }
 
   multiply(transform){
@@ -68,9 +68,7 @@ export class Transform {
 // *
 // *************************************************************************
 
-//orientation
-//reflection = -1
-//rotation = 1
+//orientation: reflection = -1 OR rotation = 1
 export class Transformations {
   constructor(p, q) {
     this.p = p;
@@ -94,7 +92,7 @@ export class Transformations {
     this.initEdgeReflection();
     this.initEdgeBisectorReflection();
 
-    this.rot2 = multiplyMatrices(this.edgeReflection, this.edgeBisectorReflection);
+    this.rot2 = multiplyMatrices(this.edgeReflection.matrix, this.edgeBisectorReflection.matrix);
 
     this.initPgonRotations();
     this.initEdges();
@@ -103,35 +101,34 @@ export class Transformations {
   }
 
   initEdgeReflection() {
-    this.edgeReflection = {m: identityMatrix(3)};
-    this.edgeReflection.m[0][0] = -this.cosh2q;
-    this.edgeReflection.m[0][2] = this.sinh2q;
-    this.edgeReflection.m[2][0] = -this.sinh2q;
-    this.edgeReflection.m[2][2] = this.cosh2q;
-    this.edgeReflection.orientation = -1; //reflection
+    this.edgeReflection = new Transform(identityMatrix(3), -1);
+    this.edgeReflection.matrix[0][0] = -this.cosh2q;
+    this.edgeReflection.matrix[0][2] = this.sinh2q;
+    this.edgeReflection.matrix[2][0] = -this.sinh2q;
+    this.edgeReflection.matrix[2][2] = this.cosh2q;
+
   }
 
   initEdgeBisectorReflection() {
-    this.edgeBisectorReflection = {m: identityMatrix(3)};
-    this.edgeBisectorReflection.m[1][1] = -1;
-    this.edgeBisectorReflection.orientation = -1; //reflection
+    this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
+    this.edgeBisectorReflection.matrix[1][1] = -1;
   }
 
   initPgonRotations() {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
     for (let i = 0; i < this.p; i++) {
-      this.rotatePolygonCW[i] = {m: identityMatrix(3)};
-      this.rotatePolygonCW[i].m[0][0] = Math.cos(2 * i * Math.PI / this.p);
-      this.rotatePolygonCW[i].m[0][1] = -Math.sin(2 * i * Math.PI / this.p);
-      this.rotatePolygonCW[i].m[1][0] = Math.sin(2 * i * Math.PI / this.p);
-      this.rotatePolygonCW[i].m[1][1] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i] = new Transform(identityMatrix(3), 1);
+      this.rotatePolygonCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].matrix[0][1] = -Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].matrix[1][0] = Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
 
-      this.rotatePolygonCCW[i] = {m: identityMatrix(3)};
-      this.rotatePolygonCCW[i].m[0][0] = Math.cos(2 * i * Math.PI / this.p);
-      this.rotatePolygonCCW[i].m[0][1] = Math.sin(2 * i * Math.PI / this.p);
-      this.rotatePolygonCCW[i].m[1][0] = -Math.sin(2 * i * Math.PI / this.p);
-      this.rotatePolygonCCW[i].m[1][1] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i] = new Transform(identityMatrix(3), 1);
+      this.rotatePolygonCCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].matrix[0][1] = Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].matrix[1][0] = -Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
     }
   }
 
@@ -169,19 +166,18 @@ export class Transformations {
     this.edgeTransformations = [];
 
     for (let i = 0; i < this.p; i++) {
-      this.edgeTransformations[i] = {};
       const adj = this.edges[i].adjacentEdge;
       //Case 1: reflection
       if(this.edges[i].orientation === -1){
-        let res = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
-        res = multiplyMatrices(res, this.rotatePolygonCCW[adj]);
-        this.edgeTransformations[i].m = res;
+        let mat = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
+        mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj]);
+        this.edgeTransformations[i] = new Transform(mat);
       }
       //Case 2: rotation
       else if(this.edges[i].orientation === 1){
-        let res = multiplyMatrices(this.rotatePolygonCW[i], this.rot2);
-        res = multiplyMatrices(res, this.rotatePolygonCCW[adj]);
-        this.edgeTransformations[i].m = res;
+        let mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
+        mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
+        this.edgeTransformations[i] = new Transform(mat);
       }
       else{
         console.error('Error: invalid orientation value');
@@ -190,6 +186,7 @@ export class Transformations {
       this.edgeTransformations[i].orientation = this.edges[adj].orientation;
       this.edgeTransformations[i].position = adj;
     }
+    console.log(this.edgeTransformations);
   }
 
   shiftTrans(transformation, shift){
