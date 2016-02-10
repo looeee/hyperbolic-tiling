@@ -131,7 +131,6 @@ export class ThreeJS {
     }
     //console.log(poly);
     let geometry = new THREE.ShapeGeometry(poly);
-
     /*
     const geometry = new THREE.Geometry();
 
@@ -154,6 +153,16 @@ export class ThreeJS {
     this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
+  setUvs(geometry){
+    const uvs = geometry.faceVertexUvs[0];
+    for (let i = 0; i < uvs.length; i++) {
+      const uv = uvs[i];
+      for (var j = 0; j < 3; j++) {
+        console.log(uv[j]);
+      }
+    }
+  }
+
   createMesh(geometry, color, imageURL, wireframe) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
@@ -168,7 +177,7 @@ export class ThreeJS {
 
       //load texture and apply to material in callback
       const texture = textureLoader.load(imageURL, (tex) => {});
-      texture.repeat.set(0.05, 0.05);
+      texture.repeat.set(0.005, 0.005);
       material.map = texture;
       material.map.wrapT = THREE.RepeatWrapping;
       material.map.wrapS = THREE.RepeatWrapping;

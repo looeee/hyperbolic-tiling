@@ -55,6 +55,30 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
   return r;
 };
 
+//Hyperbolic distance between two points
+var distance$1 = function distance$$(p, q, circle0) {
+  var circle1 = new Arc(p, q, circle0).circle;
+  var boundaryPoints = circleIntersect(circle0, circle1);
+  var a = boundaryPoints.p1;
+  var b = boundaryPoints.p2;
+  var ap = distance(a, p);
+  var aq = distance(a, q);
+  var bp = distance(b, p);
+  var bq = distance(b, q);
+  //order the points
+  if (aq < ap) {
+    var temp = aq;
+    aq = ap;
+    ap = temp;
+  }
+  if (bp < bq) {
+    var temp = bp;
+    bp = bq;
+    bq = temp;
+  }
+  return Math.log(aq * bp / (ap * bq));
+};
+
 /*
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
@@ -178,6 +202,40 @@ var lineReflection = function lineReflection(p1, p2, p3) {
         var y = 2 * d * m - p3.y + 2 * c;
         return new Point(x, y);
       }
+};
+
+//intersection of two circles with equations:
+//(x-a)^2 +(y-a)^2 = r0^2
+//(x-b)^2 +(y-c)^2 = r1^2
+//NOTE assumes the two circles DO intersect!
+var circleIntersect = function circleIntersect(circle0, circle1) {
+  var a = circle0.centre.x;
+  var b = circle0.centre.y;
+  var c = circle1.centre.x;
+  var d = circle1.centre.y;
+  var r0 = circle0.radius;
+  var r1 = circle1.radius;
+
+  var dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
+
+  var del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
+
+  var xPartial = (a + c) / 2 + (c - a) * (r0 * r0 - r1 * r1) / (2 * dist * dist);
+  var x1 = xPartial - 2 * del * (b - d) / (dist * dist);
+  var x2 = xPartial + 2 * del * (b - d) / (dist * dist);
+
+  var yPartial = (b + d) / 2 + (d - b) * (r0 * r0 - r1 * r1) / (2 * dist * dist);
+  var y1 = yPartial + 2 * del * (a - c) / (dist * dist);
+  var y2 = yPartial - 2 * del * (a - c) / (dist * dist);
+
+  var p1 = new Point(x1, y1);
+
+  var p2 = new Point(x2, y2);
+
+  return {
+    p1: p1,
+    p2: p2
+  };
 };
 
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
@@ -619,6 +677,35 @@ var Polygon = function () {
   return Polygon;
 }();
 
+//TESTING
+//let a = [[8, 3], [2, 4], [3, 6]];
+//let b = [[1, 2, 3], [4, 6, 8]];
+
+// * ***********************************************************************
+// *
+// *  TRANSFORMATIONS CLASS
+// *
+// *************************************************************************
+var Transformations = function Transformations(p, q) {
+  babelHelpers.classCallCheck(this, Transformations);
+
+  var PI = Math.PI;
+  this.sinp = Math.sin(PI / p);
+  this.cosp = Math.cos(PI / p);
+  this.cos2p = Math.cos(2 * PI / p);
+  this.sin2p = Math.sin(2 * PI / p);
+  this.coshq = Math.cos(PI / q) / this.sinp;
+  this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
+  this.cosh2q = 2 * this.coshq * this.coshq - 1;
+  this.sinh2q = 2 * this.sinhq * this.coshq;
+  this.cosh2 = 1 / (this.sinp / this.cosp) * Math.sin(PI / q);
+  this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
+  this.rad2 = this.sinh2 / (this.cosh2 + 1);
+  this.x2pt = this.sinhq / (this.coshq + 1);
+  this.xqpt = this.cosp * this.rad2;
+  this.yqpt = this.sinp * this.rad2;
+};
+
 // * ***********************************************************************
 // *
 // *  PARAMETERS CLASS
@@ -862,7 +949,6 @@ var ThreeJS = function () {
       }
       //console.log(poly);
       var geometry = new THREE.ShapeGeometry(poly);
-
       /*
       const geometry = new THREE.Geometry();
        //vertex 0 = polygon barycentre
@@ -882,6 +968,17 @@ var ThreeJS = function () {
       this.scene.add(this.createMesh(geometry, color, texture, wireframe));
     }
   }, {
+    key: 'setUvs',
+    value: function setUvs(geometry) {
+      var uvs = geometry.faceVertexUvs[0];
+      for (var i = 0; i < uvs.length; i++) {
+        var uv = uvs[i];
+        for (var j = 0; j < 3; j++) {
+          console.log(uv[j]);
+        }
+      }
+    }
+  }, {
     key: 'createMesh',
     value: function createMesh(geometry, color, imageURL, wireframe) {
       if (wireframe === undefined) wireframe = false;
@@ -897,7 +994,7 @@ var ThreeJS = function () {
 
         //load texture and apply to material in callback
         var texture = textureLoader.load(imageURL, function (tex) {});
-        texture.repeat.set(0.05, 0.05);
+        texture.repeat.set(0.005, 0.005);
         material.map = texture;
         material.map.wrapT = THREE.RepeatWrapping;
         material.map.wrapS = THREE.RepeatWrapping;
@@ -1095,6 +1192,7 @@ var RegularTesselation = function () {
     this.maxLayers = maxLayers || 5;
 
     this.params = new Parameters(p, q);
+    this.transforms = new Transformations(p, q);
 
     if (this.checkParams()) {
       return false;
@@ -1112,20 +1210,25 @@ var RegularTesselation = function () {
   babelHelpers.createClass(RegularTesselation, [{
     key: 'init',
     value: function init() {
-      this.fr = this.fundamentalRegion();
-      this.centralPolygon();
-      if (this.mayLayers > 1) this.generateLayers();
+      //this.fr = this.fundamentalRegion();
+      //this.centralPolygon();
+      //if(this.mayLayers > 1) this.generateLayers();
 
-      //this.testing();
+      this.testing();
     }
   }, {
     key: 'testing',
     value: function testing() {
+      var wireframe = false;
+      var pattern = './images/textures/pattern1.png';
       var p1 = new Point(-200, 150);
       var p2 = new Point(100, -200);
+
+      console.log(distance$1(p1, p2, this.disk.circle));
+
       var p3 = new Point(290, -20);
       var pgon = new Polygon([p1, p2, p3], this.disk.circle);
-      this.disk.drawPolygon(pgon, randomInt(900000, 14777215), '', wireframe);
+      this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
     }
   }, {
     key: 'generateLayers',

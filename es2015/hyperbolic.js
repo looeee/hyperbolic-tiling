@@ -79,6 +79,30 @@ export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
   return r;
 }
 
+//Hyperbolic distance between two points
+export const distance = (p, q, circle0) => {
+  const circle1 = new Arc(p, q, circle0).circle;
+  const boundaryPoints = E.circleIntersect(circle0, circle1);
+  const a = boundaryPoints.p1;
+  const b = boundaryPoints.p2;
+  let ap = E.distance(a,p);
+  let aq = E.distance(a,q);
+  let bp = E.distance(b,p);
+  let bq = E.distance(b,q);
+  //order the points
+  if(aq < ap){
+    const temp = aq;
+    aq = ap;
+    ap = temp;
+  }
+  if(bp < bq){
+    const temp = bp;
+    bp = bq;
+    bq = temp;
+  }
+  return Math.log((aq*bp)/(ap*bq));
+}
+
 /*
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc

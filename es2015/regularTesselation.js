@@ -10,7 +10,7 @@ import {
 }
 from './elements';
 
-import {Parameters} from './parameters';
+import {Transformations, Parameters} from './helpers';
 
 
 // * ***********************************************************************
@@ -33,6 +33,7 @@ export class RegularTesselation {
     this.maxLayers = maxLayers || 5;
 
     this.params = new Parameters(p,q);
+    this.transforms = new Transformations(p,q);
 
     if (this.checkParams()) {
       return false;
@@ -51,19 +52,24 @@ export class RegularTesselation {
   }
 
   init() {
-    this.fr = this.fundamentalRegion();
-    this.centralPolygon();
-    if(this.mayLayers > 1) this.generateLayers();
+    //this.fr = this.fundamentalRegion();
+    //this.centralPolygon();
+    //if(this.mayLayers > 1) this.generateLayers();
 
-    //this.testing();
+    this.testing();
   }
 
   testing() {
+    let wireframe = false;
+    let pattern = './images/textures/pattern1.png';
     let p1 = new Point(-200, 150);
     let p2 = new Point(100, -200);
+
+    console.log(H.distance(p1,p2, this.disk.circle));
+
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3], this.disk.circle);
-    this.disk.drawPolygon(pgon, E.randomInt(900000, 14777215), '', wireframe);
+    this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
 
   }
 
