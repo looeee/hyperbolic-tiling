@@ -46,13 +46,13 @@ export class Transform {
       console.error('Error: ' + transform + 'is not a Transform');
       return false;
     }
-    const mat = multiplyMatrices(trans.m, this.m);
+    const mat = multiplyMatrices(transform.matrix, this.matrix);
     const position = transform.position;
     let orientation = 1; //rotation
     if(transform.orientation * this.orientation < 0){
       orientation = -1;
     }
-    return new transform(mat, orientation, position);
+    return new Transform(mat, orientation, position);
   }
 
   checkParams(){
@@ -98,6 +98,8 @@ export class Transformations {
     this.initEdges();
     this.initEdgeTransforms();
 
+    this.identity = new Transform(identityMatrix(3));
+
   }
 
   initEdgeReflection() {
@@ -134,32 +136,15 @@ export class Transformations {
 
   //orientation: 0 -> reflection, 1 -> rotation
   initEdges(){
-    //this.edges = [];
-    //for (let i = 0; i < this.p; i++) {
-    //  edges.push({
-    //    orientation: 0,
-    //    adjEdgeID: 0,
-    //  })
-    //}
-
-    //TESTING: hard code for {4,5} tesselation
     this.edges = [];
-    this.edges[0] = {
-      orientation: 1,
-      adjacentEdge: 0
-    };
-    this.edges[1] = {
-      orientation: 1,
-      adjacentEdge: 1
+    for (let i = 0; i < this.p; i++) {
+      this.edges.push({
+        orientation: 1,
+        adjacentEdge: i,
+      })
     }
-    this.edges[2] = {
-      orientation: 1,
-      adjacentEdge: 2
-    }
-    this.edges[3] = {
-      orientation: 1,
-      adjacentEdge: 3
-    }
+
+
   }
 
   initEdgeTransforms(){
@@ -190,7 +175,7 @@ export class Transformations {
 
   shiftTrans(transform, shift){
     const newEdge = (transform.position + transform.orientation*shift + 2*this.p) % this.p;
-    if(newEdge <0 || newEdge > (p-1) ){
+    if(newEdge < 0 || newEdge > (this.p-1) ){
       console.error('Error: shiftTran newEdge out of range.')
     }
     return transform.multiply(this.edgeTransforms[newEdge]);

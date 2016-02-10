@@ -55,107 +55,6 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
   return r;
 };
 
-//Hyperbolic distance between two points
-var distance$1 = function distance$$(p, q, circle0) {
-  var circle1 = new Arc(p, q, circle0).circle;
-  var boundaryPoints = circleIntersect(circle0, circle1);
-  var a = boundaryPoints.p1;
-  var b = boundaryPoints.p2;
-  var ap = distance(a, p);
-  var aq = distance(a, q);
-  var bp = distance(b, p);
-  var bq = distance(b, q);
-  //order the points
-  if (aq < ap) {
-    var temp = aq;
-    aq = ap;
-    ap = temp;
-  }
-  if (bp < bq) {
-    var temp = bp;
-    bp = bq;
-    bq = temp;
-  }
-  return Math.log(aq * bp / (ap * bq));
-};
-
-/*
-
-//calculate greatCircle, startAngle and endAngle for hyperbolic arc
-NOTE: Old version, new version is in Arc class
-TODO: test which is faster
-export const arcV1 = (p1, p2, circle) => {
-  if (E.throughOrigin(p1, p2)) {
-    return {
-      circle: circle,
-      startAngle: 0,
-      endAngle: 0,
-      clockwise: false,
-      straightLine: true,
-    }
-  }
-  let clockwise = false;
-  let alpha, beta, startAngle, endAngle;
-  const c = E.greatCircle(p1, p2, circle);
-  const oy = E.toFixed(c.centre.y, 10);
-  const ox = E.toFixed(c.centre.x, 10);
-
-  //point at 0 radians on c
-  const p3 = new Point(ox + c.radius, oy);
-
-  //calculate the position of each point in the circle
-  alpha = E.centralAngle(p3, p1, c.radius);
-  beta = E.centralAngle(p3, p2, c.radius);
-
-  //for comparison to avoid round off errors
-  const p1X = E.toFixed(p1.x, 10);
-  const p1Y = E.toFixed(p1.y, 10);
-  const p2X = E.toFixed(p2.x, 10);
-  const p2Y = E.toFixed(p2.y, 10);
-
-  alpha = (p1Y < oy) ? 2 * Math.PI - alpha : alpha;
-  beta = (p2Y < oy) ? 2 * Math.PI - beta : beta;
-
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //clockwise order
-  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  //points are above and below the line (0,0)->(0,1) on unit disk
-  //anticlockwise order
-  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  //other case where we are drawing the wrong way around the circle
-  else if(beta - alpha > Math.PI){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else if(alpha - beta > Math.PI){
-    startAngle = alpha;
-    endAngle = beta;
-  }
-  else if(alpha > beta){
-    startAngle = beta;
-    endAngle = alpha;
-  }
-  else{
-    startAngle = alpha;
-    endAngle = beta;
-  }
-
-  return {
-    circle: c,
-    startAngle: startAngle,
-    endAngle: endAngle,
-    clockwise: clockwise,
-    straightLine: false,
-  }
-}
-*/
-
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
@@ -202,40 +101,6 @@ var lineReflection = function lineReflection(p1, p2, p3) {
         var y = 2 * d * m - p3.y + 2 * c;
         return new Point(x, y);
       }
-};
-
-//intersection of two circles with equations:
-//(x-a)^2 +(y-a)^2 = r0^2
-//(x-b)^2 +(y-c)^2 = r1^2
-//NOTE assumes the two circles DO intersect!
-var circleIntersect = function circleIntersect(circle0, circle1) {
-  var a = circle0.centre.x;
-  var b = circle0.centre.y;
-  var c = circle1.centre.x;
-  var d = circle1.centre.y;
-  var r0 = circle0.radius;
-  var r1 = circle1.radius;
-
-  var dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
-
-  var del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
-
-  var xPartial = (a + c) / 2 + (c - a) * (r0 * r0 - r1 * r1) / (2 * dist * dist);
-  var x1 = xPartial - 2 * del * (b - d) / (dist * dist);
-  var x2 = xPartial + 2 * del * (b - d) / (dist * dist);
-
-  var yPartial = (b + d) / 2 + (d - b) * (r0 * r0 - r1 * r1) / (2 * dist * dist);
-  var y1 = yPartial + 2 * del * (a - c) / (dist * dist);
-  var y2 = yPartial - 2 * del * (a - c) / (dist * dist);
-
-  var p1 = new Point(x1, y1);
-
-  var p2 = new Point(x2, y2);
-
-  return {
-    p1: p1,
-    p2: p2
-  };
 };
 
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
@@ -390,8 +255,8 @@ var Point = function () {
 
   }, {
     key: 'toUnitDisk',
-    value: function toUnitDisk(currentRadius) {
-      return new Point(this.x / currentRadius, this.y / currentRadius);
+    value: function toUnitDisk() {
+      return new Point(this.x / window.radius, this.y / window.radius);
     }
 
     //map from unit disk to disk of newRadius
@@ -399,7 +264,7 @@ var Point = function () {
   }, {
     key: 'fromUnitDisk',
     value: function fromUnitDisk(newRadius) {
-      return new Point(this.x * newRadius, this.y * newRadius);
+      return new Point(this.x * window.radius, this.y * window.radius);
     }
   }, {
     key: 'transform',
@@ -429,18 +294,18 @@ var Circle = function Circle(centreX, centreY, radius) {
 // *
 // *************************************************************************
 
-var Arc = function Arc(p1, p2, circle) {
+var Arc = function Arc(p1, p2) {
   babelHelpers.classCallCheck(this, Arc);
 
   if (throughOrigin(p1, p2)) {
-    this.circle = circle;
+    this.circle = new Circle(0, 0, 0);
     this.startAngle = 0;
     this.endAngle = 0;
     this.clockwise = false;
     this.straightLine = true;
   } else {
-    var q1 = p1.toUnitDisk(circle.radius);
-    var q2 = p2.toUnitDisk(circle.radius);
+    var q1 = p1.toUnitDisk();
+    var q2 = p2.toUnitDisk();
 
     var wp1 = poincareToWeierstrass(q1);
     var wp2 = poincareToWeierstrass(q2);
@@ -460,7 +325,7 @@ var Arc = function Arc(p1, p2, circle) {
     q2.y = q2.y - arcCentre.y;
 
     var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
-    var arcCircle = new Circle(arcCentre.x * circle.radius, arcCentre.y * circle.radius, r * circle.radius);
+    var arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius);
 
     var alpha = Math.atan2(q1.y, q1.x);
 
@@ -762,13 +627,13 @@ var Transform = function () {
         console.error('Error: ' + transform + 'is not a Transform');
         return false;
       }
-      var mat = multiplyMatrices(trans.m, this.m);
+      var mat = multiplyMatrices(transform.matrix, this.matrix);
       var position = transform.position;
       var orientation = 1; //rotation
       if (transform.orientation * this.orientation < 0) {
         orientation = -1;
       }
-      return new transform(mat, orientation, position);
+      return new Transform(mat, orientation, position);
     }
   }, {
     key: 'checkParams',
@@ -818,6 +683,8 @@ var Transformations = function () {
     this.initPgonRotations();
     this.initEdges();
     this.initEdgeTransforms();
+
+    this.identity = new Transform(identityMatrix(3));
   }
 
   babelHelpers.createClass(Transformations, [{
@@ -860,32 +727,13 @@ var Transformations = function () {
   }, {
     key: 'initEdges',
     value: function initEdges() {
-      //this.edges = [];
-      //for (let i = 0; i < this.p; i++) {
-      //  edges.push({
-      //    orientation: 0,
-      //    adjEdgeID: 0,
-      //  })
-      //}
-
-      //TESTING: hard code for {4,5} tesselation
       this.edges = [];
-      this.edges[0] = {
-        orientation: 1,
-        adjacentEdge: 0
-      };
-      this.edges[1] = {
-        orientation: 1,
-        adjacentEdge: 1
-      };
-      this.edges[2] = {
-        orientation: 1,
-        adjacentEdge: 2
-      };
-      this.edges[3] = {
-        orientation: 1,
-        adjacentEdge: 3
-      };
+      for (var i = 0; i < this.p; i++) {
+        this.edges.push({
+          orientation: 1,
+          adjacentEdge: i
+        });
+      }
     }
   }, {
     key: 'initEdgeTransforms',
@@ -917,7 +765,7 @@ var Transformations = function () {
     key: 'shiftTrans',
     value: function shiftTrans(transform, shift) {
       var newEdge = (transform.position + transform.orientation * shift + 2 * this.p) % this.p;
-      if (newEdge < 0 || newEdge > p - 1) {
+      if (newEdge < 0 || newEdge > this.p - 1) {
         console.error('Error: shiftTran newEdge out of range.');
       }
       return transform.multiply(this.edgeTransforms[newEdge]);
@@ -1039,9 +887,7 @@ var ThreeJS = function () {
 
     babelHelpers.classCallCheck(this, ThreeJS);
 
-    window.addEventListener('load', function (event) {
-      _this.init();
-    }, false);
+    this.init();
 
     window.addEventListener('resize', function () {
       _this.reset();
@@ -1256,11 +1102,10 @@ var Disk = function () {
 
     babelHelpers.classCallCheck(this, Disk);
 
+    console.log(window.radius);
     this.draw = new ThreeJS();
 
-    window.addEventListener('load', function (event) {
-      _this.init();
-    }, false);
+    this.init();
 
     window.addEventListener('resize', function () {
       _this.init();
@@ -1273,9 +1118,9 @@ var Disk = function () {
       this.centre = new Point(0, 0);
 
       //draw largest circle possible given window dims
-      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+      this.radius = window.radius;
 
-      this.circle = new Circle(this.centre.x, this.centre.y, this.radius);
+      this.circle = new Circle(this.centre.x, this.centre.y, window.radius);
 
       //smaller circle for testing
       //this.radius = this.radius / 2;
@@ -1352,7 +1197,7 @@ var Disk = function () {
       //pass in either a list of points or an array
       if (points[0] instanceof Array) points = points[0];
 
-      var r = this.radius;
+      var r = window.radius;
       var test = false;
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
@@ -1363,7 +1208,7 @@ var Disk = function () {
           var point = _step.value;
 
           if (distance(point, this.centre) > r) {
-            console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
+            //console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
             test = true;
           }
         }
@@ -1410,17 +1255,15 @@ var RegularTesselation = function () {
     this.p = p;
     this.q = q;
     this.maxLayers = maxLayers || 5;
-
     this.params = new Parameters(p, q);
+
     this.transforms = new Transformations(p, q);
 
     if (this.checkParams()) {
       return false;
     }
 
-    window.addEventListener('load', function (event) {
-      _this.init();
-    }, false);
+    this.init();
 
     window.addEventListener('resize', function () {
       _this.init();
@@ -1431,10 +1274,11 @@ var RegularTesselation = function () {
     key: 'init',
     value: function init() {
       this.fr = this.fundamentalRegion();
-      //this.centralPolygon();
-      //if(this.mayLayers > 1) this.generateLayers();
+      this.centralPolygon();
 
-      this.testing();
+      if (this.maxLayers > 1) this.generateLayers();
+
+      //this.testing();
     }
   }, {
     key: 'testing',
@@ -1447,14 +1291,71 @@ var RegularTesselation = function () {
       var p1 = new Point(-200, 150);
       var p2 = new Point(100, -200);
 
-      console.log(distance$1(p1, p2, this.disk.circle));
-
       var p3 = new Point(290, -20);
       var pgon = new Polygon([p1, p2, p3], this.disk.circle);
       this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
 
       var poly = pgon.transform(this.transforms.edgeBisectorReflection);
       this.disk.drawPolygon(poly, 0xffffff, pattern, wireframe);
+    }
+  }, {
+    key: 'generatePattern',
+    value: function generatePattern(pgonArray, transform) {
+      var newArray = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = pgonArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          pgon = _step.value;
+
+          newArray.push(pgon.transform(transform));
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return newArray;
+    }
+  }, {
+    key: 'drawPattern',
+    value: function drawPattern(pgonArray) {
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = pgonArray[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var _pgon = _step2.value;
+
+          this.disk.drawPolygon(_pgon, randomInt(1900000, 14777215), '', this.wireframe);
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
     }
   }, {
     key: 'generateLayers',
@@ -1467,7 +1368,7 @@ var RegularTesselation = function () {
           } else {
               this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
             }
-          if (-1 % p !== 0) {
+          if (-1 % this.p !== 0) {
             qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
           }
         }
@@ -1476,10 +1377,12 @@ var RegularTesselation = function () {
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
+      var pattern = this.generatePattern(this.layerZero, transform);
+      this.drawPattern(pattern);
       if (layer >= this.maxLayers) return;
 
       var pSkip = this.params.pSkip(exposure);
-      var verticesToDo = this.params.verticesTodo(exposure);
+      var verticesToDo = this.params.verticesToDo(exposure);
 
       for (var i = 0; i < verticesToDo; i++) {
         var pTransform = this.transforms.shiftTrans(transform, pSkip);
@@ -1492,7 +1395,7 @@ var RegularTesselation = function () {
           qTransform = pTransform;
         }
 
-        var pgonsToDo = this.params.pgonsTodo(exposure, i);
+        var pgonsToDo = this.params.pgonsToDo(exposure, i);
 
         for (var j = 0; j < pgonsToDo; j++) {
           if (this.p === 3 && j === pgonsToDo - 1) {
@@ -1500,11 +1403,11 @@ var RegularTesselation = function () {
           } else {
               this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
             }
-          if (-1 % p !== 0) {
+          if (-1 % this.p !== 0) {
             qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
           }
         }
-        pskip = (pskip + 1) % this.p;
+        pSkip = (pSkip + 1) % this.p;
       }
     }
 
@@ -1522,27 +1425,27 @@ var RegularTesselation = function () {
         this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
       }
 
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator = this.layerZero[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var pgon = _step.value;
+        for (var _iterator3 = this.layerZero[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var _pgon2 = _step3.value;
 
-          this.disk.drawPolygon(pgon, randomInt(1900000, 14777215), '', this.wireframe);
+          this.disk.drawPolygon(_pgon2, randomInt(1900000, 14777215), '', this.wireframe);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
           }
         } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
+          if (_didIteratorError3) {
+            throw _iteratorError3;
           }
         }
       }
@@ -1554,13 +1457,12 @@ var RegularTesselation = function () {
   }, {
     key: 'fundamentalRegion',
     value: function fundamentalRegion() {
-      var radius = this.disk.radius;
       var s = Math.sin(Math.PI / this.p);
       var t = Math.cos(Math.PI / this.q);
       //multiply these by the disks radius (Coxeter used unit disk);
-      var r = 1 / Math.sqrt(t * t / (s * s) - 1) * radius;
-      var d = 1 / Math.sqrt(1 - s * s / (t * t)) * radius;
-      var b = new Point(radius * Math.cos(Math.PI / this.p), -radius * Math.sin(Math.PI / this.p));
+      var r = 1 / Math.sqrt(t * t / (s * s) - 1) * window.radius;
+      var d = 1 / Math.sqrt(1 - s * s / (t * t)) * window.radius;
+      var b = new Point(window.radius * Math.cos(Math.PI / this.p), -window.radius * Math.sin(Math.PI / this.p));
 
       var circle = new Circle(d, 0, r);
 
@@ -1608,10 +1510,16 @@ var RegularTesselation = function () {
 // *
 // *************************************************************************
 
-var p$1 = randomInt(4, 8);
+var p = randomInt(4, 8);
 var q = randomInt(4, 8);
 
-if (p$1 === 4 && q === 4) p$1 = 5;
+if (p === 4 && q === 4) p = 5;
 
-//const tesselation = new RegularTesselation(p, q);
-var tesselation = new RegularTesselation(4, 5);
+window.addEventListener('load', function (event) {
+  //global variable to hold the radius as this must be calculated on load and is
+  //used across all classes
+  window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+  var tesselation = new RegularTesselation(4, 5, 2);
+}, false);
+
+//const tesselation = new RegularTesselation(p, q, 2);

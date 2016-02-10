@@ -45,13 +45,13 @@ export class Point {
   }
 
   //map from disk of currentRadius to unit disk
-  toUnitDisk(currentRadius) {
-    return new Point(this.x / currentRadius, this.y / currentRadius);
+  toUnitDisk() {
+    return new Point(this.x / window.radius , this.y / window.radius );
   }
 
   //map from unit disk to disk of newRadius
   fromUnitDisk(newRadius) {
-    return new Point(this.x * newRadius, this.y * newRadius);
+    return new Point(this.x * window.radius , this.y * window.radius );
   }
 
   transform(transform){
@@ -85,17 +85,17 @@ export class Circle {
 // *************************************************************************
 
 export class Arc {
-  constructor(p1, p2, circle) {
+  constructor(p1, p2) {
     if (E.throughOrigin(p1, p2)) {
-      this.circle = circle;
+      this.circle = new Circle(0,0,0);
       this.startAngle = 0;
       this.endAngle = 0;
       this.clockwise = false;
       this.straightLine = true;
     }
     else{
-      const q1 = p1.toUnitDisk(circle.radius);
-      const q2 = p2.toUnitDisk(circle.radius);
+      const q1 = p1.toUnitDisk();
+      const q2 = p2.toUnitDisk();
 
       const wp1 = H.poincareToWeierstrass(q1);
       const wp2 = H.poincareToWeierstrass(q2);
@@ -115,7 +115,7 @@ export class Arc {
       q2.y = q2.y - arcCentre.y;
 
       const r = Math.sqrt((q1.x * q1.x) + (q1.y * q1.y));
-      const arcCircle = new Circle(arcCentre.x * circle.radius, arcCentre.y * circle.radius, r * circle.radius);
+      const arcCircle = new Circle(arcCentre.x * window.radius , arcCentre.y * window.radius , r * window.radius );
 
       let alpha = Math.atan2(q1.y, q1.x);
 

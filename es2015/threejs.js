@@ -5,9 +5,7 @@
 // *************************************************************************
 export class ThreeJS {
   constructor() {
-    window.addEventListener('load', (event) => {
-      this.init();
-    }, false);
+    this.init();
 
     window.addEventListener('resize', () => {
       this.reset();

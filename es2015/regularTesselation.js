@@ -31,17 +31,15 @@ export class RegularTesselation {
     this.p = p;
     this.q = q;
     this.maxLayers = maxLayers || 5;
-
     this.params = new Parameters(p,q);
+
     this.transforms = new Transformations(p,q);
 
     if (this.checkParams()) {
       return false;
     }
 
-    window.addEventListener('load', (event) => {
-      this.init();
-    }, false);
+    this.init();
 
     window.addEventListener('resize', () => {
       this.init();
@@ -53,10 +51,11 @@ export class RegularTesselation {
 
   init() {
     this.fr = this.fundamentalRegion();
-    //this.centralPolygon();
-    //if(this.mayLayers > 1) this.generateLayers();
+    this.centralPolygon();
 
-    this.testing();
+    if(this.maxLayers > 1) this.generateLayers();
+
+    //this.testing();
   }
 
   testing() {
@@ -68,8 +67,6 @@ export class RegularTesselation {
     let p1 = new Point(-200, 150);
     let p2 = new Point(100, -200);
 
-    console.log(H.distance(p1,p2, this.disk.circle));
-
     let p3 = new Point(290, -20);
     let pgon = new Polygon([p1,p2,p3], this.disk.circle);
     this.disk.drawPolygon(pgon, 0xffffff, pattern, wireframe);
@@ -77,6 +74,20 @@ export class RegularTesselation {
     let poly = pgon.transform(this.transforms.edgeBisectorReflection)
     this.disk.drawPolygon(poly, 0xffffff, pattern, wireframe);
 
+  }
+
+  generatePattern(pgonArray, transform){
+    const newArray = [];
+    for( pgon of pgonArray){
+      newArray.push(pgon.transform(transform));
+    }
+    return newArray;
+  }
+
+  drawPattern(pgonArray){
+    for(let pgon of pgonArray){
+      this.disk.drawPolygon(pgon, E.randomInt(1900000, 14777215), '', this.wireframe);
+    }
   }
 
   generateLayers(){
@@ -89,7 +100,7 @@ export class RegularTesselation {
         else{
           this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
         }
-        if( (-1 % p) !== 0){
+        if( (-1 % this.p) !== 0){
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
         }
       }
@@ -97,10 +108,12 @@ export class RegularTesselation {
   }
 
   layerRecursion(exposure, layer, transform){
+    const pattern = this.generatePattern(this.layerZero, transform);
+    this.drawPattern(pattern);
     if(layer >= this.maxLayers) return;
 
     let pSkip = this.params.pSkip(exposure);
-    let verticesToDo = this.params.verticesTodo(exposure);
+    let verticesToDo = this.params.verticesToDo(exposure);
 
     for (let i = 0; i < verticesToDo; i++) {
       let pTransform = this.transforms.shiftTrans(transform, pSkip);
@@ -114,7 +127,7 @@ export class RegularTesselation {
         qTransform = pTransform;
       }
 
-      let pgonsToDo = this.params.pgonsTodo(exposure, i);
+      let pgonsToDo = this.params.pgonsToDo(exposure, i);
 
       for (let j = 0; j < pgonsToDo; j++) {
         if( (this.p === 3) && ( j === pgonsToDo - 1)){
@@ -123,11 +136,11 @@ export class RegularTesselation {
         else{
           this.layerRecursion(this.params.exposure(layer, i, j), layer+1, qTransform);
         }
-        if( (-1 % p) !== 0 ){
+        if( (-1 % this.p) !== 0 ){
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
         }
       }
-      pskip = (pskip + 1) % this.p;
+      pSkip = (pSkip + 1) % this.p;
     }
   }
 
@@ -150,14 +163,13 @@ export class RegularTesselation {
   //calculate the fundamental region (triangle out of which Layer 0 is built)
   //using Coxeter's method
   fundamentalRegion() {
-    const radius = this.disk.radius;
     const s = Math.sin(Math.PI / this.p);
     const t = Math.cos(Math.PI / this.q);
     //multiply these by the disks radius (Coxeter used unit disk);
-    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * radius;
-    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * radius;
-    const b = new Point(radius * Math.cos(Math.PI / this.p),
-    -radius * Math.sin(Math.PI / this.p));
+    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius ;
+    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius ;
+    const b = new Point(window.radius  * Math.cos(Math.PI / this.p),
+    -window.radius  * Math.sin(Math.PI / this.p));
 
     const circle = new Circle(d, 0, r);
 

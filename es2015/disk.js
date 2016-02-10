@@ -15,11 +15,10 @@ import { ThreeJS } from './threejs';
 // *************************************************************************
 export class Disk {
   constructor() {
+    console.log(window.radius);
     this.draw = new ThreeJS();
 
-    window.addEventListener('load', (event) => {
-      this.init();
-    }, false);
+    this.init();
 
     window.addEventListener('resize', () => {
       this.init();
@@ -31,9 +30,9 @@ export class Disk {
     this.centre = new Point(0,0);
 
     //draw largest circle possible given window dims
-    this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+    this.radius = window.radius;
 
-    this.circle = new Circle(this.centre.x, this.centre.y, this.radius);
+    this.circle = new Circle(this.centre.x, this.centre.y, window.radius );
 
     //smaller circle for testing
     //this.radius = this.radius / 2;
@@ -94,11 +93,11 @@ export class Disk {
     //pass in either a list of points or an array
     if(points[0] instanceof Array) points = points[0];
 
-    const r = this.radius;
+    const r = window.radius ;
     let test = false;
     for (let point of points) {
       if (E.distance(point, this.centre) > r) {
-        console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
+        //console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
         test = true;
       }
     }
