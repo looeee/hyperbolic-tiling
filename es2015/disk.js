@@ -26,9 +26,9 @@ export class Disk {
   }
 
   init() {
-    this.centre = new Point(0,0);
+    this.centre = new Point(0,0, true);
 
-    this.circle = new Circle(this.centre.x, this.centre.y, window.radius );
+    //this.circle = new Circle(this.centre.x, this.centre.y, window.radius, false );
 
     this.drawDisk();
   }
@@ -39,28 +39,32 @@ export class Disk {
   }
 
   drawPoint(point, radius, color) {
-    if (this.checkPoints(point)) {
-      return false
-    }
+    let p;
     if(point.unitDisk){
-      let p = point.fromUnitDisk();
+      p = point.fromUnitDisk();
       this.draw.disk(p, radius, color, false);
     }
     else{
-      this.draw.disk(point, radius, color, false);
+      p = point;
     }
+
+    if (this.checkPoints(p)) {
+      return false
+    }
+
+    this.draw.disk(point, radius, color, false);
   }
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
   drawArc(arc, color) {
-    if (this.checkPoints(p1, p2)) {
-      return false
-    }
-
     //resize if arc is on unit disk
     let a;
     if(arc.unitDisk) a = arc.fromUnitDisk();
     else a = arc;
+
+    if (this.checkPoints(a.p1, a.p2)) {
+      return false
+    }
 
     if (a.straightLine) {
       this.draw.line(a.p1, a.p2, color);
@@ -70,14 +74,14 @@ export class Disk {
   }
 
   drawPolygonOutline(polygon, color) {
-    if (this.checkPoints(polygon.vertices)) {
-      return false
-    }
-
     //resize if polygon is on unit disk
     let p;
     if(polygon.unitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
+
+    if (this.checkPoints(p.vertices)) {
+      return false
+    }
 
     const l = p.vertices.length;
     for (let i = 0; i < l; i++) {
@@ -87,14 +91,14 @@ export class Disk {
   }
 
   drawPolygon(polygon, color, texture, wireframe){
-    if (this.checkPoints(polygon.vertices)) {
-      return false
-    }
-
     //resize if polygon is on unit disk
     let p;
     if(polygon.unitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
+
+    if (this.checkPoints(p.vertices)) {
+      return false
+    }
 
     const points = p.spacedPointsOnEdges();
     const centre = p.barycentre();

@@ -57,9 +57,9 @@ export class RegularTesselation {
     this.buildCentralPattern();
     this.buildCentralPolygon();
 
-    //if (this.maxLayers > 1) this.generateLayers();
+    if (this.maxLayers > 1) this.generateLayers();
 
-    this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
+    //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
     this.drawPattern(this.layerZero)
 
     this.testing();
@@ -70,10 +70,56 @@ export class RegularTesselation {
     let pattern = './images/textures/pattern1.png';
     pattern = '';
 
-    this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
-    let poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
+    //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+    //let poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
     //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
 
+  }
+
+  //fundamentalRegion calculation using Dunham's method
+  fundamentalRegion() {
+    const cosh2 = Math.cot(Math.PI / this.p)*Math.cot(Math.PI / this.q);
+
+    const sinh2 = Math.sqrt(cosh2 *cosh2 - 1);
+
+    const coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
+    const sinhq = Math.sqrt(coshq * coshq - 1);
+
+    const rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
+    const x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
+
+    //point at end of hypotenuse of fundamental region
+    const xqpt = Math.cos(Math.PI / this.p) * rad2;
+    const yqpt = Math.sin(Math.PI / this.p) * rad2;
+
+    //create points and move them from the unit disk to our radius
+    const p1 = new Point(xqpt, yqpt, true);
+    const p2 = new Point(x2pt, 0, true);
+    const vertices = [this.disk.centre, p1, p2];
+
+    return new Polygon(vertices, true);
+  }
+
+  //calculate the central polygon which is made up of transformed copies
+  //of the fundamental region
+  //TODO: refactor this to use Transforms
+  buildCentralPattern() {
+    this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+    this.layerZero = [this.fr, this.frCopy];
+
+    for (let i = 0; i < this.p; i++) {
+      this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
+      this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
+    }
+  }
+
+  buildCentralPolygon(){
+    const vertices = [];
+    for(let i = 0; i < this.p; i++){
+      const p = this.fr.vertices[1];
+      vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
+    }
+    this.centralPolygon = new Polygon(vertices, true);
   }
 
   generatePattern(pgonArray, transform) {
@@ -144,75 +190,6 @@ export class RegularTesselation {
     }
   }
 
-  //calculate the central polygon which is made up of transformed copies
-  //of the fundamental region
-  //TODO: refactor this to use Transforms
-  buildCentralPattern() {
-    this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
-    this.layerZero = [this.fr, this.frCopy];
-
-    for (let i = 0; i < this.p; i++) {
-      this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
-      this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
-    }
-  }
-
-  buildCentralPolygon(){
-    const vertices = [];
-    for(let i = 0; i < this.p; i++){
-      const p = this.fr.vertices[1];
-      vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
-    }
-    this.centralPolygon = new Polygon(vertices);
-  }
-  /*
-  //calculate the fundamental region (triangle out of which Layer 0 is built)
-  //using Coxeter's method
-  fundamentalRegion() {
-    const s = Math.sin(Math.PI / this.p);
-    const t = Math.cos(Math.PI / this.q);
-    //multiply these by the disks radius (Coxeter used unit disk);
-    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
-    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
-    const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
-
-    const circle = new Circle(d, 0, r);
-
-    //there will be two points of intersection, of which we want the first
-    const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
-
-    const p2 = new Point(d - r, 0);
-
-    const vertices = [this.disk.centre, p1, p2];
-
-
-  }
-  */
-
-  //fundamentalRegion calculation using Dunham's method
-  fundamentalRegion() {
-    const cosh2 = Math.cot(Math.PI / this.p)*Math.cot(Math.PI / this.q);
-
-    const sinh2 = Math.sqrt(cosh2 *cosh2 - 1);
-
-    const coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
-    const sinhq = Math.sqrt(coshq * coshq - 1);
-
-    const rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
-    const x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
-
-    //point at end of hypotenuse of fundamental region
-    const xqpt = Math.cos(Math.PI / this.p) * rad2;
-    const yqpt = Math.sin(Math.PI / this.p) * rad2;
-
-    //create points and move them from the unit disk to our radius
-    const p1 = new Point(xqpt, yqpt, true).fromUnitDisk();
-    const p2 = new Point(x2pt, 0, true).fromUnitDisk();
-    const vertices = [this.disk.centre, p1, p2];
-
-    return new Polygon(vertices);
-  }
-
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
   //For now also require p,q > 3, as these are special cases
@@ -235,3 +212,28 @@ export class RegularTesselation {
     }
   }
 }
+
+
+  /*
+  //calculate the fundamental region (triangle out of which Layer 0 is built)
+  //using Coxeter's method
+  fundamentalRegion() {
+    const s = Math.sin(Math.PI / this.p);
+    const t = Math.cos(Math.PI / this.q);
+    //multiply these by the disks radius (Coxeter used unit disk);
+    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
+    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
+    const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
+
+    const circle = new Circle(d, 0, r);
+
+    //there will be two points of intersection, of which we want the first
+    const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
+
+    const p2 = new Point(d - r, 0);
+
+    const vertices = [this.disk.centre, p1, p2];
+
+    return new Polygon(vertices);
+  }
+  */

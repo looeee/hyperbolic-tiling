@@ -174,6 +174,14 @@ var rotatePointAboutOrigin = function rotatePointAboutOrigin(point2D, angle) {
   return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y, Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
 };
 
+// * ***********************************************************************
+// *
+// *   HYPERBOLIC FUNCTIONS
+// *   a place to stash all the functions that are hyperbolic gemeometrical
+// *   operations
+// *
+// *************************************************************************
+
 var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
   var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
   return {
@@ -222,7 +230,7 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
 
 var Point = function () {
   function Point(x, y) {
-    var unitDisk = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+    var unitDisk = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
     babelHelpers.classCallCheck(this, Point);
 
     this.unitDisk = unitDisk;
@@ -263,7 +271,7 @@ var Point = function () {
       var mat = _transform.matrix;
       var x = this.x * mat[0][0] + this.y * mat[0][1];
       var y = this.x * mat[1][0] + this.y * mat[1][1];
-      return new Point(x, y);
+      return new Point(x, y, this.unitDisk);
     }
 
     //map from disk of window.radius to unit disk
@@ -272,7 +280,7 @@ var Point = function () {
     key: 'toUnitDisk',
     value: function toUnitDisk() {
       if (this.unitDisk === true) {
-        console.warn('Point ' + this + 'already on unit disk!');
+        console.warn('Point ' + this.x + ', ' + this.y + ' already on unit disk!');
         return this;
       }
       return new Point(this.x / window.radius, this.y / window.radius, true);
@@ -284,7 +292,7 @@ var Point = function () {
     key: 'fromUnitDisk',
     value: function fromUnitDisk() {
       if (this.unitDisk === false) {
-        console.warn('Point ' + this + 'not on unit disk!');
+        console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
         return this;
       }
       return new Point(this.x * window.radius, this.y * window.radius, false);
@@ -302,7 +310,7 @@ var Circle = function () {
     if (toFixed(radius) == 0) {
       radius = 0;
     }
-    this.centre = new Point(centreX, centreY);
+    this.centre = new Point(centreX, centreY, this.unitDisk);
     this.radius = radius;
   }
 
@@ -349,7 +357,7 @@ var Arc = function () {
     this.p2 = p2;
 
     if (throughOrigin(p1, p2)) {
-      this.circle = new Circle(0, 0, 1);
+      this.circle = new Circle(0, 0, 1, true);
       this.startAngle = 0;
       this.endAngle = 0;
       this.clockwise = false;
@@ -370,7 +378,7 @@ var Arc = function () {
 
       var wcp = weierstrassCrossProduct(wp1, wp2);
 
-      var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
+      var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
       //calculate centre of arcCircle relative to unit disk
       var cx = wcp.x / wcp.z;
@@ -386,9 +394,9 @@ var Arc = function () {
 
       var arcCircle = undefined;
       if (this.unitDisk) {
-        arcCircle = new Circle(arcCentre.x, arcCentre.y, r);
+        arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
       } else {
-        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius);
+        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius, false);
       }
 
       var alpha = Math.atan2(q1.y, q1.x);
@@ -458,7 +466,7 @@ var Arc = function () {
 
 var Polygon = function () {
   function Polygon(vertices) {
-    var unitDisk = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+    var unitDisk = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
     babelHelpers.classCallCheck(this, Polygon);
 
     this.unitDisk = unitDisk;
@@ -479,7 +487,7 @@ var Polygon = function () {
 
       for (var i = 0; i < l; i++) {
         var p = undefined;
-        var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
+        var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.unitDisk);
 
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
@@ -495,6 +503,7 @@ var Polygon = function () {
             points.push(p);
           }
 
+          //TODO: check if this is necessary
           if ((i + 1) % l !== 0) {
             points.push(this.vertices[(i + 1) % l]);
           }
@@ -508,7 +517,11 @@ var Polygon = function () {
               p = spacedPointOnLine(p, this.vertices[i], spacing).p1;
               points.push(p);
             }
-            //this.points.push(this.vertices[(i + 1) % l]);
+
+            //TODO: check if this is necessary
+            if ((i + 1) % l !== 0) {
+              points.push(this.vertices[(i + 1) % l]);
+            }
           }
       }
       return points;
@@ -523,7 +536,7 @@ var Polygon = function () {
   }, {
     key: 'reflect',
     value: function reflect(p1, p2) {
-      var a = new Arc(p1, p2, this.circle);
+      var a = new Arc(p1, p2, this.circle, this.unitDisk);
       var vertices = [];
 
       if (!a.straightLine) {
@@ -577,7 +590,7 @@ var Polygon = function () {
           }
         }
       }
-      return new Polygon(vertices);
+      return new Polygon(vertices, this.unitDisk);
     }
   }, {
     key: 'rotateAboutOrigin',
@@ -609,7 +622,7 @@ var Polygon = function () {
         }
       }
 
-      return new Polygon(vertices);
+      return new Polygon(vertices, this.unitDisk);
     }
   }, {
     key: 'transform',
@@ -640,7 +653,7 @@ var Polygon = function () {
         }
       }
 
-      return new Polygon(newVertices);
+      return new Polygon(newVertices, this.unitDisk);
     }
 
     //find the barycentre of a non-self-intersecting polygon
@@ -667,7 +680,7 @@ var Polygon = function () {
         y += (p1.y + p2.y) * f;
       }
       f = twicearea * 3;
-      return new Point(x / f, y / f);
+      return new Point(x / f, y / f, this.unitDisk);
     }
 
     //map from disk of window.radius to unit disk
@@ -855,7 +868,6 @@ var Transformations = function () {
       this.edgeReflection.matrix[0][2] = Math.sinh(2 * Math.PI / this.q);
       this.edgeReflection.matrix[2][0] = -Math.sinh(2 * Math.PI / this.q);
       this.edgeReflection.matrix[2][2] = Math.cosh(2 * Math.PI / this.q);
-      console.log(this.edgeReflection.matrix);
     }
 
     //TESTED: working
@@ -1286,9 +1298,9 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'init',
     value: function init() {
-      this.centre = new Point(0, 0);
+      this.centre = new Point(0, 0, true);
 
-      this.circle = new Circle(this.centre.x, this.centre.y, window.radius);
+      //this.circle = new Circle(this.centre.x, this.centre.y, window.radius, false );
 
       this.drawDisk();
     }
@@ -1303,15 +1315,19 @@ var Disk = function () {
   }, {
     key: 'drawPoint',
     value: function drawPoint(point, radius, color) {
-      if (this.checkPoints(point)) {
-        return false;
-      }
+      var p = undefined;
       if (point.unitDisk) {
-        var p = point.fromUnitDisk();
+        p = point.fromUnitDisk();
         this.draw.disk(p, radius, color, false);
       } else {
-        this.draw.disk(point, radius, color, false);
+        p = point;
       }
+
+      if (this.checkPoints(p)) {
+        return false;
+      }
+
+      this.draw.disk(point, radius, color, false);
     }
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
@@ -1319,13 +1335,13 @@ var Disk = function () {
   }, {
     key: 'drawArc',
     value: function drawArc(arc, color) {
-      if (this.checkPoints(p1, p2)) {
-        return false;
-      }
-
       //resize if arc is on unit disk
       var a = undefined;
       if (arc.unitDisk) a = arc.fromUnitDisk();else a = arc;
+
+      if (this.checkPoints(a.p1, a.p2)) {
+        return false;
+      }
 
       if (a.straightLine) {
         this.draw.line(a.p1, a.p2, color);
@@ -1336,13 +1352,13 @@ var Disk = function () {
   }, {
     key: 'drawPolygonOutline',
     value: function drawPolygonOutline(polygon, color) {
-      if (this.checkPoints(polygon.vertices)) {
-        return false;
-      }
-
       //resize if polygon is on unit disk
       var p = undefined;
       if (polygon.unitDisk) p = polygon.fromUnitDisk();else p = polygon;
+
+      if (this.checkPoints(p.vertices)) {
+        return false;
+      }
 
       var l = p.vertices.length;
       for (var i = 0; i < l; i++) {
@@ -1353,13 +1369,13 @@ var Disk = function () {
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
-      if (this.checkPoints(polygon.vertices)) {
-        return false;
-      }
-
       //resize if polygon is on unit disk
       var p = undefined;
       if (polygon.unitDisk) p = polygon.fromUnitDisk();else p = polygon;
+
+      if (this.checkPoints(p.vertices)) {
+        return false;
+      }
 
       var points = p.spacedPointsOnEdges();
       var centre = p.barycentre();
@@ -1459,9 +1475,9 @@ var RegularTesselation = function () {
       this.buildCentralPattern();
       this.buildCentralPolygon();
 
-      //if (this.maxLayers > 1) this.generateLayers();
+      if (this.maxLayers > 1) this.generateLayers();
 
-      this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
+      //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
       this.drawPattern(this.layerZero);
 
       this.testing();
@@ -1473,9 +1489,62 @@ var RegularTesselation = function () {
       var pattern = './images/textures/pattern1.png';
       pattern = '';
 
-      this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
-      var poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
+      //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+      //let poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
       //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+    }
+
+    //fundamentalRegion calculation using Dunham's method
+
+  }, {
+    key: 'fundamentalRegion',
+    value: function fundamentalRegion() {
+      var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
+
+      var sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
+
+      var coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
+      var sinhq = Math.sqrt(coshq * coshq - 1);
+
+      var rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
+      var x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
+
+      //point at end of hypotenuse of fundamental region
+      var xqpt = Math.cos(Math.PI / this.p) * rad2;
+      var yqpt = Math.sin(Math.PI / this.p) * rad2;
+
+      //create points and move them from the unit disk to our radius
+      var p1 = new Point(xqpt, yqpt, true);
+      var p2 = new Point(x2pt, 0, true);
+      var vertices = [this.disk.centre, p1, p2];
+
+      return new Polygon(vertices, true);
+    }
+
+    //calculate the central polygon which is made up of transformed copies
+    //of the fundamental region
+    //TODO: refactor this to use Transforms
+
+  }, {
+    key: 'buildCentralPattern',
+    value: function buildCentralPattern() {
+      this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+      this.layerZero = [this.fr, this.frCopy];
+
+      for (var i = 0; i < this.p; i++) {
+        this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
+        this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
+      }
+    }
+  }, {
+    key: 'buildCentralPolygon',
+    value: function buildCentralPolygon() {
+      var vertices = [];
+      for (var i = 0; i < this.p; i++) {
+        var p = this.fr.vertices[1];
+        vertices.push(p.transform(this.transforms.rotatePolygonCW[i]));
+      }
+      this.centralPolygon = new Polygon(vertices, true);
     }
   }, {
     key: 'generatePattern',
@@ -1593,76 +1662,6 @@ var RegularTesselation = function () {
       }
     }
 
-    //calculate the central polygon which is made up of transformed copies
-    //of the fundamental region
-    //TODO: refactor this to use Transforms
-
-  }, {
-    key: 'buildCentralPattern',
-    value: function buildCentralPattern() {
-      this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
-      this.layerZero = [this.fr, this.frCopy];
-
-      for (var i = 0; i < this.p; i++) {
-        this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
-        this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
-      }
-    }
-  }, {
-    key: 'buildCentralPolygon',
-    value: function buildCentralPolygon() {
-      var vertices = [];
-      for (var i = 0; i < this.p; i++) {
-        var p = this.fr.vertices[1];
-        vertices.push(p.transform(this.transforms.rotatePolygonCW[i]));
-      }
-      this.centralPolygon = new Polygon(vertices);
-    }
-    /*
-    //calculate the fundamental region (triangle out of which Layer 0 is built)
-    //using Coxeter's method
-    fundamentalRegion() {
-      const s = Math.sin(Math.PI / this.p);
-      const t = Math.cos(Math.PI / this.q);
-      //multiply these by the disks radius (Coxeter used unit disk);
-      const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
-      const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
-      const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
-       const circle = new Circle(d, 0, r);
-       //there will be two points of intersection, of which we want the first
-      const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
-       const p2 = new Point(d - r, 0);
-       const vertices = [this.disk.centre, p1, p2];
-      }
-    */
-
-    //fundamentalRegion calculation using Dunham's method
-
-  }, {
-    key: 'fundamentalRegion',
-    value: function fundamentalRegion() {
-      var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
-
-      var sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
-
-      var coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
-      var sinhq = Math.sqrt(coshq * coshq - 1);
-
-      var rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
-      var x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
-
-      //point at end of hypotenuse of fundamental region
-      var xqpt = Math.cos(Math.PI / this.p) * rad2;
-      var yqpt = Math.sin(Math.PI / this.p) * rad2;
-
-      //create points and move them from the unit disk to our radius
-      var p1 = new Point(xqpt, yqpt, true).fromUnitDisk();
-      var p2 = new Point(x2pt, 0, true).fromUnitDisk();
-      var vertices = [this.disk.centre, p1, p2];
-
-      return new Polygon(vertices);
-    }
-
     //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
     //either an elliptical or euclidean tesselation);
     //For now also require p,q > 3, as these are special cases
@@ -1690,6 +1689,25 @@ var RegularTesselation = function () {
   }]);
   return RegularTesselation;
 }();
+
+/*
+//calculate the fundamental region (triangle out of which Layer 0 is built)
+//using Coxeter's method
+fundamentalRegion() {
+  const s = Math.sin(Math.PI / this.p);
+  const t = Math.cos(Math.PI / this.q);
+  //multiply these by the disks radius (Coxeter used unit disk);
+  const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
+  const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
+  const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
+   const circle = new Circle(d, 0, r);
+   //there will be two points of intersection, of which we want the first
+  const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
+   const p2 = new Point(d - r, 0);
+   const vertices = [this.disk.centre, p1, p2];
+   return new Polygon(vertices);
+}
+*/
 
 // * ***********************************************************************
 // *
@@ -1729,6 +1747,6 @@ window.addEventListener('load', function (event) {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
-  var tesselation = new RegularTesselation(4, 5, 2);
+  var tesselation = new RegularTesselation(4, 5, 1);
   //const tesselation = new RegularTesselation(p, q, 2);
 }, false);

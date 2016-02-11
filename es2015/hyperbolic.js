@@ -12,21 +12,6 @@ from './elements';
 // *
 // *************************************************************************
 
-//translate a set of points along the x axis
-export const translateX = (pointsArray, distance) => {
-  const l = pointsArray.length;
-  const newPoints = [];
-  const e = Math.pow(Math.E, distance);
-  const pos = e + 1;
-  const neg = e - 1;
-  for (let i = 0; i < l; i++) {
-    const x = pos * pointsArray[i].x + neg * pointsArray[i].y;
-    const y = neg * pointsArray[i].x + pos * pointsArray[i].y;
-    newPoints.push(new Point(x, y));
-  }
-  return newPoints;
-}
-
 export const poincareToWeierstrass = (point2D) => {
   const factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
   return {
@@ -177,5 +162,21 @@ export const arcV1 = (p1, p2, circle) => {
     clockwise: clockwise,
     straightLine: false,
   }
+}
+
+//translate a set of points along the x axis
+//UNTEST AND NEEDS TO BE UPDATED FOR UNIT DISK
+export const translateX = (pointsArray, distance) => {
+  const l = pointsArray.length;
+  const newPoints = [];
+  const e = Math.pow(Math.E, distance);
+  const pos = e + 1;
+  const neg = e - 1;
+  for (let i = 0; i < l; i++) {
+    const x = pos * pointsArray[i].x + neg * pointsArray[i].y;
+    const y = neg * pointsArray[i].x + pos * pointsArray[i].y;
+    newPoints.push(new Point(x, y));
+  }
+  return newPoints;
 }
 */

@@ -19,7 +19,7 @@ import * as H from './hyperbolic';
 // *************************************************************************
 
 export class Point {
-  constructor(x, y, unitDisk = false) {
+  constructor(x, y, unitDisk = true) {
     this.unitDisk = unitDisk;
     if (E.toFixed(x, 10) == 0) {
       x = 0;
@@ -53,13 +53,13 @@ export class Point {
     const mat = transform.matrix;
     const x = this.x * mat[0][0] + this.y * mat[0][1];
     const y = this.x * mat[1][0] + this.y * mat[1][1];
-    return new Point(x, y);
+    return new Point(x, y, this.unitDisk);
   }
 
   //map from disk of window.radius to unit disk
   toUnitDisk() {
     if(this.unitDisk === true){
-      console.warn('Point ' + this + 'already on unit disk!');
+      console.warn('Point ' + this.x + ', ' + this.y + ' already on unit disk!');
       return this;
     }
     return new Point(this.x / window.radius , this.y / window.radius, true );
@@ -68,7 +68,7 @@ export class Point {
   //map from unit disk to disk of window.radius
   fromUnitDisk() {
     if(this.unitDisk === false){
-      console.warn('Point ' + this + 'not on unit disk!');
+      console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
       return this;
     }
     return new Point(this.x * window.radius , this.y * window.radius, false );
@@ -87,7 +87,7 @@ export class Circle {
     if (E.toFixed(radius) == 0) {
       radius = 0;
     }
-    this.centre = new Point(centreX, centreY);
+    this.centre = new Point(centreX, centreY, this.unitDisk);
     this.radius = radius;
   }
 
@@ -123,7 +123,7 @@ export class Arc {
     this.p2 = p2;
 
     if (E.throughOrigin(p1, p2)) {
-      this.circle = new Circle(0,0,1);
+      this.circle = new Circle(0,0,1, true);
       this.startAngle = 0;
       this.endAngle = 0;
       this.clockwise = false;
@@ -145,7 +145,7 @@ export class Arc {
 
       const wcp = H.weierstrassCrossProduct(wp1, wp2);
 
-      const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
+      const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
       //calculate centre of arcCircle relative to unit disk
       const cx = wcp.x / wcp.z;
@@ -161,10 +161,10 @@ export class Arc {
 
       let arcCircle;
       if(this.unitDisk){
-        arcCircle = new Circle(arcCentre.x, arcCentre.y, r );
+        arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true );
       }
       else{
-        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius );
+        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius, false );
       }
 
       let alpha = Math.atan2(q1.y, q1.x);
@@ -226,7 +226,7 @@ export class Arc {
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 export class Polygon {
-  constructor(vertices, unitDisk = false) {
+  constructor(vertices, unitDisk = true) {
     this.unitDisk = unitDisk;
     this.vertices = vertices;
     this.centre = this.barycentre();
@@ -242,7 +242,7 @@ export class Polygon {
 
     for (let i = 0; i < l; i++) {
       let p;
-      const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
+      const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.unitDisk);
 
       //line not through the origin (hyperbolic arc)
       if (!arc.straightLine) {
@@ -260,6 +260,7 @@ export class Polygon {
           points.push(p);
         }
 
+        //TODO: check if this is necessary
         if((i + 1) % l !== 0){
           points.push(this.vertices[(i + 1) % l]);
         }
@@ -273,7 +274,11 @@ export class Polygon {
           p = E.spacedPointOnLine(p, this.vertices[i], spacing).p1;
           points.push(p);
         }
-        //this.points.push(this.vertices[(i + 1) % l]);
+
+        //TODO: check if this is necessary
+        if((i + 1) % l !== 0){
+          points.push(this.vertices[(i + 1) % l]);
+        }
       }
     }
     return points;
@@ -285,7 +290,7 @@ export class Polygon {
   //resulting polygon may be smaller or larger so it makes more sense
   //to recalculate the points
   reflect(p1, p2){
-    const a = new Arc(p1, p2, this.circle);
+    const a = new Arc(p1, p2, this.circle, this.unitDisk);
     const vertices = [];
 
     if (!a.straightLine) {
@@ -297,7 +302,7 @@ export class Polygon {
         vertices.push(E.lineReflection(p1, p2, v));
       }
     }
-    return new Polygon(vertices);
+    return new Polygon(vertices, this.unitDisk);
   }
 
   rotateAboutOrigin(angle){
@@ -306,7 +311,7 @@ export class Polygon {
       let point = E.rotatePointAboutOrigin(v, angle);
       vertices.push(point);
     }
-    return new Polygon(vertices);
+    return new Polygon(vertices, this.unitDisk);
   }
 
   transform(transform){
@@ -315,7 +320,7 @@ export class Polygon {
       newVertices.push(v.transform(transform));
     }
 
-    return new Polygon(newVertices);
+    return new Polygon(newVertices, this.unitDisk);
   }
 
   //find the barycentre of a non-self-intersecting polygon
@@ -334,7 +339,7 @@ export class Polygon {
       y += (p1.y + p2.y) * f;
     }
     f = twicearea * 3;
-    return new Point( x / f, y / f);
+    return new Point( x / f, y / f, this.unitDisk);
   }
 
   //map from disk of window.radius to unit disk

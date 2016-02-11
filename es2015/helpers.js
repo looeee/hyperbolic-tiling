@@ -64,7 +64,7 @@ export class Transformations {
   constructor(p, q) {
     this.p = p;
     this.q = q;
-    
+
 
     this.initHypotenuseReflection();
     this.initEdgeReflection();
@@ -95,8 +95,6 @@ export class Transformations {
     this.edgeReflection.matrix[0][2] = Math.sinh(2 * Math.PI / this.q);
     this.edgeReflection.matrix[2][0] = -Math.sinh(2 * Math.PI / this.q);
     this.edgeReflection.matrix[2][2] = Math.cosh(2 * Math.PI / this.q);
-    console.log(this.edgeReflection.matrix);
-
   }
 
   //TESTED: working

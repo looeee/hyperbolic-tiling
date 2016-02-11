@@ -40,6 +40,6 @@ window.addEventListener('load', (event) => {
   //used across all classes
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
-  const tesselation = new RegularTesselation(4, 5, 2);
+  const tesselation = new RegularTesselation(4, 5, 1);
   //const tesselation = new RegularTesselation(p, q, 2);
 }, false);
