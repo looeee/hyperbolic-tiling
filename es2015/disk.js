@@ -28,63 +28,79 @@ export class Disk {
   init() {
     this.centre = new Point(0,0);
 
-    //draw largest circle possible given window dims
-    this.radius = window.radius;
-
     this.circle = new Circle(this.centre.x, this.centre.y, window.radius );
-
-    //smaller circle for testing
-    //this.radius = this.radius / 2;
 
     this.drawDisk();
   }
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, this.radius, 0x000000);
+    this.draw.disk(this.centre, window.radius, 0x000000);
   }
 
-  drawPoint(centre, radius, color) {
-    this.draw.disk(centre, radius, color, false);
+  drawPoint(point, radius, color) {
+    if (this.checkPoints(point)) {
+      return false
+    }
+    if(point.unitDisk){
+      let p = point.fromUnitDisk();
+      this.draw.disk(p, radius, color, false);
+    }
+    else{
+      this.draw.disk(point, radius, color, false);
+    }
   }
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
-  drawArc(p1, p2, colour) {
-    //check that the points are in the disk
+  drawArc(arc, color) {
     if (this.checkPoints(p1, p2)) {
       return false
     }
-    const col = colour || 0xffffff;
-    const arc = new Arc(p1, p2, this.circle);
 
-    if (arc.straightLine) {
-      this.draw.line(p1, p2, col);
+    //resize if arc is on unit disk
+    let a;
+    if(arc.unitDisk) a = arc.fromUnitDisk();
+    else a = arc;
+
+    if (a.straightLine) {
+      this.draw.line(a.p1, a.p2, color);
     } else {
-      this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, colour);
+      this.draw.segment(a.circle, a.startAngle, a.endAngle, color);
     }
   }
 
-  drawPolygonOutline(polygon, colour) {
-    //check that the points are in the disk
+  drawPolygonOutline(polygon, color) {
     if (this.checkPoints(polygon.vertices)) {
       return false
     }
-    const l = polygon.vertices.length;
+
+    //resize if polygon is on unit disk
+    let p;
+    if(polygon.unitDisk) p = polygon.fromUnitDisk();
+    else p = polygon;
+
+    const l = p.vertices.length;
     for (let i = 0; i < l; i++) {
-      this.drawArc(polygon.vertices[i], polygon.vertices[(i + 1) % l], colour);
+      const arc = new Arc(p.vertices[i], p.vertices[(i + 1) % l])
+      this.drawArc(arc, color);
     }
   }
 
   drawPolygon(polygon, color, texture, wireframe){
-    //check that the points are in the disk
     if (this.checkPoints(polygon.vertices)) {
       return false
     }
-    this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
-    //TESTING
-    //for(let point of polygon.points){
-    //  this.drawPoint(point, 2);
-    //}
+
+    //resize if polygon is on unit disk
+    let p;
+    if(polygon.unitDisk) p = polygon.fromUnitDisk();
+    else p = polygon;
+
+    const points = p.spacedPointsOnEdges();
+    const centre = p.barycentre();
+
+    this.draw.polygon(points, centre, color, texture, wireframe);
+
   }
 
   //return true if any of the points is not in the disk

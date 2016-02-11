@@ -26,35 +26,6 @@ babelHelpers.createClass = function () {
 
 babelHelpers;
 
-var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
-  var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
-  return {
-    x: 2 * factor * point2D.x,
-    y: 2 * factor * point2D.y,
-    z: factor * (1 + point2D.x * point2D.x + point2D.y * point2D.y)
-  };
-};
-
-var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3D_2) {
-  if (point3D_1.z === 'undefined' || point3D_2.z === 'undefined') {
-    console.error('weierstrassCrossProduct: 3D points required');
-  }
-  var r = {
-    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
-    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
-  };
-
-  var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
-  if (toFixed(norm, 10) == 0) {
-    console.error('weierstrassCrossProduct: division by zero error');
-  }
-  r.x = r.x / norm;
-  r.y = r.y / norm;
-  r.z = r.z / norm;
-  return r;
-};
-
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS
@@ -203,22 +174,58 @@ var rotatePointAboutOrigin = function rotatePointAboutOrigin(point2D, angle) {
   return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y, Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
 };
 
+var poincareToWeierstrass = function poincareToWeierstrass(point2D) {
+  var factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
+  return {
+    x: 2 * factor * point2D.x,
+    y: 2 * factor * point2D.y,
+    z: factor * (1 + point2D.x * point2D.x + point2D.y * point2D.y)
+  };
+};
+
+var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3D_2) {
+  if (point3D_1.z === 'undefined' || point3D_2.z === 'undefined') {
+    console.error('weierstrassCrossProduct: 3D points required');
+  }
+  var r = {
+    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
+    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
+    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+  };
+
+  var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
+  if (toFixed(norm, 10) == 0) {
+    console.error('weierstrassCrossProduct: division by zero error');
+  }
+  r.x = r.x / norm;
+  r.y = r.y / norm;
+  r.z = r.z / norm;
+  return r;
+};
+
+// * ***********************************************************************
+// * ***********************************************************************
 // * ***********************************************************************
 // *
 // *   HYPERBOLIC ELEMENT CLASSES
 // *
 // *************************************************************************
+// * ***********************************************************************
+// * ***********************************************************************
 
 // * ***********************************************************************
 // *
 // *   POINT CLASS
-// *   2d point class
+// *   2D point class
+// *
 // *************************************************************************
 
 var Point = function () {
   function Point(x, y) {
+    var unitDisk = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
     babelHelpers.classCallCheck(this, Point);
 
+    this.unitDisk = unitDisk;
     if (toFixed(x, 10) == 0) {
       x = 0;
     }
@@ -250,50 +257,81 @@ var Point = function () {
 
       if (p1.x === p2.x && p1.y === p2.y) return true;else return false;
     }
-
-    //map from disk of currentRadius to unit disk
-
-  }, {
-    key: 'toUnitDisk',
-    value: function toUnitDisk() {
-      return new Point(this.x / window.radius, this.y / window.radius);
-    }
-
-    //map from unit disk to disk of newRadius
-
-  }, {
-    key: 'fromUnitDisk',
-    value: function fromUnitDisk() {
-      return new Point(this.x * window.radius, this.y * window.radius);
-    }
   }, {
     key: 'transform',
     value: function transform(_transform) {
       var mat = _transform.matrix;
-      /*
-      const p = this.toUnitDisk();
-      p.x = p.x * mat[0][0] + p.y * mat[0][1];
-      p.y = p.x * mat[1][0] + p.y * mat[1][1];
-      return p.fromUnitDisk();
-      */
-
       var x = this.x * mat[0][0] + this.y * mat[0][1];
       var y = this.x * mat[1][0] + this.y * mat[1][1];
       return new Point(x, y);
+    }
+
+    //map from disk of window.radius to unit disk
+
+  }, {
+    key: 'toUnitDisk',
+    value: function toUnitDisk() {
+      if (this.unitDisk === true) {
+        console.warn('Point ' + this + 'already on unit disk!');
+        return this;
+      }
+      return new Point(this.x / window.radius, this.y / window.radius, true);
+    }
+
+    //map from unit disk to disk of window.radius
+
+  }, {
+    key: 'fromUnitDisk',
+    value: function fromUnitDisk() {
+      if (this.unitDisk === false) {
+        console.warn('Point ' + this + 'not on unit disk!');
+        return this;
+      }
+      return new Point(this.x * window.radius, this.y * window.radius, false);
     }
   }]);
   return Point;
 }();
 
-var Circle = function Circle(centreX, centreY, radius) {
-  babelHelpers.classCallCheck(this, Circle);
+var Circle = function () {
+  function Circle(centreX, centreY, radius) {
+    var unitDisk = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+    babelHelpers.classCallCheck(this, Circle);
 
-  if (toFixed(radius) == 0) {
-    radius = 0;
+    this.unitDisk = unitDisk;
+    if (toFixed(radius) == 0) {
+      radius = 0;
+    }
+    this.centre = new Point(centreX, centreY);
+    this.radius = radius;
   }
-  this.centre = new Point(centreX, centreY);
-  this.radius = radius;
-};
+
+  //map from disk of window.radius to unit disk
+
+  babelHelpers.createClass(Circle, [{
+    key: 'toUnitDisk',
+    value: function toUnitDisk() {
+      if (this.unitDisk === true) {
+        console.warn('Circle ' + this + 'already on unit disk!');
+        return this;
+      }
+      return new Circle(this.centre.x / window.radius, this.centre.y / window.radius, this.radius / window.radius);
+    }
+
+    //map from unit disk to disk of window.radius
+
+  }, {
+    key: 'fromUnitDisk',
+    value: function fromUnitDisk() {
+      if (this.unitDisk === false) {
+        console.warn('Circle ' + this + 'not on unit disk!');
+        return this;
+      }
+      return new Circle(this.centre.x * window.radius, this.centre.y * window.radius, this.radius * window.radius);
+    }
+  }]);
+  return Circle;
+}();
 
 // * ***********************************************************************
 // *
@@ -301,61 +339,113 @@ var Circle = function Circle(centreX, centreY, radius) {
 // *
 // *************************************************************************
 
-var Arc = function Arc(p1, p2) {
-  babelHelpers.classCallCheck(this, Arc);
+var Arc = function () {
+  function Arc(p1, p2) {
+    var unitDisk = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+    babelHelpers.classCallCheck(this, Arc);
 
-  if (throughOrigin(p1, p2)) {
-    this.circle = new Circle(0, 0, 0);
-    this.startAngle = 0;
-    this.endAngle = 0;
-    this.clockwise = false;
-    this.straightLine = true;
-  } else {
-    var q1 = p1.toUnitDisk();
-    var q2 = p2.toUnitDisk();
+    this.unitDisk = unitDisk;
+    this.p1 = p1;
+    this.p2 = p2;
 
-    var wp1 = poincareToWeierstrass(q1);
-    var wp2 = poincareToWeierstrass(q2);
-
-    var wcp = weierstrassCrossProduct(wp1, wp2);
-
-    var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
-
-    //calculate centre of arcCircle relative to unit disk
-    var cx = wcp.x / wcp.z;
-    var cy = wcp.y / wcp.z;
-
-    //translate points to origin before calculating arctan
-    q1.x = q1.x - arcCentre.x;
-    q1.y = q1.y - arcCentre.y;
-    q2.x = q2.x - arcCentre.x;
-    q2.y = q2.y - arcCentre.y;
-
-    var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
-    var arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius);
-
-    var alpha = Math.atan2(q1.y, q1.x);
-
-    var beta = Math.atan2(q2.y, q2.x);
-
-    //angles are in (-pi, pi), transform to (0,2pi)
-    alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
-    beta = beta < 0 ? 2 * Math.PI + beta : beta;
-
-    var cw = clockwise(alpha, beta);
-    if (cw) {
-      this.startAngle = alpha;
-      this.endAngle = beta;
+    if (throughOrigin(p1, p2)) {
+      this.circle = new Circle(0, 0, 1);
+      this.startAngle = 0;
+      this.endAngle = 0;
+      this.clockwise = false;
+      this.straightLine = true;
     } else {
-      this.startAngle = beta;
-      this.endAngle = alpha;
+      var q1 = undefined,
+          q2 = undefined;
+      if (this.unitDisk) {
+        q1 = p2;
+        q2 = p2;
+      } else {
+        q1 = p1.toUnitDisk();
+        q2 = p2.toUnitDisk();
+      }
+
+      var wp1 = poincareToWeierstrass(q1);
+      var wp2 = poincareToWeierstrass(q2);
+
+      var wcp = weierstrassCrossProduct(wp1, wp2);
+
+      var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z);
+
+      //calculate centre of arcCircle relative to unit disk
+      var cx = wcp.x / wcp.z;
+      var cy = wcp.y / wcp.z;
+
+      //translate points to origin before calculating arctan
+      q1.x = q1.x - arcCentre.x;
+      q1.y = q1.y - arcCentre.y;
+      q2.x = q2.x - arcCentre.x;
+      q2.y = q2.y - arcCentre.y;
+
+      var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
+
+      var arcCircle = undefined;
+      if (this.unitDisk) {
+        arcCircle = new Circle(arcCentre.x, arcCentre.y, r);
+      } else {
+        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius);
+      }
+
+      var alpha = Math.atan2(q1.y, q1.x);
+
+      var beta = Math.atan2(q2.y, q2.x);
+
+      //angles are in (-pi, pi), transform to (0,2pi)
+      alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
+      beta = beta < 0 ? 2 * Math.PI + beta : beta;
+
+      var cw = clockwise(alpha, beta);
+      if (cw) {
+        this.startAngle = alpha;
+        this.endAngle = beta;
+      } else {
+        this.startAngle = beta;
+        this.endAngle = alpha;
+      }
+
+      this.circle = arcCircle;
+      this.clockwise = cw;
+      this.straightLine = false;
+    }
+  }
+
+  //map from disk of window.radius to unit disk
+
+  babelHelpers.createClass(Arc, [{
+    key: 'toUnitDisk',
+    value: function toUnitDisk() {
+      if (this.unitDisk === true) {
+        console.warn('Arc ' + this + 'already on unit disk!');
+        return this;
+      } else {
+        var _p = this.p1.toUnitDisk();
+        var p2 = this.p2.toUnitDisk();
+        return new Arc(_p, p2, true);
+      }
     }
 
-    this.circle = arcCircle;
-    this.clockwise = cw;
-    this.straightLine = false;
-  }
-};
+    //map from unit disk to disk of window.radius
+
+  }, {
+    key: 'fromUnitDisk',
+    value: function fromUnitDisk() {
+      if (this.unitDisk === false) {
+        console.warn('Arc ' + this + 'not on unit disk!');
+        return this;
+      } else {
+        var _p2 = this.p1.fromUnitDisk();
+        var p2 = this.p2.fromUnitDisk();
+        return new Arc(_p2, p2, false);
+      }
+    }
+  }]);
+  return Arc;
+}();
 
 // * ***********************************************************************
 // *
@@ -368,24 +458,24 @@ var Arc = function Arc(p1, p2) {
 
 var Polygon = function () {
   function Polygon(vertices) {
+    var unitDisk = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
     babelHelpers.classCallCheck(this, Polygon);
 
+    this.unitDisk = unitDisk;
     this.vertices = vertices;
-    this.points = [];
     this.centre = this.barycentre();
-    this.spacedPointsOnEdges();
   }
 
   //TODO: make spacing function of resolution
-  //TODO: space points along straight edges
 
   babelHelpers.createClass(Polygon, [{
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
       var spacing = 5;
       var l = this.vertices.length;
+      var points = [];
 
-      this.points.push(this.vertices[0]);
+      points.push(this.vertices[0]);
 
       for (var i = 0; i < l; i++) {
         var p = undefined;
@@ -394,7 +484,7 @@ var Polygon = function () {
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
           if (!arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
-          this.points.push(p);
+          points.push(p);
 
           while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
             if (!arc.clockwise) {
@@ -402,25 +492,26 @@ var Polygon = function () {
             } else {
               p = spacedPointOnArc(arc.circle, p, spacing).p1;
             }
-            this.points.push(p);
+            points.push(p);
           }
 
           if ((i + 1) % l !== 0) {
-            this.points.push(this.vertices[(i + 1) % l]);
+            points.push(this.vertices[(i + 1) % l]);
           }
         }
 
         //line through origin (straight line)
         else {
             p = spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
-            this.points.push(p);
+            points.push(p);
             while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
               p = spacedPointOnLine(p, this.vertices[i], spacing).p1;
-              this.points.push(p);
+              points.push(p);
             }
             //this.points.push(this.vertices[(i + 1) % l]);
           }
       }
+      return points;
     }
 
     //reflect vertices of the polygon over the arc defined by p1, p1
@@ -577,6 +668,84 @@ var Polygon = function () {
       }
       f = twicearea * 3;
       return new Point(x / f, y / f);
+    }
+
+    //map from disk of window.radius to unit disk
+
+  }, {
+    key: 'toUnitDisk',
+    value: function toUnitDisk() {
+      if (this.unitDisk === true) {
+        console.warn('Polygon ' + this + 'already on unit disk!');
+        return this;
+      } else {
+        var newVertices = [];
+        var _iteratorNormalCompletion5 = true;
+        var _didIteratorError5 = false;
+        var _iteratorError5 = undefined;
+
+        try {
+          for (var _iterator5 = this.vertices[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var _v4 = _step5.value;
+
+            newVertices.push(_v4.toUnitDisk());
+          }
+        } catch (err) {
+          _didIteratorError5 = true;
+          _iteratorError5 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion5 && _iterator5.return) {
+              _iterator5.return();
+            }
+          } finally {
+            if (_didIteratorError5) {
+              throw _iteratorError5;
+            }
+          }
+        }
+
+        return new Polygon(newVertices, true);
+      }
+    }
+
+    //map from unit disk to disk of window.radius
+
+  }, {
+    key: 'fromUnitDisk',
+    value: function fromUnitDisk() {
+      if (this.unitDisk === false) {
+        console.warn('Polygon ' + this + 'not on unit disk!');
+        return this;
+      } else {
+        var newVertices = [];
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
+
+        try {
+          for (var _iterator6 = this.vertices[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+            var _v5 = _step6.value;
+
+            newVertices.push(_v5.fromUnitDisk());
+          }
+        } catch (err) {
+          _didIteratorError6 = true;
+          _iteratorError6 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion6 && _iterator6.return) {
+              _iterator6.return();
+            }
+          } finally {
+            if (_didIteratorError6) {
+              throw _iteratorError6;
+            }
+          }
+        }
+
+        return new Polygon(newVertices, false);
+      }
     }
   }]);
   return Polygon;
@@ -903,8 +1072,6 @@ var ThreeJS = function () {
 
       this.initLighting();
 
-      //this.axes();
-
       this.initRenderer();
     }
   }, {
@@ -1035,6 +1202,9 @@ var ThreeJS = function () {
 
       this.scene.add(this.createMesh(geometry, color, texture, wireframe));
     }
+
+    //TODO learn how UVs work then write this function
+
   }, {
     key: 'setUvs',
     value: function setUvs(geometry) {
@@ -1118,13 +1288,7 @@ var Disk = function () {
     value: function init() {
       this.centre = new Point(0, 0);
 
-      //draw largest circle possible given window dims
-      this.radius = window.radius;
-
       this.circle = new Circle(this.centre.x, this.centre.y, window.radius);
-
-      //smaller circle for testing
-      //this.radius = this.radius / 2;
 
       this.drawDisk();
     }
@@ -1134,56 +1298,73 @@ var Disk = function () {
   }, {
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, this.radius, 0x000000);
+      this.draw.disk(this.centre, window.radius, 0x000000);
     }
   }, {
     key: 'drawPoint',
-    value: function drawPoint(centre, radius, color) {
-      this.draw.disk(centre, radius, color, false);
+    value: function drawPoint(point, radius, color) {
+      if (this.checkPoints(point)) {
+        return false;
+      }
+      if (point.unitDisk) {
+        var p = point.fromUnitDisk();
+        this.draw.disk(p, radius, color, false);
+      } else {
+        this.draw.disk(point, radius, color, false);
+      }
     }
 
     //Draw an arc (hyperbolic line segment) between two points on the disk
 
   }, {
     key: 'drawArc',
-    value: function drawArc(p1, p2, colour) {
-      //check that the points are in the disk
+    value: function drawArc(arc, color) {
       if (this.checkPoints(p1, p2)) {
         return false;
       }
-      var col = colour || 0xffffff;
-      var arc = new Arc(p1, p2, this.circle);
 
-      if (arc.straightLine) {
-        this.draw.line(p1, p2, col);
+      //resize if arc is on unit disk
+      var a = undefined;
+      if (arc.unitDisk) a = arc.fromUnitDisk();else a = arc;
+
+      if (a.straightLine) {
+        this.draw.line(a.p1, a.p2, color);
       } else {
-        this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, colour);
+        this.draw.segment(a.circle, a.startAngle, a.endAngle, color);
       }
     }
   }, {
     key: 'drawPolygonOutline',
-    value: function drawPolygonOutline(polygon, colour) {
-      //check that the points are in the disk
+    value: function drawPolygonOutline(polygon, color) {
       if (this.checkPoints(polygon.vertices)) {
         return false;
       }
-      var l = polygon.vertices.length;
+
+      //resize if polygon is on unit disk
+      var p = undefined;
+      if (polygon.unitDisk) p = polygon.fromUnitDisk();else p = polygon;
+
+      var l = p.vertices.length;
       for (var i = 0; i < l; i++) {
-        this.drawArc(polygon.vertices[i], polygon.vertices[(i + 1) % l], colour);
+        var arc = new Arc(p.vertices[i], p.vertices[(i + 1) % l]);
+        this.drawArc(arc, color);
       }
     }
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
-      //check that the points are in the disk
       if (this.checkPoints(polygon.vertices)) {
         return false;
       }
-      this.draw.polygon(polygon.points, polygon.centre, color, texture, wireframe);
-      //TESTING
-      //for(let point of polygon.points){
-      //  this.drawPoint(point, 2);
-      //}
+
+      //resize if polygon is on unit disk
+      var p = undefined;
+      if (polygon.unitDisk) p = polygon.fromUnitDisk();else p = polygon;
+
+      var points = p.spacedPointsOnEdges();
+      var centre = p.barycentre();
+
+      this.draw.polygon(points, centre, color, texture, wireframe);
     }
 
     //return true if any of the points is not in the disk
@@ -1475,8 +1656,8 @@ var RegularTesselation = function () {
       var yqpt = Math.sin(Math.PI / this.p) * rad2;
 
       //create points and move them from the unit disk to our radius
-      var p1 = new Point(xqpt, yqpt).fromUnitDisk();
-      var p2 = new Point(x2pt, 0).fromUnitDisk();
+      var p1 = new Point(xqpt, yqpt, true).fromUnitDisk();
+      var p2 = new Point(x2pt, 0, true).fromUnitDisk();
       var vertices = [this.disk.centre, p1, p2];
 
       return new Polygon(vertices);
@@ -1535,6 +1716,7 @@ Math.cot = Math.cot || function (x) {
 // *   SETUP
 // *
 // *************************************************************************
+window.unitDisk = new Circle(0, 0, 1);
 
 var p = randomInt(4, 8);
 var q = randomInt(4, 8);

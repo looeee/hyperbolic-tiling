@@ -206,8 +206,8 @@ export class RegularTesselation {
     const yqpt = Math.sin(Math.PI / this.p) * rad2;
 
     //create points and move them from the unit disk to our radius
-    const p1 = new Point(xqpt, yqpt).fromUnitDisk();
-    const p2 = new Point(x2pt, 0).fromUnitDisk();
+    const p1 = new Point(xqpt, yqpt, true).fromUnitDisk();
+    const p2 = new Point(x2pt, 0, true).fromUnitDisk();
     const vertices = [this.disk.centre, p1, p2];
 
     return new Polygon(vertices);

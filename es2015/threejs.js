@@ -19,8 +19,6 @@ export class ThreeJS {
 
     this.initLighting();
 
-    //this.axes();
-
     this.initRenderer();
   }
 
@@ -150,6 +148,7 @@ export class ThreeJS {
     this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
+  //TODO learn how UVs work then write this function
   setUvs(geometry){
     const uvs = geometry.faceVertexUvs[0];
     for (let i = 0; i < uvs.length; i++) {
