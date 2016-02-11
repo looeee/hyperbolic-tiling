@@ -229,7 +229,6 @@ export class Polygon {
   constructor(vertices, unitDisk = true) {
     this.unitDisk = unitDisk;
     this.vertices = vertices;
-    this.centre = this.barycentre();
   }
 
   //TODO: make spacing function of resolution
@@ -260,7 +259,6 @@ export class Polygon {
           points.push(p);
         }
 
-        //TODO: check if this is necessary
         if((i + 1) % l !== 0){
           points.push(this.vertices[(i + 1) % l]);
         }
@@ -275,7 +273,6 @@ export class Polygon {
           points.push(p);
         }
 
-        //TODO: check if this is necessary
         if((i + 1) % l !== 0){
           points.push(this.vertices[(i + 1) % l]);
         }

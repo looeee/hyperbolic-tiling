@@ -211,6 +211,19 @@ var distance = function distance(p1, p2) {
   return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
 };
 
+//does the line connecting p1, p2 go through the point (0,0)?
+//needs to take into account roundoff errors so returns true if
+//test is close to 0
+var throughOrigin = function throughOrigin(p1, p2) {
+  if (toFixed(p1.x) == 0 && toFixed(p2.x) === 0) {
+    //vertical line through centre
+    return true;
+  }
+  var test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+
+  if (toFixed(test, 10) == 0) return true;else return false;
+};
+
 var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   var cx = circle.centre.x;
   var cy = circle.centre.y;
@@ -248,19 +261,6 @@ var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   }
 };
 
-//does the line connecting p1, p2 go through the point (0,0)?
-//needs to take into account roundoff errors so returns true if
-//test is close to 0
-var throughOrigin = function throughOrigin(p1, p2) {
-  if (toFixed(p1.x) == 0 && toFixed(p2.x) === 0) {
-    //vertical line through centre
-    return true;
-  }
-  var test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
-
-  if (toFixed(test, 10) == 0) return true;else return false;
-};
-
 //find a point at a distance d along the circumference of
 //a circle of radius r, centre c from a point also
 //on the circumference
@@ -292,6 +292,7 @@ var randomInt = function randomInt(min, max) {
 //.toFixed returns a string for some no doubt very good reason.
 //Change it back to a float
 var toFixed = function toFixed(number, places) {
+  //default to twelve as this seems to be the point after which fp errors arise
   places = places || 12;
   return parseFloat(number.toFixed(places));
 };
@@ -309,10 +310,152 @@ var clockwise = function clockwise(alpha, beta) {
 };
 
 /*
+//slope of line through p1, p2
+export const slope = (p1, p2) => {
+  return (p2.x - p1.x) / (p2.y - p1.y);
+}
+
+//midpoint of the line segment connecting two points
+export const midpoint = (p1, p2) => {
+  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p1.unitDisk);
+}
+
+//intersection of two circles with equations:
+//(x-a)^2 +(y-a)^2 = r0^2
+//(x-b)^2 +(y-c)^2 = r1^2
+//NOTE assumes the two circles DO intersect!
+export const circleIntersect = (circle0, circle1) => {
+  const a = circle0.centre.x;
+  const b = circle0.centre.y;
+  const c = circle1.centre.x;
+  const d = circle1.centre.y;
+  const r0 = circle0.radius;
+  const r1 = circle1.radius;
+
+  const dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
+
+  const del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
+
+  const xPartial = (a + c) / 2 + ((c - a) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
+  const x1 = xPartial - 2 * del * (b - d) / (dist * dist);
+  const x2 = xPartial + 2 * del * (b - d) / (dist * dist);
+
+  const yPartial = (b + d) / 2 + ((d - b) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
+  const y1 = yPartial + 2 * del * (a - c) / (dist * dist);
+  const y2 = yPartial - 2 * del * (a - c) / (dist * dist);
+
+  const p1 = new Point(x1, y1, circle0.unitDisk);
+
+  const p2 = new Point(x2, y2, circle0.unitDisk);
+
+  return {
+    p1: p1,
+    p2: p2
+  };
+}
+
+//reflect p3 across the line defined by p1,p2
+export const lineReflection = (p1, p2, p3) => {
+  const m = slope(p1, p2);
+  //reflection in y axis
+  if (m > 999999 || m < -999999) {
+    return new Point( p3.x, -p3.y, p1.unitDisk);
+  }
+  //reflection in x axis
+  else if ( toFixed(m) == 0) {
+    return new Point( -p3.x, p3.y, p1.unitDisk);
+  }
+  //reflection in arbitrary line
+  else {
+    const c = p1.y - m * p1.x;
+    const d = (p3.x + (p3.y - c) * m) / (1 + m * m);
+    const x = 2 * d - p3.x;
+    const y = 2 * d * m - p3.y + 2 * c;
+    return new Point(x,y, p1.unitDisk);
+  }
+}
+
+//intersection point of two lines defined by p1,m1 and q1,m2
+export const intersection = (p1, m1, p2, m2) => {
+  let c1, c2, x, y;
+  if ( toFixed(p1.y) == 0) {
+    x = p1.x;
+    y = (m2) * (p1.x - p2.x) + p2.y;
+  }
+  else if ( toFixed(p2.y) == 0) {
+    x = p2.x;
+    y = (m1 * (p2.x - p1.x)) + p1.y;
+  } else {
+    //y intercept of first line
+    c1 = p1.y - m1 * p1.x;
+    //y intercept of second line
+    c2 = p2.y - m2 * p2.x;
+
+    x = (c2 - c1) / (m1 - m2);
+    y = m1 * x + c1;
+  }
+
+  return new Point(x, y, p1.unitDisk);
+}
+
+//get the circle inverse of a point p with respect a circle radius r centre c
+export const inverse = (point, circle) => {
+  const c = circle.centre;
+  const r = circle.radius;
+  const alpha = (r * r) / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y, circle.unitDisk);
+}
+
+//angle in radians between two points on circle of radius r
+export const centralAngle = (p1, p2, r) => {
+  //round off error can result in this being very slightly greater than 1
+  let temp = (0.5 * distance(p1, p2) / r);
+  temp = toFixed(temp);
+  let res = 2 * Math.asin(temp);
+  if(isNaN(res)) res = 0;
+  return res;
+}
+
+//calculate the normal vector given 2 points
+export const normalVector = (p1, p2) => {
+  let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d, p1.unitDisk);
+}
+
+export const radians = (degrees) => {
+  return (Math.PI / 180) * degrees;
+}
+
 //NOTE: rotations are now done using transforms
 export const rotatePointAboutOrigin = (point2D, angle) => {
   return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
     Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
+}
+
+//NOTE: now using Dunhams method to calculate arcs
+//calculate the radius and centre of the circle required to draw a line between
+//two points in the hyperbolic plane defined by the disk (r, c)
+export const greatCircle = (p1, p2, circle) => {
+  const p1Inverse = inverse(p1, circle);
+  const p2Inverse = inverse(p2, circle);
+
+  const m = midpoint(p1, p1Inverse);
+  const n = midpoint(p2, p2Inverse);
+
+  const m1 = perpendicularSlope(m, p1Inverse);
+  const m2 = perpendicularSlope(n, p2Inverse);
+
+
+  //centre is the centrepoint of the circle out of which the arc is made
+  const centre = intersection(m, m1, n, m2);
+  const radius = distance(centre, p1);
+
+  return new Circle(centre.x, centre.y, radius, p1.unitDisk);
+}
+
+//slope of line perpendicular to a line defined by p1,p2
+export const perpendicularSlope = (p1, p2) => {
+  return -1 / (Math.pow(slope(p1, p2), -1));
 }
 */
 
@@ -576,7 +719,6 @@ var Polygon = function () {
 
     this.unitDisk = unitDisk;
     this.vertices = vertices;
-    this.centre = this.barycentre();
   }
 
   //TODO: make spacing function of resolution
@@ -608,7 +750,6 @@ var Polygon = function () {
             points.push(p);
           }
 
-          //TODO: check if this is necessary
           if ((i + 1) % l !== 0) {
             points.push(this.vertices[(i + 1) % l]);
           }
@@ -623,7 +764,6 @@ var Polygon = function () {
               points.push(p);
             }
 
-            //TODO: check if this is necessary
             if ((i + 1) % l !== 0) {
               points.push(this.vertices[(i + 1) % l]);
             }
@@ -855,6 +995,8 @@ var Transformations = function () {
     this.identity = new Transform(identityMatrix(3));
   }
 
+  //TESTED: probably working
+
   babelHelpers.createClass(Transformations, [{
     key: 'initHypotenuseReflection',
     value: function initHypotenuseReflection() {
@@ -870,11 +1012,18 @@ var Transformations = function () {
   }, {
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
+      var cosp = Math.cos(Math.PI / this.p);
+      var sinp = Math.sin(Math.PI / this.p);
+      var coshq = Math.cosh(Math.PI / this.q);
+      var sinhq = Math.sinh(Math.PI / this.q);
+
+      var cosh2q = Math.cos(2 * Math.PI / this.q);
+      var sinh2q = Math.sin(2 * Math.PI / this.q);
       this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -Math.cosh(2 * Math.PI / this.q);
-      this.edgeReflection.matrix[0][2] = Math.sinh(2 * Math.PI / this.q);
-      this.edgeReflection.matrix[2][0] = -Math.sinh(2 * Math.PI / this.q);
-      this.edgeReflection.matrix[2][2] = Math.cosh(2 * Math.PI / this.q);
+      this.edgeReflection.matrix[0][0] = -cosh2q; //-Math.cosh( Math.PI / this.q);
+      this.edgeReflection.matrix[0][2] = sinh2q; //Math.sinh( Math.PI / this.q);
+      this.edgeReflection.matrix[2][0] = -sinh2q; //-Math.sinh( Math.PI / this.q);
+      this.edgeReflection.matrix[2][2] = cosh2q; //Math.cosh( Math.PI / this.q);
     }
 
     //TESTED: working
@@ -1485,8 +1634,8 @@ var RegularTesselation = function () {
 
       if (this.maxLayers > 1) this.generateLayers();
 
-      //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
-      //this.drawPattern(this.layerZero)
+      this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
+      this.drawPattern(this.layerZero);
 
       this.testing();
     }
@@ -1496,9 +1645,13 @@ var RegularTesselation = function () {
       var pattern = './images/textures/pattern1.png';
       pattern = '';
 
-      this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
-      var poly = this.fr.transform(this.transforms.edgeTransforms[1]);
-      this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+      //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+
+      //let poly = this.fr.transform(this.transforms.edgeTransforms[3]);
+      //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+
+      //poly = poly.transform(this.transforms.edgeReflection);
+      //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1634,7 +1787,7 @@ var RegularTesselation = function () {
       //const pattern = this.generatePattern(this.layerZero, transform);
       //this.drawPattern(pattern);
       var poly = this.centralPolygon.transform(transform);
-      this.disk.drawPolygon(poly, 0x301a45, '', this.wireframe);
+      this.disk.drawPolygon(poly, randomInt(1000, 14777215), '', this.wireframe);
 
       if (layer >= this.maxLayers) return;
 
@@ -1753,6 +1906,6 @@ window.addEventListener('load', function (event) {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
-  var tesselation = new RegularTesselation(4, 5, 1);
+  var tesselation = new RegularTesselation(4, 5, 2);
   //const tesselation = new RegularTesselation(p, q, 2);
 }, false);
