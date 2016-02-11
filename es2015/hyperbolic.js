@@ -26,6 +26,27 @@ export const weierstrassToPoincare = (point3D) => {
   return new Point(factor * point3D.x, factor * point3D.y);
 }
 
+export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
+  if(point3D_1.z === 'undefined' || point3D_2.z === 'undefined'){
+    console.error('weierstrassCrossProduct: 3D points required');
+  }
+  let r = {
+    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
+    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
+    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+  };
+
+  const norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
+  if (E.toFixed(norm) == 0) {
+    console.error('weierstrassCrossProduct: division by zero error');
+  }
+  r.x = r.x / norm;
+  r.y = r.y / norm;
+  r.z = r.z / norm;
+  return r;
+}
+
+/*
 //when the point p1 is translated to the origin, the point p2
 //is translated according to this formula
 //https://en.wikipedia.org/wiki/Poincar%C3%A9_disk_model#Isometric_Transformations
@@ -42,26 +63,6 @@ export const translatePoincare = (p1, p2) => {
   const y = p1Factor * p1.y + p2Factor * p2.y;
 
   return new Point(x, y);
-}
-
-export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
-  if(point3D_1.z === 'undefined' || point3D_2.z === 'undefined'){
-    console.error('weierstrassCrossProduct: 3D points required');
-  }
-  let r = {
-    x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
-    y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-    z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
-  };
-
-  const norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
-  if (E.toFixed(norm, 10) == 0) {
-    console.error('weierstrassCrossProduct: division by zero error');
-  }
-  r.x = r.x / norm;
-  r.y = r.y / norm;
-  r.z = r.z / norm;
-  return r;
 }
 
 //Hyperbolic distance between two points
@@ -88,8 +89,6 @@ export const distance = (p, q, circle0) => {
   return Math.log((aq*bp)/(ap*bq));
 }
 
-/*
-
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 NOTE: Old version, new version is in Arc class
 TODO: test which is faster
@@ -106,8 +105,8 @@ export const arcV1 = (p1, p2, circle) => {
   let clockwise = false;
   let alpha, beta, startAngle, endAngle;
   const c = E.greatCircle(p1, p2, circle);
-  const oy = E.toFixed(c.centre.y, 10);
-  const ox = E.toFixed(c.centre.x, 10);
+  const oy = E.toFixed(c.centre.y);
+  const ox = E.toFixed(c.centre.x);
 
   //point at 0 radians on c
   const p3 = new Point(ox + c.radius, oy);
@@ -117,10 +116,10 @@ export const arcV1 = (p1, p2, circle) => {
   beta = E.centralAngle(p3, p2, c.radius);
 
   //for comparison to avoid round off errors
-  const p1X = E.toFixed(p1.x, 10);
-  const p1Y = E.toFixed(p1.y, 10);
-  const p2X = E.toFixed(p2.x, 10);
-  const p2Y = E.toFixed(p2.y, 10);
+  const p1X = E.toFixed(p1.x);
+  const p1Y = E.toFixed(p1.y);
+  const p2X = E.toFixed(p2.x);
+  const p2Y = E.toFixed(p2.y);
 
   alpha = (p1Y < oy) ? 2 * Math.PI - alpha : alpha;
   beta = (p2Y < oy) ? 2 * Math.PI - beta : beta;

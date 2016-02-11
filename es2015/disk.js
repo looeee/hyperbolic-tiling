@@ -8,10 +8,11 @@ import { ThreeJS } from './threejs';
 
 // * ***********************************************************************
 // *
-// *   DISK CLASS
-// *   Poincare Disk representation of the hyperbolic plane
-// *   Contains any functions used to draw to the disk
-// *   which are then passed to ThreeJS
+// *  DISK CLASS
+// *  Poincare Disk representation of the hyperbolic plane. Contains any
+// *  functions used to draw to the disk which are then passed to Three.js
+// *  Also responsibly for checking whether elements are on the unit Disk
+// *  and resizing them if they are
 // *************************************************************************
 export class Disk {
   constructor() {

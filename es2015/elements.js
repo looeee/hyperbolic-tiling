@@ -21,10 +21,10 @@ import * as H from './hyperbolic';
 export class Point {
   constructor(x, y, unitDisk = true) {
     this.unitDisk = unitDisk;
-    if (E.toFixed(x, 10) == 0) {
+    if (E.toFixed(x) == 0) {
       x = 0;
     }
-    if (E.toFixed(y, 10) == 0) {
+    if (E.toFixed(y) == 0) {
       y = 0;
     }
     this.x = x;
@@ -42,8 +42,8 @@ export class Point {
       console.warn('Warning: point not defined.')
       return false;
     }
-    const t1 = this.toFixed(10);
-    const t2 = p2.toFixed(10);
+    const t1 = this.toFixed(12);
+    const t2 = p2.toFixed(12);
 
     if (p1.x === p2.x && p1.y === p2.y) return true;
     else return false;
@@ -284,36 +284,6 @@ export class Polygon {
     return points;
   }
 
-  //reflect vertices of the polygon over the arc defined by p1, p1
-  //and create a new polygon from the reflected vertices
-  //NOTE: reflect vertices rather than all points on edge as the
-  //resulting polygon may be smaller or larger so it makes more sense
-  //to recalculate the points
-  reflect(p1, p2){
-    const a = new Arc(p1, p2, this.circle, this.unitDisk);
-    const vertices = [];
-
-    if (!a.straightLine) {
-      for (let v of this.vertices) {
-        vertices.push(E.inverse(v, a.circle));
-      }
-    } else {
-      for (let v of this.vertices) {
-        vertices.push(E.lineReflection(p1, p2, v));
-      }
-    }
-    return new Polygon(vertices, this.unitDisk);
-  }
-
-  rotateAboutOrigin(angle){
-    const vertices = [];
-    for (let v of this.vertices) {
-      let point = E.rotatePointAboutOrigin(v, angle);
-      vertices.push(point);
-    }
-    return new Polygon(vertices, this.unitDisk);
-  }
-
   transform(transform){
     const newVertices = [];
     for(v of this.vertices){
@@ -372,3 +342,35 @@ export class Polygon {
     }
   }
 }
+
+/*
+//reflect vertices of the polygon over the arc defined by p1, p1
+//and create a new polygon from the reflected vertices
+//NOTE: now done using transforms
+reflect(p1, p2){
+  const a = new Arc(p1, p2, this.circle, this.unitDisk);
+  const vertices = [];
+
+  if (!a.straightLine) {
+    for (let v of this.vertices) {
+      vertices.push(E.inverse(v, a.circle));
+    }
+  } else {
+    for (let v of this.vertices) {
+      vertices.push(E.lineReflection(p1, p2, v));
+    }
+  }
+  return new Polygon(vertices, this.unitDisk);
+}
+
+//NOTE: now done using transforms
+rotateAboutOrigin(angle){
+  const vertices = [];
+  for (let v of this.vertices) {
+    let point = E.rotatePointAboutOrigin(v, angle);
+    vertices.push(point);
+  }
+  return new Polygon(vertices, this.unitDisk);
+}
+
+*/

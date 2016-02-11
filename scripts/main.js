@@ -28,154 +28,6 @@ babelHelpers;
 
 // * ***********************************************************************
 // *
-// *   EUCLIDEAN FUNCTIONS
-// *   a place to stash all the functions that are euclidean geometrical
-// *   operations
-// *   All functions are 2D unless otherwise specified!
-// *
-// *************************************************************************
-
-//distance between two points
-var distance = function distance(p1, p2) {
-  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-};
-
-//slope of line through p1, p2
-var slope = function slope(p1, p2) {
-  return (p2.x - p1.x) / (p2.y - p1.y);
-};
-
-//get the circle inverse of a point p with respect a circle radius r centre c
-var inverse = function inverse(point, circle) {
-  var c = circle.centre;
-  var r = circle.radius;
-  var alpha = r * r / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
-  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
-};
-
-//reflect p3 across the line defined by p1,p2
-var lineReflection = function lineReflection(p1, p2, p3) {
-  var m = slope(p1, p2);
-  //reflection in y axis
-  if (m > 999999 || m < -999999) {
-    return new Point(p3.x, -p3.y);
-  }
-  //reflection in x axis
-  else if (toFixed(m, 10) == 0) {
-      return new Point(-p3.x, p3.y);
-    }
-    //reflection in arbitrary line
-    else {
-        var c = p1.y - m * p1.x;
-        var d = (p3.x + (p3.y - c) * m) / (1 + m * m);
-        var x = 2 * d - p3.x;
-        var y = 2 * d * m - p3.y + 2 * c;
-        return new Point(x, y);
-      }
-};
-
-var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
-  var cx = circle.centre.x;
-  var cy = circle.centre.y;
-  var r = circle.radius;
-
-  var d = distance(p1, p2);
-  //unit vector p1 p2
-  var dx = (p2.x - p1.x) / d;
-  var dy = (p2.y - p1.y) / d;
-
-  //point on line closest to circle centre
-  var t = dx * (cx - p1.x) + dy * (cy - p1.y);
-  var p = new Point(t * dx + p1.x, t * dy + p1.y);
-
-  //distance from this point to centre
-  var d2 = distance(p, circle.centre);
-
-  //line intersects circle
-  if (d2 < r) {
-    var dt = Math.sqrt(r * r - d2 * d2);
-    //point 1
-    var q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
-    //point 2
-    var q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y);
-
-    return {
-      p1: q1,
-      p2: q2
-    };
-  } else if (d2 === r) {
-    return p;
-  } else {
-    console.warn('Warning: line does not intersect circle!');
-    return false;
-  }
-};
-
-//does the line connecting p1, p2 go through the point (0,0)?
-//needs to take into account roundoff errors so returns true if
-//test is close to 0
-var throughOrigin = function throughOrigin(p1, p2) {
-  if (toFixed(p1.x, 10) == 0 && toFixed(p2.x, 10) === 0) {
-    //vertical line through centre
-    return true;
-  }
-  var test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
-
-  if (toFixed(test, 10) == 0) return true;else return false;
-};
-
-//find a point at a distance d along the circumference of
-//a circle of radius r, centre c from a point also
-//on the circumference
-var spacedPointOnArc = function spacedPointOnArc(circle, point, spacing) {
-  var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
-  var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
-  var sinThetaNeg = -sinThetaPos;
-
-  var xPos = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaPos * (point.y - circle.centre.y);
-  var xNeg = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaNeg * (point.y - circle.centre.y);
-  var yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
-  var yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
-
-  return {
-    p1: new Point(xPos, yPos),
-    p2: new Point(xNeg, yNeg)
-  };
-};
-
-var spacedPointOnLine = function spacedPointOnLine(point1, point2, spacing) {
-  var circle = new Circle(point1.x, point1.y, spacing);
-  return points = circleLineIntersect(circle, point1, point2);
-};
-
-var randomInt = function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-};
-
-//.toFixed returns a string for some no doubt very good reason.
-//Change it back to a float
-var toFixed = function toFixed(number, places) {
-  return parseFloat(number.toFixed(places));
-};
-
-//are the angles alpha, beta in clockwise order on unit disk?
-var clockwise = function clockwise(alpha, beta) {
-  var cw = true;
-  var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
-  var b = beta - alpha > Math.PI;
-  var c = alpha > beta && !(alpha - beta > Math.PI);
-  if (a || b || c) {
-    cw = false;
-  }
-  return cw;
-};
-
-var rotatePointAboutOrigin = function rotatePointAboutOrigin(point2D, angle) {
-  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y, Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
-};
-
-// * ***********************************************************************
-// *
 // *   HYPERBOLIC FUNCTIONS
 // *   a place to stash all the functions that are hyperbolic gemeometrical
 // *   operations
@@ -202,7 +54,7 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
   };
 
   var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
-  if (toFixed(norm, 10) == 0) {
+  if (toFixed(norm) == 0) {
     console.error('weierstrassCrossProduct: division by zero error');
   }
   r.x = r.x / norm;
@@ -210,6 +62,259 @@ var weierstrassCrossProduct = function weierstrassCrossProduct(point3D_1, point3
   r.z = r.z / norm;
   return r;
 };
+
+/*
+//when the point p1 is translated to the origin, the point p2
+//is translated according to this formula
+//https://en.wikipedia.org/wiki/Poincar%C3%A9_disk_model#Isometric_Transformations
+export const translatePoincare = (p1, p2) => {
+  const dot = p1.x * p2.x + p1.y * p2.y;
+  const normSquaredP1 = Math.pow(Math.sqrt(p1.x * p1.x + p1.y * p1.y), 2);
+  const normSquaredP2 = Math.pow(Math.sqrt(p2.x * p2.x + p2.y * p2.y), 2);
+  const denominator = 1 + 2 * dot + normSquaredP1 * normSquaredP2;
+
+  const p1Factor = (1 + 2 * dot + normSquaredP2) / denominator;
+  const p2Factor = (1 - normSquaredP1) / denominator;
+
+  const x = p1Factor * p1.x + p2Factor * p2.x;
+  const y = p1Factor * p1.y + p2Factor * p2.y;
+
+  return new Point(x, y);
+}
+
+//Hyperbolic distance between two points
+export const distance = (p, q, circle0) => {
+  const circle1 = new Arc(p, q, circle0).circle;
+  const boundaryPoints = E.circleIntersect(circle0, circle1);
+  const a = boundaryPoints.p1;
+  const b = boundaryPoints.p2;
+  let ap = E.distance(a,p);
+  let aq = E.distance(a,q);
+  let bp = E.distance(b,p);
+  let bq = E.distance(b,q);
+  //order the points
+  if(aq < ap){
+    const temp = aq;
+    aq = ap;
+    ap = temp;
+  }
+  if(bp < bq){
+    const temp = bp;
+    bp = bq;
+    bq = temp;
+  }
+  return Math.log((aq*bp)/(ap*bq));
+}
+
+//calculate greatCircle, startAngle and endAngle for hyperbolic arc
+NOTE: Old version, new version is in Arc class
+TODO: test which is faster
+export const arcV1 = (p1, p2, circle) => {
+  if (E.throughOrigin(p1, p2)) {
+    return {
+      circle: circle,
+      startAngle: 0,
+      endAngle: 0,
+      clockwise: false,
+      straightLine: true,
+    }
+  }
+  let clockwise = false;
+  let alpha, beta, startAngle, endAngle;
+  const c = E.greatCircle(p1, p2, circle);
+  const oy = E.toFixed(c.centre.y);
+  const ox = E.toFixed(c.centre.x);
+
+  //point at 0 radians on c
+  const p3 = new Point(ox + c.radius, oy);
+
+  //calculate the position of each point in the circle
+  alpha = E.centralAngle(p3, p1, c.radius);
+  beta = E.centralAngle(p3, p2, c.radius);
+
+  //for comparison to avoid round off errors
+  const p1X = E.toFixed(p1.x);
+  const p1Y = E.toFixed(p1.y);
+  const p2X = E.toFixed(p2.x);
+  const p2Y = E.toFixed(p2.y);
+
+  alpha = (p1Y < oy) ? 2 * Math.PI - alpha : alpha;
+  beta = (p2Y < oy) ? 2 * Math.PI - beta : beta;
+
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //clockwise order
+  if(alpha > 3*Math.PI/2 && beta < Math.PI/2){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  //points are above and below the line (0,0)->(0,1) on unit disk
+  //anticlockwise order
+  else if(beta > 3*Math.PI/2 && alpha < Math.PI/2){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  //other case where we are drawing the wrong way around the circle
+  else if(beta - alpha > Math.PI){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else if(alpha - beta > Math.PI){
+    startAngle = alpha;
+    endAngle = beta;
+  }
+  else if(alpha > beta){
+    startAngle = beta;
+    endAngle = alpha;
+  }
+  else{
+    startAngle = alpha;
+    endAngle = beta;
+  }
+
+  return {
+    circle: c,
+    startAngle: startAngle,
+    endAngle: endAngle,
+    clockwise: clockwise,
+    straightLine: false,
+  }
+}
+
+//translate a set of points along the x axis
+//UNTEST AND NEEDS TO BE UPDATED FOR UNIT DISK
+export const translateX = (pointsArray, distance) => {
+  const l = pointsArray.length;
+  const newPoints = [];
+  const e = Math.pow(Math.E, distance);
+  const pos = e + 1;
+  const neg = e - 1;
+  for (let i = 0; i < l; i++) {
+    const x = pos * pointsArray[i].x + neg * pointsArray[i].y;
+    const y = neg * pointsArray[i].x + pos * pointsArray[i].y;
+    newPoints.push(new Point(x, y));
+  }
+  return newPoints;
+}
+*/
+
+// * ***********************************************************************
+// *
+// *   EUCLIDEAN FUNCTIONS
+// *   a place to stash all the functions that are euclidean geometrical
+// *   operations
+// *   All functions are 2D unless otherwise specified!
+// *
+// *************************************************************************
+
+//distance between two points
+var distance = function distance(p1, p2) {
+  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+};
+
+var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
+  var cx = circle.centre.x;
+  var cy = circle.centre.y;
+  var r = circle.radius;
+
+  var d = distance(p1, p2);
+  //unit vector p1 p2
+  var dx = (p2.x - p1.x) / d;
+  var dy = (p2.y - p1.y) / d;
+
+  //point on line closest to circle centre
+  var t = dx * (cx - p1.x) + dy * (cy - p1.y);
+  var p = new Point(t * dx + p1.x, t * dy + p1.y);
+
+  //distance from this point to centre
+  var d2 = distance(p, circle.centre, circle.unitDisk);
+
+  //line intersects circle
+  if (d2 < r) {
+    var dt = Math.sqrt(r * r - d2 * d2);
+    //point 1
+    var q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y, circle.unitDisk);
+    //point 2
+    var q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y, circle.unitDisk);
+
+    return {
+      p1: q1,
+      p2: q2
+    };
+  } else if (d2 === r) {
+    return p;
+  } else {
+    console.warn('Warning: line does not intersect circle!');
+    return false;
+  }
+};
+
+//does the line connecting p1, p2 go through the point (0,0)?
+//needs to take into account roundoff errors so returns true if
+//test is close to 0
+var throughOrigin = function throughOrigin(p1, p2) {
+  if (toFixed(p1.x) == 0 && toFixed(p2.x) === 0) {
+    //vertical line through centre
+    return true;
+  }
+  var test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+
+  if (toFixed(test, 10) == 0) return true;else return false;
+};
+
+//find a point at a distance d along the circumference of
+//a circle of radius r, centre c from a point also
+//on the circumference
+var spacedPointOnArc = function spacedPointOnArc(circle, point, spacing) {
+  var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
+  var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
+  var sinThetaNeg = -sinThetaPos;
+
+  var xPos = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaPos * (point.y - circle.centre.y);
+  var xNeg = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaNeg * (point.y - circle.centre.y);
+  var yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
+  var yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
+
+  return {
+    p1: new Point(xPos, yPos, point.unitDisk),
+    p2: new Point(xNeg, yNeg, point.unitDisk)
+  };
+};
+
+var spacedPointOnLine = function spacedPointOnLine(point1, point2, spacing) {
+  var circle = new Circle(point1.x, point1.y, spacing, point1.unitDisk);
+  return points = circleLineIntersect(circle, point1, point2);
+};
+
+var randomInt = function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
+//.toFixed returns a string for some no doubt very good reason.
+//Change it back to a float
+var toFixed = function toFixed(number, places) {
+  places = places || 12;
+  return parseFloat(number.toFixed(places));
+};
+
+//are the angles alpha, beta in clockwise order on unit disk?
+var clockwise = function clockwise(alpha, beta) {
+  var cw = true;
+  var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
+  var b = beta - alpha > Math.PI;
+  var c = alpha > beta && !(alpha - beta > Math.PI);
+  if (a || b || c) {
+    cw = false;
+  }
+  return cw;
+};
+
+/*
+//NOTE: rotations are now done using transforms
+export const rotatePointAboutOrigin = (point2D, angle) => {
+  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
+    Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
+}
+*/
 
 // * ***********************************************************************
 // * ***********************************************************************
@@ -234,10 +339,10 @@ var Point = function () {
     babelHelpers.classCallCheck(this, Point);
 
     this.unitDisk = unitDisk;
-    if (toFixed(x, 10) == 0) {
+    if (toFixed(x) == 0) {
       x = 0;
     }
-    if (toFixed(y, 10) == 0) {
+    if (toFixed(y) == 0) {
       y = 0;
     }
     this.x = x;
@@ -260,8 +365,8 @@ var Point = function () {
         console.warn('Warning: point not defined.');
         return false;
       }
-      var t1 = this.toFixed(10);
-      var t2 = p2.toFixed(10);
+      var t1 = this.toFixed(12);
+      var t2 = p2.toFixed(12);
 
       if (p1.x === p2.x && p1.y === p2.y) return true;else return false;
     }
@@ -526,129 +631,31 @@ var Polygon = function () {
       }
       return points;
     }
-
-    //reflect vertices of the polygon over the arc defined by p1, p1
-    //and create a new polygon from the reflected vertices
-    //NOTE: reflect vertices rather than all points on edge as the
-    //resulting polygon may be smaller or larger so it makes more sense
-    //to recalculate the points
-
-  }, {
-    key: 'reflect',
-    value: function reflect(p1, p2) {
-      var a = new Arc(p1, p2, this.circle, this.unitDisk);
-      var vertices = [];
-
-      if (!a.straightLine) {
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-          for (var _iterator = this.vertices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-            var _v = _step.value;
-
-            vertices.push(inverse(_v, a.circle));
-          }
-        } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator.return) {
-              _iterator.return();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
-        }
-      } else {
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
-
-        try {
-          for (var _iterator2 = this.vertices[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var _v2 = _step2.value;
-
-            vertices.push(lineReflection(p1, p2, _v2));
-          }
-        } catch (err) {
-          _didIteratorError2 = true;
-          _iteratorError2 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion2 && _iterator2.return) {
-              _iterator2.return();
-            }
-          } finally {
-            if (_didIteratorError2) {
-              throw _iteratorError2;
-            }
-          }
-        }
-      }
-      return new Polygon(vertices, this.unitDisk);
-    }
-  }, {
-    key: 'rotateAboutOrigin',
-    value: function rotateAboutOrigin(angle) {
-      var vertices = [];
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = this.vertices[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var _v3 = _step3.value;
-
-          var point = rotatePointAboutOrigin(_v3, angle);
-          vertices.push(point);
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-
-      return new Polygon(vertices, this.unitDisk);
-    }
   }, {
     key: 'transform',
     value: function transform(_transform2) {
       var newVertices = [];
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
 
       try {
-        for (var _iterator4 = this.vertices[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          v = _step4.value;
+        for (var _iterator = this.vertices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          v = _step.value;
 
           newVertices.push(v.transform(_transform2));
         }
       } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
+        _didIteratorError = true;
+        _iteratorError = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
           }
         } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
+          if (_didIteratorError) {
+            throw _iteratorError;
           }
         }
       }
@@ -693,27 +700,27 @@ var Polygon = function () {
         return this;
       } else {
         var newVertices = [];
-        var _iteratorNormalCompletion5 = true;
-        var _didIteratorError5 = false;
-        var _iteratorError5 = undefined;
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
 
         try {
-          for (var _iterator5 = this.vertices[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-            var _v4 = _step5.value;
+          for (var _iterator2 = this.vertices[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            var _v = _step2.value;
 
-            newVertices.push(_v4.toUnitDisk());
+            newVertices.push(_v.toUnitDisk());
           }
         } catch (err) {
-          _didIteratorError5 = true;
-          _iteratorError5 = err;
+          _didIteratorError2 = true;
+          _iteratorError2 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion5 && _iterator5.return) {
-              _iterator5.return();
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+              _iterator2.return();
             }
           } finally {
-            if (_didIteratorError5) {
-              throw _iteratorError5;
+            if (_didIteratorError2) {
+              throw _iteratorError2;
             }
           }
         }
@@ -732,27 +739,27 @@ var Polygon = function () {
         return this;
       } else {
         var newVertices = [];
-        var _iteratorNormalCompletion6 = true;
-        var _didIteratorError6 = false;
-        var _iteratorError6 = undefined;
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
 
         try {
-          for (var _iterator6 = this.vertices[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-            var _v5 = _step6.value;
+          for (var _iterator3 = this.vertices[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+            var _v2 = _step3.value;
 
-            newVertices.push(_v5.fromUnitDisk());
+            newVertices.push(_v2.fromUnitDisk());
           }
         } catch (err) {
-          _didIteratorError6 = true;
-          _iteratorError6 = err;
+          _didIteratorError3 = true;
+          _iteratorError3 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion6 && _iterator6.return) {
-              _iterator6.return();
+            if (!_iteratorNormalCompletion3 && _iterator3.return) {
+              _iterator3.return();
             }
           } finally {
-            if (_didIteratorError6) {
-              throw _iteratorError6;
+            if (_didIteratorError3) {
+              throw _iteratorError3;
             }
           }
         }
@@ -1275,10 +1282,11 @@ var ThreeJS = function () {
 
 // * ***********************************************************************
 // *
-// *   DISK CLASS
-// *   Poincare Disk representation of the hyperbolic plane
-// *   Contains any functions used to draw to the disk
-// *   which are then passed to ThreeJS
+// *  DISK CLASS
+// *  Poincare Disk representation of the hyperbolic plane. Contains any
+// *  functions used to draw to the disk which are then passed to Three.js
+// *  Also responsibly for checking whether elements are on the unit Disk
+// *  and resizing them if they are
 // *************************************************************************
 var Disk = function () {
   function Disk() {
@@ -1478,20 +1486,19 @@ var RegularTesselation = function () {
       if (this.maxLayers > 1) this.generateLayers();
 
       //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
-      this.drawPattern(this.layerZero);
+      //this.drawPattern(this.layerZero)
 
       this.testing();
     }
   }, {
     key: 'testing',
     value: function testing() {
-      //TODO: this.transforms.edgeTransforms[0] + [2] broken!
       var pattern = './images/textures/pattern1.png';
       pattern = '';
 
-      //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
-      //let poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
-      //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+      this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+      var poly = this.fr.transform(this.transforms.edgeTransforms[1]);
+      this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1523,17 +1530,16 @@ var RegularTesselation = function () {
 
     //calculate the central polygon which is made up of transformed copies
     //of the fundamental region
-    //TODO: refactor this to use Transforms
 
   }, {
     key: 'buildCentralPattern',
     value: function buildCentralPattern() {
-      this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+      this.frCopy = this.fr.transform(this.transforms.hypReflection);
       this.layerZero = [this.fr, this.frCopy];
 
       for (var i = 0; i < this.p; i++) {
-        this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
-        this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
+        this.layerZero.push(this.layerZero[0].transform(this.transforms.rotatePolygonCW[i]));
+        this.layerZero.push(this.layerZero[1].transform(this.transforms.rotatePolygonCW[i]));
       }
     }
   }, {
@@ -1734,7 +1740,7 @@ Math.cot = Math.cot || function (x) {
 // *   SETUP
 // *
 // *************************************************************************
-window.unitDisk = new Circle(0, 0, 1);
+//window.unitDisk = new Circle(0,0,1);
 
 var p = randomInt(4, 8);
 var q = randomInt(4, 8);

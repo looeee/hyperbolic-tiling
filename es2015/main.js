@@ -1,5 +1,5 @@
 import * as E from './euclid';
-import {Circle} from './elements';
+//import {Circle} from './elements';
 import { RegularTesselation } from './regularTesselation';
 
 // * ***********************************************************************
@@ -27,7 +27,7 @@ Math.cot = Math.cot || function(x) {
 // *   SETUP
 // *
 // *************************************************************************
-window.unitDisk = new Circle(0,0,1);
+//window.unitDisk = new Circle(0,0,1);
 
 let p = E.randomInt(4,8);
 let q = E.randomInt(4,8);

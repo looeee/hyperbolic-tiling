@@ -18,7 +18,7 @@ export const distance = (p1, p2) => {
 
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => {
-  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p1.unitDisk);
 }
 
 //slope of line through p1, p2
@@ -34,11 +34,11 @@ export const perpendicularSlope = (p1, p2) => {
 //intersection point of two lines defined by p1,m1 and q1,m2
 export const intersection = (p1, m1, p2, m2) => {
   let c1, c2, x, y;
-  if ( toFixed(p1.y, 10) == 0) {
+  if ( toFixed(p1.y) == 0) {
     x = p1.x;
     y = (m2) * (p1.x - p2.x) + p2.y;
   }
-  else if ( toFixed(p2.y, 10) == 0) {
+  else if ( toFixed(p2.y) == 0) {
     x = p2.x;
     y = (m1 * (p2.x - p1.x)) + p1.y;
   } else {
@@ -51,7 +51,7 @@ export const intersection = (p1, m1, p2, m2) => {
     y = m1 * x + c1;
   }
 
-  return new Point(x, y);
+  return new Point(x, y, p1.unitDisk);
 }
 
 export const radians = (degrees) => {
@@ -63,7 +63,7 @@ export const inverse = (point, circle) => {
   const c = circle.centre;
   const r = circle.radius;
   const alpha = (r * r) / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
-  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y, circle.unitDisk);
 }
 
 //reflect p3 across the line defined by p1,p2
@@ -71,11 +71,11 @@ export const lineReflection = (p1, p2, p3) => {
   const m = slope(p1, p2);
   //reflection in y axis
   if (m > 999999 || m < -999999) {
-    return new Point( p3.x, -p3.y);
+    return new Point( p3.x, -p3.y, p1.unitDisk);
   }
   //reflection in x axis
-  else if ( toFixed(m, 10) == 0) {
-    return new Point( -p3.x, p3.y);
+  else if ( toFixed(m) == 0) {
+    return new Point( -p3.x, p3.y, p1.unitDisk);
   }
   //reflection in arbitrary line
   else {
@@ -83,7 +83,7 @@ export const lineReflection = (p1, p2, p3) => {
     const d = (p3.x + (p3.y - c) * m) / (1 + m * m);
     const x = 2 * d - p3.x;
     const y = 2 * d * m - p3.y + 2 * c;
-    return new Point(x,y);
+    return new Point(x,y, p1.unitDisk);
   }
 }
 
@@ -104,7 +104,7 @@ export const greatCircle = (p1, p2, circle) => {
   const centre = intersection(m, m1, n, m2);
   const radius = distance(centre, p1);
 
-  return new Circle(centre.x, centre.y, radius);
+  return new Circle(centre.x, centre.y, radius, p1.unitDisk);
 }
 
 //intersection of two circles with equations:
@@ -131,9 +131,9 @@ export const circleIntersect = (circle0, circle1) => {
   const y1 = yPartial + 2 * del * (a - c) / (dist * dist);
   const y2 = yPartial - 2 * del * (a - c) / (dist * dist);
 
-  const p1 = new Point(x1,y1);
+  const p1 = new Point(x1, y1, circle0.unitDisk);
 
-  const p2 = new Point(x2,y2);
+  const p2 = new Point(x2, y2, circle0.unitDisk);
 
   return {
     p1: p1,
@@ -156,15 +156,15 @@ export const circleLineIntersect = (circle, p1, p2) => {
   const p = new Point(t * dx + p1.x, t * dy + p1.y);
 
   //distance from this point to centre
-  const d2 = distance(p, circle.centre);
+  const d2 = distance(p, circle.centre, circle.unitDisk);
 
   //line intersects circle
   if (d2 < r) {
     const dt = Math.sqrt(r * r - d2 * d2);
     //point 1
-    const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
+    const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y, circle.unitDisk);
     //point 2
-    const q2 = new Point((t + dt) * dx + p1.x,(t + dt) * dy + p1.y);
+    const q2 = new Point((t + dt) * dx + p1.x,(t + dt) * dy + p1.y, circle.unitDisk);
 
     return {
       p1: q1,
@@ -182,7 +182,7 @@ export const circleLineIntersect = (circle, p1, p2) => {
 export const centralAngle = (p1, p2, r) => {
   //round off error can result in this being very slightly greater than 1
   let temp = (0.5 * distance(p1, p2) / r);
-  temp = toFixed(temp,10);
+  temp = toFixed(temp);
   let res = 2 * Math.asin(temp);
   if(isNaN(res)) res = 0;
   return res;
@@ -191,14 +191,14 @@ export const centralAngle = (p1, p2, r) => {
 //calculate the normal vector given 2 points
 export const normalVector = (p1, p2) => {
   let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
+  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d, p1.unitDisk);
 }
 
 //does the line connecting p1, p2 go through the point (0,0)?
 //needs to take into account roundoff errors so returns true if
 //test is close to 0
 export const throughOrigin = (p1, p2) => {
-  if ( toFixed(p1.x, 10) == 0 && toFixed(p2.x, 10) === 0) {
+  if ( toFixed(p1.x) == 0 && toFixed(p2.x) === 0) {
     //vertical line through centre
     return true;
   }
@@ -222,13 +222,13 @@ export const spacedPointOnArc = (circle, point, spacing) => {
   const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
 
   return {
-    p1: new Point(xPos, yPos),
-    p2: new Point(xNeg,yNeg)
+    p1: new Point(xPos, yPos, point.unitDisk),
+    p2: new Point(xNeg, yNeg, point.unitDisk)
   }
 }
 
 export const spacedPointOnLine = (point1, point2, spacing) => {
-  const circle = new Circle(point1.x, point1.y, spacing);
+  const circle = new Circle(point1.x, point1.y, spacing, point1.unitDisk);
   return points = circleLineIntersect(circle, point1, point2);
 }
 
@@ -243,6 +243,7 @@ export const randomInt = (min, max) => {
 //.toFixed returns a string for some no doubt very good reason.
 //Change it back to a float
 export const toFixed = (number, places) => {
+  places = places || 12;
   return parseFloat(number.toFixed(places));
 }
 
@@ -258,7 +259,10 @@ export const clockwise = (alpha, beta) => {
   return cw;
 }
 
+/*
+//NOTE: rotations are now done using transforms
 export const rotatePointAboutOrigin = (point2D, angle) => {
   return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
     Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
 }
+*/

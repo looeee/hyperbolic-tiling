@@ -60,19 +60,18 @@ export class RegularTesselation {
     if (this.maxLayers > 1) this.generateLayers();
 
     //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
-    this.drawPattern(this.layerZero)
+    //this.drawPattern(this.layerZero)
 
     this.testing();
   }
 
   testing() {
-        //TODO: this.transforms.edgeTransforms[0] + [2] broken!
     let pattern = './images/textures/pattern1.png';
     pattern = '';
 
-    //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
-    //let poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
-    //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+    this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+    let poly = this.fr.transform(this.transforms.edgeTransforms[1]);
+    this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
 
   }
 
@@ -102,14 +101,13 @@ export class RegularTesselation {
 
   //calculate the central polygon which is made up of transformed copies
   //of the fundamental region
-  //TODO: refactor this to use Transforms
   buildCentralPattern() {
-    this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
+    this.frCopy = this.fr.transform(this.transforms.hypReflection);
     this.layerZero = [this.fr, this.frCopy];
 
     for (let i = 0; i < this.p; i++) {
-      this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
-      this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
+      this.layerZero.push(this.layerZero[0].transform(this.transforms.rotatePolygonCW[i]));
+      this.layerZero.push(this.layerZero[1].transform(this.transforms.rotatePolygonCW[i]));
     }
   }
 
