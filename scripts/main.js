@@ -652,33 +652,6 @@ var Transformations = function () {
 
     this.p = p;
     this.q = q;
-    var PI = Math.PI;
-
-    this.cosp = Math.cos(PI / p);
-    this.sinp = Math.sin(PI / p);
-
-    this.cosq = Math.cos(PI / q);
-    this.sinq = Math.sin(PI / q);
-
-    this.cos2p = Math.cos(2 * PI / p);
-    this.sin2p = Math.sin(2 * PI / p);
-
-    this.coshq = Math.cos(PI / q) / this.sinp;
-    this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
-
-    this.cosh2q = Math.cosh(2 * PI / q); //2 * this.coshq * this.coshq - 1;
-    this.sinh2q = Math.sinh(2 * PI / q); //2 * this.sinhq * this.coshq;
-
-    this.cosh2 = 1 / (Math.tan(PI / p) * Math.tan(PI / q)); //1 / ((this.sinp / this.cosp) * (this.sinq / this.cosq));
-
-    this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
-
-    this.rad2 = this.sinh2 / (this.cosh2 + 1); //radius of circle containing layer 0
-    this.x2pt = this.sinhq / (this.coshq + 1); //?
-
-    //point at end of hypotenuse of fundamental region
-    this.xqpt = this.cosp * this.rad2;
-    this.yqpt = this.sinp * this.rad2;
 
     this.initHypotenuseReflection();
     this.initEdgeReflection();
@@ -697,10 +670,10 @@ var Transformations = function () {
     key: 'initHypotenuseReflection',
     value: function initHypotenuseReflection() {
       this.hypReflection = new Transform(identityMatrix(3), -1);
-      this.hypReflection.matrix[0][0] = this.cos2p;
-      this.hypReflection.matrix[0][1] = this.sin2p;
-      this.hypReflection.matrix[1][0] = this.sin2p;
-      this.hypReflection.matrix[1][1] = -this.cos2p;
+      this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
+      this.hypReflection.matrix[0][1] = Math.sin(2 * Math.PI / this.p);
+      this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
+      this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
     }
 
     //TESTED: Not working!
@@ -709,10 +682,10 @@ var Transformations = function () {
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
       this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -this.cosh2q;
-      this.edgeReflection.matrix[0][2] = this.sinh2q;
-      this.edgeReflection.matrix[2][0] = -this.sinh2q;
-      this.edgeReflection.matrix[2][2] = this.cosh2q;
+      this.edgeReflection.matrix[0][0] = -Math.cosh(2 * Math.PI / this.q);
+      this.edgeReflection.matrix[0][2] = Math.sinh(2 * Math.PI / this.q);
+      this.edgeReflection.matrix[2][0] = -Math.sinh(2 * Math.PI / this.q);
+      this.edgeReflection.matrix[2][2] = Math.cosh(2 * Math.PI / this.q);
       console.log(this.edgeReflection.matrix);
     }
 
@@ -1301,9 +1274,6 @@ var RegularTesselation = function () {
   babelHelpers.createClass(RegularTesselation, [{
     key: 'init',
     value: function init() {
-      this.disk.drawPoint(this.disk.centre, this.transforms.rad2 * window.radius, 0xffffff);
-      //TODO: this.transforms.edgeReflection broken!
-
       this.fr = this.fundamentalRegion();
       this.buildCentralPattern();
       this.buildCentralPolygon();
@@ -1321,14 +1291,6 @@ var RegularTesselation = function () {
       //TODO: this.transforms.edgeTransforms[0] + [2] broken!
       var pattern = './images/textures/pattern1.png';
       pattern = '';
-
-      var r = this.transforms.rad2;
-      var x1 = this.transforms.x2pt;
-      var x2 = this.transforms.xqpt;
-      var y1 = this.transforms.yqpt;
-
-      console.log(r, x1, x2, y1);
-      console.log(this.fr.vertices);
 
       this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
       var poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
@@ -1493,11 +1455,28 @@ var RegularTesselation = function () {
       }
     */
 
+    //fundamentalRegion calculation using Dunham's method
+
   }, {
     key: 'fundamentalRegion',
     value: function fundamentalRegion() {
-      var p1 = new Point(this.transforms.xqpt * window.radius, this.transforms.yqpt * window.radius);
-      var p2 = new Point(this.transforms.x2pt * window.radius, 0);
+      var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
+
+      var sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
+
+      var coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
+      var sinhq = Math.sqrt(coshq * coshq - 1);
+
+      var rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
+      var x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
+
+      //point at end of hypotenuse of fundamental region
+      var xqpt = Math.cos(Math.PI / this.p) * rad2;
+      var yqpt = Math.sin(Math.PI / this.p) * rad2;
+
+      //create points and move them from the unit disk to our radius
+      var p1 = new Point(xqpt, yqpt).fromUnitDisk();
+      var p2 = new Point(x2pt, 0).fromUnitDisk();
       var vertices = [this.disk.centre, p1, p2];
 
       return new Polygon(vertices);
@@ -1545,6 +1524,10 @@ Math.sinh = Math.sinh || function (x) {
 Math.cosh = Math.cosh || function (x) {
   var y = Math.exp(x);
   return (y + 1 / y) / 2;
+};
+
+Math.cot = Math.cot || function (x) {
+  return 1 / Math.tan(x);
 };
 
 // * ***********************************************************************

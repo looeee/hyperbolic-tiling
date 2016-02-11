@@ -17,6 +17,10 @@ Math.cosh = Math.cosh || function(x) {
   return (y + 1 / y) / 2;
 };
 
+Math.cot = Math.cot || function(x) {
+  return 1 / Math.tan(x);
+};
+
 // * ***********************************************************************
 // *
 // *   SETUP

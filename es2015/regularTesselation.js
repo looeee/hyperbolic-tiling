@@ -53,9 +53,6 @@ export class RegularTesselation {
   }
 
   init() {
-    this.disk.drawPoint(this.disk.centre, this.transforms.rad2 *window.radius, 0xffffff)
-    //TODO: this.transforms.edgeReflection broken!
-
     this.fr = this.fundamentalRegion();
     this.buildCentralPattern();
     this.buildCentralPolygon();
@@ -72,14 +69,6 @@ export class RegularTesselation {
         //TODO: this.transforms.edgeTransforms[0] + [2] broken!
     let pattern = './images/textures/pattern1.png';
     pattern = '';
-
-    let r = this.transforms.rad2;
-    let x1 = this.transforms.x2pt;
-    let x2 = this.transforms.xqpt;
-    let y1 = this.transforms.yqpt;
-
-    console.log(r, x1, x2, y1);
-    console.log(this.fr.vertices);
 
     this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
     let poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
@@ -199,9 +188,26 @@ export class RegularTesselation {
 
   }
   */
+
+  //fundamentalRegion calculation using Dunham's method
   fundamentalRegion() {
-    let p1 = new Point(this.transforms.xqpt * window.radius, this.transforms.yqpt * window.radius);
-    let p2 = new Point(this.transforms.x2pt * window.radius, 0);
+    const cosh2 = Math.cot(Math.PI / this.p)*Math.cot(Math.PI / this.q);
+
+    const sinh2 = Math.sqrt(cosh2 *cosh2 - 1);
+
+    const coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
+    const sinhq = Math.sqrt(coshq * coshq - 1);
+
+    const rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
+    const x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
+
+    //point at end of hypotenuse of fundamental region
+    const xqpt = Math.cos(Math.PI / this.p) * rad2;
+    const yqpt = Math.sin(Math.PI / this.p) * rad2;
+
+    //create points and move them from the unit disk to our radius
+    const p1 = new Point(xqpt, yqpt).fromUnitDisk();
+    const p2 = new Point(x2pt, 0).fromUnitDisk();
     const vertices = [this.disk.centre, p1, p2];
 
     return new Polygon(vertices);
