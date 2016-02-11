@@ -663,8 +663,8 @@ var Transformations = function () {
     this.cos2p = Math.cos(2 * PI / p);
     this.sin2p = Math.sin(2 * PI / p);
 
-    this.coshq = Math.cosh(PI / q); //Math.cos(PI / q) / this.sinp;
-    this.sinhq = Math.sinh(PI / q); //Math.sqrt(this.coshq * this.coshq - 1);
+    this.coshq = Math.cos(PI / q) / this.sinp;
+    this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
 
     this.cosh2q = Math.cosh(2 * PI / q); //2 * this.coshq * this.coshq - 1;
     this.sinh2q = Math.sinh(2 * PI / q); //2 * this.sinhq * this.coshq;
@@ -673,12 +673,14 @@ var Transformations = function () {
 
     this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
 
-    this.rad2 = this.sinh2 / (this.cosh2 + 1);
-    this.x2pt = this.sinhq / (this.coshq + 1);
+    this.rad2 = this.sinh2 / (this.cosh2 + 1); //radius of circle containing layer 0
+    this.x2pt = this.sinhq / (this.coshq + 1); //?
 
+    //point at end of hypotenuse of fundamental region
     this.xqpt = this.cosp * this.rad2;
     this.yqpt = this.sinp * this.rad2;
 
+    this.initHypotenuseReflection();
     this.initEdgeReflection();
     this.initEdgeBisectorReflection();
 
@@ -691,16 +693,27 @@ var Transformations = function () {
     this.identity = new Transform(identityMatrix(3));
   }
 
-  //TESTED: Not working!
-
   babelHelpers.createClass(Transformations, [{
+    key: 'initHypotenuseReflection',
+    value: function initHypotenuseReflection() {
+      this.hypReflection = new Transform(identityMatrix(3), -1);
+      this.hypReflection.matrix[0][0] = this.cos2p;
+      this.hypReflection.matrix[0][1] = this.sin2p;
+      this.hypReflection.matrix[1][0] = this.sin2p;
+      this.hypReflection.matrix[1][1] = -this.cos2p;
+    }
+
+    //TESTED: Not working!
+
+  }, {
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
       this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -this.coshq;
-      this.edgeReflection.matrix[0][2] = this.sinhq;
-      this.edgeReflection.matrix[2][0] = -this.sinhq;
-      this.edgeReflection.matrix[2][2] = this.coshq;
+      this.edgeReflection.matrix[0][0] = -this.cosh2q;
+      this.edgeReflection.matrix[0][2] = this.sinh2q;
+      this.edgeReflection.matrix[2][0] = -this.sinh2q;
+      this.edgeReflection.matrix[2][2] = this.cosh2q;
+      console.log(this.edgeReflection.matrix);
     }
 
     //TESTED: working
@@ -1018,34 +1031,35 @@ var ThreeJS = function () {
     value: function polygon(vertices, centre, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
       var l = vertices.length;
-
-      var poly = new THREE.Shape();
-
-      poly.moveTo(vertices[0].x, vertices[0].y);
-      for (var i = 0; i < l; i++) {
+      /*
+      const poly = new THREE.Shape();
+       poly.moveTo(vertices[0].x, vertices[0].y);
+      for (let i = 0; i < l; i++) {
         //poly.moveTo(vertices[i].x, vertices[i].y);
         //poly.lineTo(centre.x, centre.y);
         //poly.moveTo(vertices[i].x, vertices[i].y);
         poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
       }
       //console.log(poly);
-      var geometry = new THREE.ShapeGeometry(poly);
-      /*
-      const geometry = new THREE.Geometry();
-       //vertex 0 = polygon barycentre
+      let geometry = new THREE.ShapeGeometry(poly);
+      */
+      var geometry = new THREE.Geometry();
+
+      //vertex 0 = polygon barycentre
       geometry.vertices.push(new THREE.Vector3(centre.x, centre.y, 0));
       //push first vertex to vertices array
       //This means that when the next vertex is pushed in the loop
       //we can also create the first face triangle
       geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
-       for(let i = 1; i < l; i++){
+
+      for (var i = 1; i < l; i++) {
         geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
-        geometry.faces.push( new THREE.Face3( 0, i, i+1 ) );
+        geometry.faces.push(new THREE.Face3(0, i, i + 1));
       }
-       //push the final faces
-      geometry.faces.push( new THREE.Face3( 0, l, 1 ) );
-      console.log(geometry);
-      */
+
+      //push the final faces
+      geometry.faces.push(new THREE.Face3(0, l, 1));
+
       this.scene.add(this.createMesh(geometry, color, texture, wireframe));
     }
   }, {
@@ -1287,30 +1301,38 @@ var RegularTesselation = function () {
   babelHelpers.createClass(RegularTesselation, [{
     key: 'init',
     value: function init() {
+      this.disk.drawPoint(this.disk.centre, this.transforms.rad2 * window.radius, 0xffffff);
+      //TODO: this.transforms.edgeReflection broken!
+
       this.fr = this.fundamentalRegion();
-      this.centralPolygon();
+      this.buildCentralPattern();
+      this.buildCentralPolygon();
 
-      if (this.maxLayers > 1) this.generateLayers();
+      //if (this.maxLayers > 1) this.generateLayers();
 
-      //this.testing();
+      this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
+      this.drawPattern(this.layerZero);
+
+      this.testing();
     }
   }, {
     key: 'testing',
     value: function testing() {
-      //TODO: this.transforms.edgeReflection broken!
       //TODO: this.transforms.edgeTransforms[0] + [2] broken!
-      var wireframe = true;
       var pattern = './images/textures/pattern1.png';
       pattern = '';
-      var p1 = new Point(-200, 150);
-      var p2 = new Point(100, -200);
 
-      var p3 = new Point(290, -20);
-      var pgon = new Polygon([p1, p2, p3]);
-      this.disk.drawPolygon(this.fr, 0xffffff, pattern, wireframe);
+      var r = this.transforms.rad2;
+      var x1 = this.transforms.x2pt;
+      var x2 = this.transforms.xqpt;
+      var y1 = this.transforms.yqpt;
 
-      var poly = this.fr.transform(this.transforms.edgeReflection);
-      this.disk.drawPolygon(poly, 0x5c30e0, pattern, wireframe);
+      console.log(r, x1, x2, y1);
+      console.log(this.fr.vertices);
+
+      this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+      var poly = this.centralPolygon.transform(this.transforms.edgeTransforms[3]);
+      //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
     }
   }, {
     key: 'generatePattern',
@@ -1391,8 +1413,11 @@ var RegularTesselation = function () {
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
-      var pattern = this.generatePattern(this.layerZero, transform);
-      this.drawPattern(pattern);
+      //const pattern = this.generatePattern(this.layerZero, transform);
+      //this.drawPattern(pattern);
+      var poly = this.centralPolygon.transform(transform);
+      this.disk.drawPolygon(poly, 0x301a45, '', this.wireframe);
+
       if (layer >= this.maxLayers) return;
 
       var pSkip = this.params.pSkip(exposure);
@@ -1430,8 +1455,8 @@ var RegularTesselation = function () {
     //TODO: refactor this to use Transforms
 
   }, {
-    key: 'centralPolygon',
-    value: function centralPolygon() {
+    key: 'buildCentralPattern',
+    value: function buildCentralPattern() {
       this.frCopy = this.fr.reflect(this.fr.vertices[0], this.fr.vertices[2]);
       this.layerZero = [this.fr, this.frCopy];
 
@@ -1439,53 +1464,40 @@ var RegularTesselation = function () {
         this.layerZero.push(this.layerZero[0].rotateAboutOrigin(2 * Math.PI / this.p * i));
         this.layerZero.push(this.layerZero[1].rotateAboutOrigin(2 * Math.PI / this.p * i));
       }
-
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = this.layerZero[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var _pgon2 = _step3.value;
-
-          this.disk.drawPolygon(_pgon2, randomInt(1900000, 14777215), '', this.wireframe);
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
     }
-
+  }, {
+    key: 'buildCentralPolygon',
+    value: function buildCentralPolygon() {
+      var vertices = [];
+      for (var i = 0; i < this.p; i++) {
+        var p = this.fr.vertices[1];
+        vertices.push(p.transform(this.transforms.rotatePolygonCW[i]));
+      }
+      this.centralPolygon = new Polygon(vertices);
+    }
+    /*
     //calculate the fundamental region (triangle out of which Layer 0 is built)
     //using Coxeter's method
+    fundamentalRegion() {
+      const s = Math.sin(Math.PI / this.p);
+      const t = Math.cos(Math.PI / this.q);
+      //multiply these by the disks radius (Coxeter used unit disk);
+      const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
+      const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
+      const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
+       const circle = new Circle(d, 0, r);
+       //there will be two points of intersection, of which we want the first
+      const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
+       const p2 = new Point(d - r, 0);
+       const vertices = [this.disk.centre, p1, p2];
+      }
+    */
 
   }, {
     key: 'fundamentalRegion',
     value: function fundamentalRegion() {
-      var s = Math.sin(Math.PI / this.p);
-      var t = Math.cos(Math.PI / this.q);
-      //multiply these by the disks radius (Coxeter used unit disk);
-      var r = 1 / Math.sqrt(t * t / (s * s) - 1) * window.radius;
-      var d = 1 / Math.sqrt(1 - s * s / (t * t)) * window.radius;
-      var b = new Point(window.radius * Math.cos(Math.PI / this.p), -window.radius * Math.sin(Math.PI / this.p));
-
-      var circle = new Circle(d, 0, r);
-
-      //there will be two points of intersection, of which we want the first
-      var p1 = circleLineIntersect(circle, this.disk.centre, b).p1;
-
-      var p2 = new Point(d - r, 0);
-
+      var p1 = new Point(this.transforms.xqpt * window.radius, this.transforms.yqpt * window.radius);
+      var p2 = new Point(this.transforms.x2pt * window.radius, 0);
       var vertices = [this.disk.centre, p1, p2];
 
       return new Polygon(vertices);
@@ -1552,6 +1564,6 @@ window.addEventListener('load', function (event) {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
-  var tesselation = new RegularTesselation(4, 5, 1);
+  var tesselation = new RegularTesselation(4, 5, 2);
   //const tesselation = new RegularTesselation(p, q, 2);
 }, false);

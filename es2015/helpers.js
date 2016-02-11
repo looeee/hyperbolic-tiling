@@ -75,8 +75,8 @@ export class Transformations {
     this.cos2p = Math.cos(2 * PI / p);
     this.sin2p = Math.sin(2 * PI / p);
 
-    this.coshq = Math.cosh(PI / q);//Math.cos(PI / q) / this.sinp;
-    this.sinhq = Math.sinh(PI / q);//Math.sqrt(this.coshq * this.coshq - 1);
+    this.coshq = Math.cos(PI / q) / this.sinp;
+    this.sinhq = Math.sqrt(this.coshq * this.coshq - 1);
 
     this.cosh2q = Math.cosh(2 * PI / q);//2 * this.coshq * this.coshq - 1;
     this.sinh2q = Math.sinh(2 * PI / q);//2 * this.sinhq * this.coshq;
@@ -85,12 +85,14 @@ export class Transformations {
 
     this.sinh2 = Math.sqrt(this.cosh2 * this.cosh2 - 1);
 
-    this.rad2 = this.sinh2 / (this.cosh2 + 1);
-    this.x2pt = this.sinhq / (this.coshq + 1);
+    this.rad2 = this.sinh2 / (this.cosh2 + 1); //radius of circle containing layer 0
+    this.x2pt = this.sinhq / (this.coshq + 1); //?
 
+    //point at end of hypotenuse of fundamental region
     this.xqpt = this.cosp * this.rad2;
     this.yqpt = this.sinp * this.rad2;
 
+    this.initHypotenuseReflection();
     this.initEdgeReflection();
     this.initEdgeBisectorReflection();
 
@@ -104,13 +106,22 @@ export class Transformations {
 
   }
 
+  initHypotenuseReflection(){
+    this.hypReflection = new Transform(identityMatrix(3), -1);
+    this.hypReflection.matrix[0][0] = this.cos2p;
+    this.hypReflection.matrix[0][1] = this.sin2p;
+    this.hypReflection.matrix[1][0] = this.sin2p;
+    this.hypReflection.matrix[1][1] = -this.cos2p;
+  }
+
   //TESTED: Not working!
   initEdgeReflection() {
     this.edgeReflection = new Transform(identityMatrix(3), -1);
-    this.edgeReflection.matrix[0][0] = -this.coshq;
-    this.edgeReflection.matrix[0][2] = this.sinhq;
-    this.edgeReflection.matrix[2][0] = -this.sinhq;
-    this.edgeReflection.matrix[2][2] = this.coshq;
+    this.edgeReflection.matrix[0][0] = -this.cosh2q;
+    this.edgeReflection.matrix[0][2] = this.sinh2q;
+    this.edgeReflection.matrix[2][0] = -this.sinh2q;
+    this.edgeReflection.matrix[2][2] = this.cosh2q;
+    console.log(this.edgeReflection.matrix);
 
   }
 

@@ -117,7 +117,7 @@ export class ThreeJS {
   polygon(vertices, centre, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
     const l = vertices.length;
-
+    /*
     const poly = new THREE.Shape();
 
     poly.moveTo(vertices[0].x, vertices[0].y);
@@ -129,7 +129,7 @@ export class ThreeJS {
     }
     //console.log(poly);
     let geometry = new THREE.ShapeGeometry(poly);
-    /*
+    */
     const geometry = new THREE.Geometry();
 
     //vertex 0 = polygon barycentre
@@ -146,8 +146,7 @@ export class ThreeJS {
 
     //push the final faces
     geometry.faces.push( new THREE.Face3( 0, l, 1 ) );
-    console.log(geometry);
-    */
+
     this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
