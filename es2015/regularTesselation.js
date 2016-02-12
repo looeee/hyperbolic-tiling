@@ -43,13 +43,6 @@ export class RegularTesselation {
     }
 
     this.init();
-
-    window.addEventListener('resize', () => {
-      this.init();
-    }, false);
-
-
-
   }
 
   init() {

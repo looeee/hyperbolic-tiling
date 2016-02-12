@@ -6,11 +6,6 @@
 export class ThreeJS {
   constructor() {
     this.init();
-
-    window.addEventListener('resize', () => {
-      this.reset();
-    }, false);
-
   }
 
   init() {
@@ -27,7 +22,6 @@ export class ThreeJS {
     this.clearScene();
     this.projector = null;
     this.camera = null;
-
     this.init();
   }
 
@@ -35,6 +29,7 @@ export class ThreeJS {
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       this.scene.remove(this.scene.children[i]);
     }
+
   }
 
   initCamera() {

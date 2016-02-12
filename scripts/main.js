@@ -1229,19 +1229,13 @@ var Parameters = function () {
 // *************************************************************************
 var ThreeJS = function () {
   function ThreeJS() {
-    var _this = this;
-
     babelHelpers.classCallCheck(this, ThreeJS);
 
     this.init();
-
-    window.addEventListener('resize', function () {
-      _this.reset();
-    }, false);
   }
 
   babelHelpers.createClass(ThreeJS, [{
-    key: 'init',
+    key: "init",
     value: function init() {
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
@@ -1251,36 +1245,35 @@ var ThreeJS = function () {
       this.initRenderer();
     }
   }, {
-    key: 'reset',
+    key: "reset",
     value: function reset() {
       cancelAnimationFrame(this.id); // Stop the animation
       this.clearScene();
       this.projector = null;
       this.camera = null;
-
       this.init();
     }
   }, {
-    key: 'clearScene',
+    key: "clearScene",
     value: function clearScene() {
       for (var i = this.scene.children.length - 1; i >= 0; i--) {
         this.scene.remove(this.scene.children[i]);
       }
     }
   }, {
-    key: 'initCamera',
+    key: "initCamera",
     value: function initCamera() {
       this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
       this.scene.add(this.camera);
     }
   }, {
-    key: 'initLighting',
+    key: "initLighting",
     value: function initLighting() {
       var ambientLight = new THREE.AmbientLight(0xffffff);
       this.scene.add(ambientLight);
     }
   }, {
-    key: 'initRenderer',
+    key: "initRenderer",
     value: function initRenderer() {
       if (this.renderer === undefined) {
         this.renderer = new THREE.WebGLRenderer({
@@ -1295,7 +1288,7 @@ var ThreeJS = function () {
       this.render();
     }
   }, {
-    key: 'disk',
+    key: "disk",
     value: function disk(centre, radius, color) {
       if (color === undefined) color = 0xffffff;
 
@@ -1307,7 +1300,7 @@ var ThreeJS = function () {
       this.scene.add(circle);
     }
   }, {
-    key: 'segment',
+    key: "segment",
     value: function segment(circle, startAngle, endAngle, color) {
       if (color === undefined) color = 0xffffff;
 
@@ -1329,7 +1322,7 @@ var ThreeJS = function () {
       this.scene.add(s);
     }
   }, {
-    key: 'line',
+    key: "line",
     value: function line(start, end, color) {
       if (color === undefined) color = 0xffffff;
 
@@ -1343,7 +1336,7 @@ var ThreeJS = function () {
       this.scene.add(l);
     }
   }, {
-    key: 'polygon',
+    key: "polygon",
     value: function polygon(vertices, centre, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
       var l = vertices.length;
@@ -1382,7 +1375,7 @@ var ThreeJS = function () {
     //TODO learn how UVs work then write this function
 
   }, {
-    key: 'setUvs',
+    key: "setUvs",
     value: function setUvs(geometry) {
       var uvs = geometry.faceVertexUvs[0];
       for (var i = 0; i < uvs.length; i++) {
@@ -1393,7 +1386,7 @@ var ThreeJS = function () {
       }
     }
   }, {
-    key: 'createMesh',
+    key: "createMesh",
     value: function createMesh(geometry, color, imageURL, wireframe) {
       if (wireframe === undefined) wireframe = false;
       if (color === undefined) color = 0xffffff;
@@ -1417,18 +1410,18 @@ var ThreeJS = function () {
       return new THREE.Mesh(geometry, material);
     }
   }, {
-    key: 'axes',
+    key: "axes",
     value: function axes() {
       var xyz = new THREE.AxisHelper(20);
       this.scene.add(xyz);
     }
   }, {
-    key: 'render',
+    key: "render",
     value: function render() {
-      var _this2 = this;
+      var _this = this;
 
       requestAnimationFrame(function () {
-        _this2.render();
+        _this.render();
       });
 
       this.renderer.render(this.scene, this.camera);
@@ -1447,17 +1440,11 @@ var ThreeJS = function () {
 // *************************************************************************
 var Disk = function () {
   function Disk() {
-    var _this = this;
-
     babelHelpers.classCallCheck(this, Disk);
 
     this.draw = new ThreeJS();
 
     this.init();
-
-    window.addEventListener('resize', function () {
-      _this.init();
-    }, false);
   }
 
   babelHelpers.createClass(Disk, [{
@@ -1603,8 +1590,6 @@ var Disk = function () {
 // *************************************************************************
 var RegularTesselation = function () {
   function RegularTesselation(p, q, maxLayers) {
-    var _this = this;
-
     babelHelpers.classCallCheck(this, RegularTesselation);
 
     this.wireframe = false;
@@ -1624,10 +1609,6 @@ var RegularTesselation = function () {
     }
 
     this.init();
-
-    window.addEventListener('resize', function () {
-      _this.init();
-    }, false);
   }
 
   babelHelpers.createClass(RegularTesselation, [{
@@ -1897,7 +1878,7 @@ Math.cot = Math.cot || function (x) {
 // *
 // *************************************************************************
 //window.isOnUnitDisk = new Circle(0,0,1);
-
+var tesselation = undefined;
 var p = randomInt(4, 8);
 var q = randomInt(4, 8);
 
@@ -1909,6 +1890,13 @@ window.addEventListener('load', function (event) {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
-  var tesselation = new RegularTesselation(4, 5, 2);
+  tesselation = new RegularTesselation(4, 5, 2);
   //const tesselation = new RegularTesselation(p, q, 2);
 }, false);
+
+window.addEventListener('resize', function () {
+  window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+  tesselation.disk.draw.reset();
+  tesselation.disk.init();
+  tesselation.init();
+});

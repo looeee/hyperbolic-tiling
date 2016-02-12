@@ -19,11 +19,6 @@ export class Disk {
     this.draw = new ThreeJS();
 
     this.init();
-
-    window.addEventListener('resize', () => {
-      this.init();
-    }, false);
-
   }
 
   init() {
