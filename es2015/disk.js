@@ -11,7 +11,7 @@ import { ThreeJS } from './threejs';
 // *  DISK CLASS
 // *  Poincare Disk representation of the hyperbolic plane. Contains any
 // *  functions used to draw to the disk which are then passed to Three.js
-// *  Also responsibly for checking whether elements are on the unit Disk
+// *  Also responsible for checking whether elements are on the unit Disk
 // *  and resizing them if they are
 // *************************************************************************
 export class Disk {
@@ -28,9 +28,6 @@ export class Disk {
 
   init() {
     this.centre = new Point(0,0, true);
-
-    //this.circle = new Circle(this.centre.x, this.centre.y, window.radius, false );
-
     this.drawDisk();
   }
 
@@ -41,7 +38,7 @@ export class Disk {
 
   drawPoint(point, radius, color) {
     let p;
-    if(point.unitDisk){
+    if(point.isOnUnitDisk){
       p = point.fromUnitDisk();
       this.draw.disk(p, radius, color, false);
     }
@@ -60,7 +57,7 @@ export class Disk {
   drawArc(arc, color) {
     //resize if arc is on unit disk
     let a;
-    if(arc.unitDisk) a = arc.fromUnitDisk();
+    if(arc.isOnUnitDisk) a = arc.fromUnitDisk();
     else a = arc;
 
     if (this.checkPoints(a.p1, a.p2)) {
@@ -77,7 +74,7 @@ export class Disk {
   drawPolygonOutline(polygon, color) {
     //resize if polygon is on unit disk
     let p;
-    if(polygon.unitDisk) p = polygon.fromUnitDisk();
+    if(polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
 
     if (this.checkPoints(p.vertices)) {
@@ -94,7 +91,7 @@ export class Disk {
   drawPolygon(polygon, color, texture, wireframe){
     //resize if polygon is on unit disk
     let p;
-    if(polygon.unitDisk) p = polygon.fromUnitDisk();
+    if(polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
 
     if (this.checkPoints(p.vertices)) {

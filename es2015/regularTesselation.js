@@ -58,8 +58,7 @@ export class RegularTesselation {
     this.buildCentralPolygon();
 
     if (this.maxLayers > 1) this.generateLayers();
-
-    this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
+    //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
     this.drawPattern(this.layerZero)
 
     this.testing();
@@ -68,10 +67,9 @@ export class RegularTesselation {
   testing() {
     let pattern = './images/textures/pattern1.png';
     pattern = '';
-
     //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
 
-    //let poly = this.fr.transform(this.transforms.edgeTransforms[3]);
+    //let poly = this.fr.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
 
     //poly = poly.transform(this.transforms.edgeReflection);

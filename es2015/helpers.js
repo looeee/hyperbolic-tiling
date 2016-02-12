@@ -96,13 +96,13 @@ export class Transformations {
     const coshq = Math.cosh(Math.PI / this.q);
     const sinhq = Math.sinh(Math.PI / this.q);
 
-    const cosh2q = Math.cos(2 * Math.PI / this.q);
-    const sinh2q = Math.sin(2 * Math.PI / this.q);
+    const cosh2q = Math.cosh(2 * Math.PI / this.q);
+    const sinh2q = Math.sinh(2 * Math.PI / this.q);
     this.edgeReflection = new Transform(identityMatrix(3), -1);
-    this.edgeReflection.matrix[0][0] = -cosh2q//-Math.cosh( Math.PI / this.q);
-    this.edgeReflection.matrix[0][2] = sinh2q//Math.sinh( Math.PI / this.q);
-    this.edgeReflection.matrix[2][0] = -sinh2q//-Math.sinh( Math.PI / this.q);
-    this.edgeReflection.matrix[2][2] = cosh2q//Math.cosh( Math.PI / this.q);
+    this.edgeReflection.matrix[0][0] = -Math.cosh(2 * Math.PI / this.q);
+    this.edgeReflection.matrix[0][2] = Math.sinh(2 * Math.PI / this.q);
+    this.edgeReflection.matrix[2][0] = -Math.sinh(2 * Math.PI / this.q);
+    this.edgeReflection.matrix[2][2] = Math.cosh(2 * Math.PI / this.q);
   }
 
   //TESTED: working
