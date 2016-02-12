@@ -1003,7 +1003,7 @@ var Transformations = function () {
     this.identity = new Transform(identityMatrix(3));
   }
 
-  //TESTED: probably working
+  //TESTED: working
 
   babelHelpers.createClass(Transformations, [{
     key: 'initHypotenuseReflection',
@@ -1015,23 +1015,28 @@ var Transformations = function () {
       this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
     }
 
-    //TESTED: Not working!
+    //TESTED: working but putting gaps between objects
 
   }, {
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
       var cosp = Math.cos(Math.PI / this.p);
       var sinp = Math.sin(Math.PI / this.p);
-      var coshq = Math.cosh(Math.PI / this.q);
-      var sinhq = Math.sinh(Math.PI / this.q);
+      var cos2p = Math.cos(2 * Math.PI / this.p);
+      var sin2p = Math.sin(2 * Math.PI / this.p);
 
-      var cosh2q = Math.cosh(2 * Math.PI / this.q);
-      var sinh2q = Math.sinh(2 * Math.PI / this.q);
+      var coshq = Math.cos(Math.PI / this.q) / sinp; //Math.cosh(Math.PI / this.q);
+      var sinhq = Math.sqrt(coshq * coshq - 1); //Math.sinh(Math.PI / this.q);
+
+      var cosh2q = 2 * coshq * coshq - 1;
+      var sinh2q = 2 * sinhq * coshq;
+      var num = 2;
+      var den = 6;
       this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -Math.cosh(2 * Math.PI / this.q);
-      this.edgeReflection.matrix[0][2] = Math.sinh(2 * Math.PI / this.q);
-      this.edgeReflection.matrix[2][0] = -Math.sinh(2 * Math.PI / this.q);
-      this.edgeReflection.matrix[2][2] = Math.cosh(2 * Math.PI / this.q);
+      this.edgeReflection.matrix[0][0] = -cosh2q; //Math.cosh(num * Math.PI / (den));
+      this.edgeReflection.matrix[0][2] = sinh2q; //Math.sinh(num * Math.PI / (den));
+      this.edgeReflection.matrix[2][0] = -sinh2q; //Math.sinh(num * Math.PI / (den));
+      this.edgeReflection.matrix[2][2] = cosh2q; //Math.cosh(num * Math.PI / (den));
     }
 
     //TESTED: working
@@ -1631,7 +1636,7 @@ var RegularTesselation = function () {
       pattern = '';
       //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
 
-      //let poly = this.fr.transform(this.transforms.edgeReflection);
+      //let poly = this.centralPolygon.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
 
       //poly = poly.transform(this.transforms.edgeReflection);
@@ -1879,24 +1884,24 @@ Math.cot = Math.cot || function (x) {
 // *************************************************************************
 //window.isOnUnitDisk = new Circle(0,0,1);
 var tesselation = undefined;
-var p = randomInt(4, 8);
-var q = randomInt(4, 8);
+var p = randomInt(4, 7);
+var q = randomInt(4, 7);
 
 if (p === 4 && q === 4) p = 5;
 
 //Run after load to get window width and height
-window.addEventListener('load', function (event) {
+window.onload = function () {
   //global variable to hold the radius as this must be calculated on load and is
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
   tesselation = new RegularTesselation(4, 5, 2);
-  //const tesselation = new RegularTesselation(p, q, 2);
-}, false);
+  //tesselation = new RegularTesselation(p, q, 2);
+};
 
-window.addEventListener('resize', function () {
+window.onresize = function () {
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();
-});
+};

@@ -32,24 +32,24 @@ Math.cot = Math.cot || function(x) {
 // *************************************************************************
 //window.isOnUnitDisk = new Circle(0,0,1);
 let tesselation;
-let p = E.randomInt(4, 8);
-let q = E.randomInt(4, 8);
+let p = E.randomInt(4, 7);
+let q = E.randomInt(4, 7);
 
 if (p === 4 && q === 4) p = 5;
 
 //Run after load to get window width and height
-window.addEventListener('load', (event) => {
+window.onload = () => {
   //global variable to hold the radius as this must be calculated on load and is
   //used across all classes
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
   tesselation = new RegularTesselation(4, 5, 2);
-  //const tesselation = new RegularTesselation(p, q, 2);
-}, false);
+  //tesselation = new RegularTesselation(p, q, 2);
+}
 
-window.addEventListener('resize', () => {
+window.onresize = () => {
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();
-});
+}

@@ -62,7 +62,7 @@ export class RegularTesselation {
     pattern = '';
     //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
 
-    //let poly = this.fr.transform(this.transforms.edgeReflection);
+    //let poly = this.centralPolygon.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
 
     //poly = poly.transform(this.transforms.edgeReflection);
