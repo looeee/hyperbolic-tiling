@@ -105,10 +105,9 @@ export class Disk {
     //pass in either a list of points or an array
     if(points[0] instanceof Array) points = points[0];
 
-    const r = window.radius ;
     let test = false;
     for (let point of points) {
-      if (E.distance(point, this.centre) > r) {
+      if (E.distance(point, this.centre) > window.radius) {
         console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
         test = true;
       }

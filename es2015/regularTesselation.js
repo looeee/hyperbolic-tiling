@@ -50,7 +50,11 @@ export class RegularTesselation {
     this.buildCentralPattern();
     this.buildCentralPolygon();
 
-    if (this.maxLayers > 1) this.generateLayers();
+    if (this.maxLayers > 1) {
+      //debugger;
+      this.generateLayers();
+
+    }
     //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
     this.drawPattern(this.layerZero)
 
@@ -115,18 +119,18 @@ export class RegularTesselation {
     this.centralPolygon = new Polygon(vertices, true);
   }
 
-  generatePattern(pgonArray, transform) {
-    const newArray = [];
-    for (pgon of pgonArray) {
-      newArray.push(pgon.transform(transform));
-    }
-    return newArray;
-  }
-
   drawPattern(pgonArray) {
     for (let pgon of pgonArray) {
       this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
     }
+  }
+
+  transformPattern(pattern, transform){
+    const newPattern = [];
+    for(let poly of pattern){
+      newPattern.push(poly.transform(transform));
+    }
+    return newPattern;
   }
 
   generateLayers() {
@@ -145,8 +149,10 @@ export class RegularTesselation {
     }
   }
 
+  //TODO: Do I actually want to draw the layers here? Or just generate all the polygons
+  //then draw them after?
   layerRecursion(exposure, layer, transform) {
-    //const pattern = this.generatePattern(this.layerZero, transform);
+    //const pattern = this.transformPattern(this.layerZero, transform);
     //this.drawPattern(pattern);
     const poly = this.centralPolygon.transform(transform);
     this.disk.drawPolygon(poly, E.randomInt(1000, 14777215), '', this.wireframe);

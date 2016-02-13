@@ -62,7 +62,7 @@ export class Point {
     const q =  new Point(x, y, this.isOnUnitDisk);
     q.z = z;
     return q.weierstrassToPoincare();
-    
+
   }
 
   poincareToWeierstrass() {
@@ -97,6 +97,7 @@ export class Point {
       console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
       return this;
     }
+
     return new Point(this.x * window.radius, this.y * window.radius, false);
   }
 }
@@ -259,44 +260,45 @@ export class Polygon {
     const l = this.vertices.length;
     const points = [];
 
+    //push the first vertex
     points.push(this.vertices[0]);
 
+    //loop over the edges
     for (let i = 0; i < l; i++) {
-      let p;
-      const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
+       //tiny pgons near the edges of the disk don't need to be subdivided
+      if(E.distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing){
+        let p;
+        const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
 
-      //line not through the origin (hyperbolic arc)
-      if (!arc.straightLine) {
-        if (!arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
-        else p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
-        points.push(p);
+        //line not through the origin (hyperbolic arc)
+        if (!arc.straightLine) {
+          //if arc is not being drawn clockwise pick the
+          if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
+          else p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
 
-        while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
-          if (!arc.clockwise) {
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-          } else {
-            p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
-          }
           points.push(p);
+
+          while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
+            if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
+            else p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
+            points.push(p);
+          }
         }
 
-        if ((i + 1) % l !== 0) {
-          points.push(this.vertices[(i + 1) % l]);
+        //line through origin (straight line)
+        else {
+          p = E.spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
+          points.push(p);
+          while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
+            p = E.spacedPointOnLine(p, this.vertices[i], spacing).p1;
+            points.push(p);
+          }
         }
       }
 
-      //line through origin (straight line)
-      else {
-        p = E.spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
-        points.push(p);
-        while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
-          p = E.spacedPointOnLine(p, this.vertices[i], spacing).p1;
-          points.push(p);
-        }
-
-        if ((i + 1) % l !== 0) {
-          points.push(this.vertices[(i + 1) % l]);
-        }
+      //push the last vertex on each edge (but don't push first vertex again)
+      if ((i + 1) % l !== 0) {
+        points.push(this.vertices[(i + 1) % l]);
       }
     }
     return points;

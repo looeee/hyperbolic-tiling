@@ -553,6 +553,7 @@ var Point = function () {
         console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
         return this;
       }
+
       return new Point(this.x * window.radius, this.y * window.radius, false);
     }
   }]);
@@ -738,44 +739,44 @@ var Polygon = function () {
       var l = this.vertices.length;
       var points = [];
 
+      //push the first vertex
       points.push(this.vertices[0]);
 
+      //loop over the edges
       for (var i = 0; i < l; i++) {
-        var p = undefined;
-        var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
+        //tiny pgons near the edges of the disk don't need to be subdivided
+        if (distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing) {
+          var p = undefined;
+          var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
 
-        //line not through the origin (hyperbolic arc)
-        if (!arc.straightLine) {
-          if (!arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
-          points.push(p);
+          //line not through the origin (hyperbolic arc)
+          if (!arc.straightLine) {
+            //if arc is not being drawn clockwise pick the
+            if (arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
 
-          while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
-            if (!arc.clockwise) {
-              p = spacedPointOnArc(arc.circle, p, spacing).p2;
-            } else {
-              p = spacedPointOnArc(arc.circle, p, spacing).p1;
-            }
             points.push(p);
-          }
 
-          if ((i + 1) % l !== 0) {
-            points.push(this.vertices[(i + 1) % l]);
-          }
-        }
-
-        //line through origin (straight line)
-        else {
-            p = spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
-            points.push(p);
             while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
-              p = spacedPointOnLine(p, this.vertices[i], spacing).p1;
+              if (arc.clockwise) p = spacedPointOnArc(arc.circle, p, spacing).p1;else p = spacedPointOnArc(arc.circle, p, spacing).p2;
               points.push(p);
             }
-
-            if ((i + 1) % l !== 0) {
-              points.push(this.vertices[(i + 1) % l]);
-            }
           }
+
+          //line through origin (straight line)
+          else {
+              p = spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
+              points.push(p);
+              while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
+                p = spacedPointOnLine(p, this.vertices[i], spacing).p1;
+                points.push(p);
+              }
+            }
+        }
+
+        //push the last vertex on each edge (but don't push first vertex again)
+        if ((i + 1) % l !== 0) {
+          points.push(this.vertices[(i + 1) % l]);
+        }
       }
       return points;
     }
@@ -1232,6 +1233,8 @@ var Parameters = function () {
 // *  THREE JS CLASS
 // *
 // *************************************************************************
+//TODO: after resizing a few times the scene stops drawing - possible memory
+//not being freed in clearScene?
 var ThreeJS = function () {
   function ThreeJS() {
     babelHelpers.classCallCheck(this, ThreeJS);
@@ -1262,6 +1265,10 @@ var ThreeJS = function () {
     key: "clearScene",
     value: function clearScene() {
       for (var i = this.scene.children.length - 1; i >= 0; i--) {
+        //this.scene.children[i].material.map.dispose();
+        //this.scene.children[i].material.dispose();
+        //this.scene.children[i].geometry.dispose();
+        //this.scene.children[i] = null;
         this.scene.remove(this.scene.children[i]);
       }
     }
@@ -1549,7 +1556,6 @@ var Disk = function () {
       //pass in either a list of points or an array
       if (points[0] instanceof Array) points = points[0];
 
-      var r = window.radius;
       var test = false;
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
@@ -1559,7 +1565,7 @@ var Disk = function () {
         for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var point = _step.value;
 
-          if (distance(point, this.centre) > r) {
+          if (distance(point, this.centre) > window.radius) {
             console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
             test = true;
           }
@@ -1623,7 +1629,10 @@ var RegularTesselation = function () {
       this.buildCentralPattern();
       this.buildCentralPolygon();
 
-      if (this.maxLayers > 1) this.generateLayers();
+      if (this.maxLayers > 1) {
+        //debugger;
+        this.generateLayers();
+      }
       //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
       this.drawPattern(this.layerZero);
 
@@ -1695,18 +1704,17 @@ var RegularTesselation = function () {
       this.centralPolygon = new Polygon(vertices, true);
     }
   }, {
-    key: 'generatePattern',
-    value: function generatePattern(pgonArray, transform) {
-      var newArray = [];
+    key: 'drawPattern',
+    value: function drawPattern(pgonArray) {
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
         for (var _iterator = pgonArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          pgon = _step.value;
+          var pgon = _step.value;
 
-          newArray.push(pgon.transform(transform));
+          this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
         }
       } catch (err) {
         _didIteratorError = true;
@@ -1722,21 +1730,20 @@ var RegularTesselation = function () {
           }
         }
       }
-
-      return newArray;
     }
   }, {
-    key: 'drawPattern',
-    value: function drawPattern(pgonArray) {
+    key: 'transformPattern',
+    value: function transformPattern(pattern, transform) {
+      var newPattern = [];
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator2 = pgonArray[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var _pgon = _step2.value;
+        for (var _iterator2 = pattern[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var poly = _step2.value;
 
-          this.disk.drawPolygon(_pgon, randomInt(1000, 14777215), '', this.wireframe);
+          newPattern.push(poly.transform(transform));
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -1752,6 +1759,8 @@ var RegularTesselation = function () {
           }
         }
       }
+
+      return newPattern;
     }
   }, {
     key: 'generateLayers',
@@ -1770,10 +1779,14 @@ var RegularTesselation = function () {
         }
       }
     }
+
+    //TODO: Do I actually want to draw the layers here? Or just generate all the polygons
+    //then draw them after?
+
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
-      //const pattern = this.generatePattern(this.layerZero, transform);
+      //const pattern = this.transformPattern(this.layerZero, transform);
       //this.drawPattern(pattern);
       var poly = this.centralPolygon.transform(transform);
       this.disk.drawPolygon(poly, randomInt(1000, 14777215), '', this.wireframe);
@@ -1894,13 +1907,16 @@ window.onload = function () {
   //global variable to hold the radius as this must be calculated on load and is
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-
+  window.radius = Math.floor(window.radius);
+  console.log(window.radius);
   tesselation = new RegularTesselation(4, 5, 2);
   //tesselation = new RegularTesselation(p, q, 2);
 };
 
 window.onresize = function () {
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+  window.radius = Math.floor(window.radius);
+  console.log(window.radius);
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();

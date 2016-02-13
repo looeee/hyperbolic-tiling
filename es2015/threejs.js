@@ -3,6 +3,8 @@
 // *  THREE JS CLASS
 // *
 // *************************************************************************
+//TODO: after resizing a few times the scene stops drawing - possible memory
+//not being freed in clearScene?
 export class ThreeJS {
   constructor() {
     this.init();
@@ -25,8 +27,12 @@ export class ThreeJS {
     this.init();
   }
 
-  clearScene(){
+  clearScene() {
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      //this.scene.children[i].material.map.dispose();
+      //this.scene.children[i].material.dispose();
+      //this.scene.children[i].geometry.dispose();
+      //this.scene.children[i] = null;
       this.scene.remove(this.scene.children[i]);
     }
   }
@@ -131,19 +137,19 @@ export class ThreeJS {
     //we can also create the first face triangle
     geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
 
-    for(let i = 1; i < l; i++){
+    for (let i = 1; i < l; i++) {
       geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
-      geometry.faces.push( new THREE.Face3( 0, i, i+1 ) );
+      geometry.faces.push(new THREE.Face3(0, i, i + 1));
     }
 
     //push the final faces
-    geometry.faces.push( new THREE.Face3( 0, l, 1 ) );
+    geometry.faces.push(new THREE.Face3(0, l, 1));
 
     this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
   //TODO learn how UVs work then write this function
-  setUvs(geometry){
+  setUvs(geometry) {
     const uvs = geometry.faceVertexUvs[0];
     for (let i = 0; i < uvs.length; i++) {
       const uv = uvs[i];
