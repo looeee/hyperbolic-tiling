@@ -254,9 +254,9 @@ export class Polygon {
     this.vertices = vertices;
   }
 
-  //TODO: make spacing function of resolution
   spacedPointsOnEdges() {
-    const spacing = 5;
+    let spacing = 5; //Math.ceil((2000 / window.radius));
+    //if(spacing < 5) spacing = 5;
     const l = this.vertices.length;
     const points = [];
 
@@ -272,7 +272,6 @@ export class Polygon {
 
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
-          //if arc is not being drawn clockwise pick the
           if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
           else p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
 
@@ -304,6 +303,7 @@ export class Polygon {
     return points;
   }
 
+  //Apply a Transform to the polygon
   transform(transform) {
     const newVertices = [];
     for (v of this.vertices) {

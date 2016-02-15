@@ -730,12 +730,11 @@ var Polygon = function () {
     this.vertices = vertices;
   }
 
-  //TODO: make spacing function of resolution
-
   babelHelpers.createClass(Polygon, [{
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
-      var spacing = 5;
+      var spacing = 5; //Math.ceil((2000 / window.radius));
+      //if(spacing < 5) spacing = 5;
       var l = this.vertices.length;
       var points = [];
 
@@ -751,7 +750,6 @@ var Polygon = function () {
 
           //line not through the origin (hyperbolic arc)
           if (!arc.straightLine) {
-            //if arc is not being drawn clockwise pick the
             if (arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
 
             points.push(p);
@@ -780,6 +778,9 @@ var Polygon = function () {
       }
       return points;
     }
+
+    //Apply a Transform to the polygon
+
   }, {
     key: 'transform',
     value: function transform(_transform2) {
@@ -1603,6 +1604,8 @@ var RegularTesselation = function () {
   function RegularTesselation(p, q, maxLayers) {
     babelHelpers.classCallCheck(this, RegularTesselation);
 
+    this.maxPolygons = 200;
+    this.currentPolygons = 1;
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
@@ -1786,40 +1789,53 @@ var RegularTesselation = function () {
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
+      var _this = this;
+
       //const pattern = this.transformPattern(this.layerZero, transform);
       //this.drawPattern(pattern);
       var poly = this.centralPolygon.transform(transform);
       this.disk.drawPolygon(poly, randomInt(1000, 14777215), '', this.wireframe);
-
+      this.currentPolygons++;
       if (layer >= this.maxLayers) return;
 
       var pSkip = this.params.pSkip(exposure);
       var verticesToDo = this.params.verticesToDo(exposure);
 
-      for (var i = 0; i < verticesToDo; i++) {
-        var pTransform = this.transforms.shiftTrans(transform, pSkip);
+      var _loop = function _loop(i) {
+        var pTransform = _this.transforms.shiftTrans(transform, pSkip);
         var qTransform = undefined;
 
-        var qSkip = this.params.qSkip(exposure, i);
-        if (qSkip % this.p !== 0) {
-          qTransform = this.transforms.shiftTrans(pTransform, qSkip);
+        var qSkip = _this.params.qSkip(exposure, i);
+        if (qSkip % _this.p !== 0) {
+          qTransform = _this.transforms.shiftTrans(pTransform, qSkip);
         } else {
           qTransform = pTransform;
         }
 
-        var pgonsToDo = this.params.pgonsToDo(exposure, i);
+        var pgonsToDo = _this.params.pgonsToDo(exposure, i);
 
-        for (var j = 0; j < pgonsToDo; j++) {
-          if (this.p === 3 && j === pgonsToDo - 1) {
+        var _loop2 = function _loop2(j) {
+          if (_this.p === 3 && j === pgonsToDo - 1) {
             //TODO: transform polygon accordingly
           } else {
-              this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+              var rand = randomInt(10, 100);
+              window.setTimeout(function () {
+                _this.layerRecursion(_this.params.exposure(layer, i, j), layer + 1, qTransform);
+              }, rand);
             }
-          if (-1 % this.p !== 0) {
-            qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+          if (-1 % _this.p !== 0) {
+            qTransform = _this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
           }
+        };
+
+        for (var j = 0; j < pgonsToDo; j++) {
+          _loop2(j);
         }
-        pSkip = (pSkip + 1) % this.p;
+        pSkip = (pSkip + 1) % _this.p;
+      };
+
+      for (var i = 0; i < verticesToDo; i++) {
+        _loop(i);
       }
     }
 
@@ -1909,7 +1925,7 @@ window.onload = function () {
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   window.radius = Math.floor(window.radius);
   console.log(window.radius);
-  tesselation = new RegularTesselation(4, 5, 2);
+  tesselation = new RegularTesselation(5, 4, 6);
   //tesselation = new RegularTesselation(p, q, 2);
 };
 

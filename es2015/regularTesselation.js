@@ -26,6 +26,8 @@ from './helpers';
 // *************************************************************************
 export class RegularTesselation {
   constructor(p, q, maxLayers) {
+    this.maxPolygons = 200;
+    this.currentPolygons = 1;
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
@@ -156,7 +158,7 @@ export class RegularTesselation {
     //this.drawPattern(pattern);
     const poly = this.centralPolygon.transform(transform);
     this.disk.drawPolygon(poly, E.randomInt(1000, 14777215), '', this.wireframe);
-
+    this.currentPolygons ++;
     if (layer >= this.maxLayers) return;
 
     let pSkip = this.params.pSkip(exposure);
@@ -179,7 +181,11 @@ export class RegularTesselation {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
           //TODO: transform polygon accordingly
         } else {
-          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+          const rand = E.randomInt(10,100);
+          window.setTimeout(
+            () => {
+              this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
+            }, rand);
         }
         if ((-1 % this.p) !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
