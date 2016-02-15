@@ -26,8 +26,8 @@ from './helpers';
 // *************************************************************************
 export class RegularTesselation {
   constructor(p, q, maxLayers) {
-    this.maxPolygons = 200;
-    this.currentPolygons = 1;
+    this.layers = [];
+    for(let i = 0; i <= maxLayers; i++ ){ this.layers[i] = []}
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
@@ -57,10 +57,9 @@ export class RegularTesselation {
       this.generateLayers();
 
     }
-    //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
-    this.drawPattern(this.layerZero)
+    this.drawLayers();
 
-    this.testing();
+    //this.testing();
   }
 
   testing() {
@@ -74,6 +73,15 @@ export class RegularTesselation {
     //poly = poly.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
 
+  }
+
+  drawLayers(){
+    console.log(this.layers);
+    for(let layer of this.layers){
+      for(let pgon of layer){
+        this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+      }
+    }
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -104,11 +112,11 @@ export class RegularTesselation {
   //of the fundamental region
   buildCentralPattern() {
     this.frCopy = this.fr.transform(this.transforms.hypReflection);
-    this.layerZero = [this.fr, this.frCopy];
+    this.layers[0] = [this.fr, this.frCopy];
 
     for (let i = 0; i < this.p; i++) {
-      this.layerZero.push(this.layerZero[0].transform(this.transforms.rotatePolygonCW[i]));
-      this.layerZero.push(this.layerZero[1].transform(this.transforms.rotatePolygonCW[i]));
+      this.layers[0].push(this.layers[0][0].transform(this.transforms.rotatePolygonCW[i]));
+      this.layers[0].push(this.layers[0][1].transform(this.transforms.rotatePolygonCW[i]));
     }
   }
 
@@ -151,14 +159,11 @@ export class RegularTesselation {
     }
   }
 
-  //TODO: Do I actually want to draw the layers here? Or just generate all the polygons
-  //then draw them after?
+  //calculate the polygons in each layer and add them to this.layers[layer] array
+  //but don't draw them yet
   layerRecursion(exposure, layer, transform) {
-    //const pattern = this.transformPattern(this.layerZero, transform);
-    //this.drawPattern(pattern);
-    const poly = this.centralPolygon.transform(transform);
-    this.disk.drawPolygon(poly, E.randomInt(1000, 14777215), '', this.wireframe);
-    this.currentPolygons ++;
+    this.layers[layer].push(this.centralPolygon.transform(transform));
+
     if (layer >= this.maxLayers) return;
 
     let pSkip = this.params.pSkip(exposure);
@@ -181,11 +186,7 @@ export class RegularTesselation {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
           //TODO: transform polygon accordingly
         } else {
-          const rand = E.randomInt(10,100);
-          window.setTimeout(
-            () => {
-              this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
-            }, rand);
+          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
         }
         if ((-1 % this.p) !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise

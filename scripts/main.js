@@ -1604,8 +1604,10 @@ var RegularTesselation = function () {
   function RegularTesselation(p, q, maxLayers) {
     babelHelpers.classCallCheck(this, RegularTesselation);
 
-    this.maxPolygons = 200;
-    this.currentPolygons = 1;
+    this.layers = [];
+    for (var i = 0; i <= maxLayers; i++) {
+      this.layers[i] = [];
+    }
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
@@ -1636,10 +1638,9 @@ var RegularTesselation = function () {
         //debugger;
         this.generateLayers();
       }
-      //this.disk.drawPolygon(this.centralPolygon, 0x0ff000, '', true);
-      this.drawPattern(this.layerZero);
+      this.drawLayers();
 
-      this.testing();
+      //this.testing();
     }
   }, {
     key: 'testing',
@@ -1653,6 +1654,57 @@ var RegularTesselation = function () {
 
       //poly = poly.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
+    }
+  }, {
+    key: 'drawLayers',
+    value: function drawLayers() {
+      console.log(this.layers);
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.layers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var layer = _step.value;
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
+
+          try {
+            for (var _iterator2 = layer[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var pgon = _step2.value;
+
+              this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1689,11 +1741,11 @@ var RegularTesselation = function () {
     key: 'buildCentralPattern',
     value: function buildCentralPattern() {
       this.frCopy = this.fr.transform(this.transforms.hypReflection);
-      this.layerZero = [this.fr, this.frCopy];
+      this.layers[0] = [this.fr, this.frCopy];
 
       for (var i = 0; i < this.p; i++) {
-        this.layerZero.push(this.layerZero[0].transform(this.transforms.rotatePolygonCW[i]));
-        this.layerZero.push(this.layerZero[1].transform(this.transforms.rotatePolygonCW[i]));
+        this.layers[0].push(this.layers[0][0].transform(this.transforms.rotatePolygonCW[i]));
+        this.layers[0].push(this.layers[0][1].transform(this.transforms.rotatePolygonCW[i]));
       }
     }
   }, {
@@ -1709,27 +1761,27 @@ var RegularTesselation = function () {
   }, {
     key: 'drawPattern',
     value: function drawPattern(pgonArray) {
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator = pgonArray[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var pgon = _step.value;
+        for (var _iterator3 = pgonArray[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var pgon = _step3.value;
 
           this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
           }
         } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
+          if (_didIteratorError3) {
+            throw _iteratorError3;
           }
         }
       }
@@ -1738,27 +1790,27 @@ var RegularTesselation = function () {
     key: 'transformPattern',
     value: function transformPattern(pattern, transform) {
       var newPattern = [];
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
 
       try {
-        for (var _iterator2 = pattern[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var poly = _step2.value;
+        for (var _iterator4 = pattern[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var poly = _step4.value;
 
           newPattern.push(poly.transform(transform));
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
           }
         } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
+          if (_didIteratorError4) {
+            throw _iteratorError4;
           }
         }
       }
@@ -1783,59 +1835,43 @@ var RegularTesselation = function () {
       }
     }
 
-    //TODO: Do I actually want to draw the layers here? Or just generate all the polygons
-    //then draw them after?
+    //calculate the polygons in each layer and add them to this.layers[layer] array
+    //but don't draw them yet
 
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
-      var _this = this;
+      this.layers[layer].push(this.centralPolygon.transform(transform));
 
-      //const pattern = this.transformPattern(this.layerZero, transform);
-      //this.drawPattern(pattern);
-      var poly = this.centralPolygon.transform(transform);
-      this.disk.drawPolygon(poly, randomInt(1000, 14777215), '', this.wireframe);
-      this.currentPolygons++;
       if (layer >= this.maxLayers) return;
 
       var pSkip = this.params.pSkip(exposure);
       var verticesToDo = this.params.verticesToDo(exposure);
 
-      var _loop = function _loop(i) {
-        var pTransform = _this.transforms.shiftTrans(transform, pSkip);
+      for (var i = 0; i < verticesToDo; i++) {
+        var pTransform = this.transforms.shiftTrans(transform, pSkip);
         var qTransform = undefined;
 
-        var qSkip = _this.params.qSkip(exposure, i);
-        if (qSkip % _this.p !== 0) {
-          qTransform = _this.transforms.shiftTrans(pTransform, qSkip);
+        var qSkip = this.params.qSkip(exposure, i);
+        if (qSkip % this.p !== 0) {
+          qTransform = this.transforms.shiftTrans(pTransform, qSkip);
         } else {
           qTransform = pTransform;
         }
 
-        var pgonsToDo = _this.params.pgonsToDo(exposure, i);
-
-        var _loop2 = function _loop2(j) {
-          if (_this.p === 3 && j === pgonsToDo - 1) {
-            //TODO: transform polygon accordingly
-          } else {
-              var rand = randomInt(10, 100);
-              window.setTimeout(function () {
-                _this.layerRecursion(_this.params.exposure(layer, i, j), layer + 1, qTransform);
-              }, rand);
-            }
-          if (-1 % _this.p !== 0) {
-            qTransform = _this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
-          }
-        };
+        var pgonsToDo = this.params.pgonsToDo(exposure, i);
 
         for (var j = 0; j < pgonsToDo; j++) {
-          _loop2(j);
+          if (this.p === 3 && j === pgonsToDo - 1) {
+            //TODO: transform polygon accordingly
+          } else {
+              this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+            }
+          if (-1 % this.p !== 0) {
+            qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+          }
         }
-        pSkip = (pSkip + 1) % _this.p;
-      };
-
-      for (var i = 0; i < verticesToDo; i++) {
-        _loop(i);
+        pSkip = (pSkip + 1) % this.p;
       }
     }
 
@@ -1924,8 +1960,7 @@ window.onload = function () {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   window.radius = Math.floor(window.radius);
-  console.log(window.radius);
-  tesselation = new RegularTesselation(5, 4, 6);
+  tesselation = new RegularTesselation(5, 4, 5);
   //tesselation = new RegularTesselation(p, q, 2);
 };
 
