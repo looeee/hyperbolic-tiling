@@ -118,6 +118,30 @@ export const clockwise = (alpha, beta) => {
   return cw;
 }
 
+export const multiplyMatrices = (m1, m2) => {
+  const result = [];
+  for (let i = 0; i < m1.length; i++) {
+    result[i] = [];
+    for (let j = 0; j < m2[0].length; j++) {
+      let sum = 0;
+      for (let k = 0; k < m1[0].length; k++) {
+        sum += m1[i][k] * m2[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+}
+
+//create nxn identityMatrix
+export const identityMatrix = (n) => {
+  return Array.apply(null, new Array(n)).map(function(x, i, a) {
+    return a.map(function(y, k) {
+      return i === k ? 1 : 0;
+    })
+  });
+}
+
 /*
 //slope of line through p1, p2
 export const slope = (p1, p2) => {

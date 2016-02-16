@@ -1,5 +1,4 @@
 import * as E from './euclid';
-import * as H from './hyperbolic';
 import {
   Polygon, Arc, Circle, Point
 }

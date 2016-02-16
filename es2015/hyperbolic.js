@@ -12,19 +12,7 @@ from './elements';
 // *
 // *************************************************************************
 
-export const poincareToWeierstrass = (point2D) => {
-  const factor = 1 / (1 - point2D.x * point2D.x - point2D.y * point2D.y);
-  return {
-    x: 2 * factor * point2D.x,
-    y: 2 * factor * point2D.y,
-    z: factor * (1 + point2D.x * point2D.x + point2D.y * point2D.y)
-  }
-}
-
-export const weierstrassToPoincare = (point3D) => {
-  const factor = 1 / (1 + point3D.z);
-  return new Point(factor * point3D.x, factor * point3D.y);
-}
+/*
 
 export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
   if(point3D_1.z === 'undefined' || point3D_2.z === 'undefined'){
@@ -46,7 +34,7 @@ export const weierstrassCrossProduct = (point3D_1, point3D_2) => {
   return r;
 }
 
-/*
+
 //when the point p1 is translated to the origin, the point p2
 //is translated according to this formula
 //https://en.wikipedia.org/wiki/Poincar%C3%A9_disk_model#Isometric_Transformations
