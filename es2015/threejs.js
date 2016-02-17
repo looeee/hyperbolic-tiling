@@ -5,6 +5,7 @@
 // *************************************************************************
 //TODO: after resizing a few times the scene stops drawing - possible memory
 //not being freed in clearScene?
+//TODO add functions to save image to disk/screen for download
 export class ThreeJS {
   constructor() {
     this.init();
@@ -126,26 +127,27 @@ export class ThreeJS {
       //poly.moveTo(vertices[i].x, vertices[i].y);
       poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
     }
-    //console.log(poly);
+
     let geometry = new THREE.ShapeGeometry(poly);
     */
     const geometry = new THREE.Geometry();
 
     //vertex 0 = polygon barycentre
     geometry.vertices.push(new THREE.Vector3(centre.x, centre.y, 0));
+
     //push first vertex to vertices array
     //This means that when the next vertex is pushed in the loop
     //we can also create the first face triangle
     geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
 
+    //each vertex added creates a new triangle, use this to create a new face
     for (let i = 1; i < l; i++) {
       geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
       geometry.faces.push(new THREE.Face3(0, i, i + 1));
     }
 
-    //push the final faces
+    //push the final face
     geometry.faces.push(new THREE.Face3(0, l, 1));
-
     this.scene.add(this.createMesh(geometry, color, texture, wireframe));
   }
 
@@ -160,32 +162,33 @@ export class ThreeJS {
     }
   }
 
+  //NOTE: some polygons are inverted due to vertex order,
+  //solved this but this might cause problems with textures
   createMesh(geometry, color, imageURL, wireframe) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
     const material = new THREE.MeshBasicMaterial({
       color: color,
-      wireframe: wireframe
+      wireframe: wireframe,
+      side: THREE.DoubleSide
     });
+
+    //material.
 
     if (imageURL) {
       const textureLoader = new THREE.TextureLoader();
 
       //load texture and apply to material in callback
-      const texture = textureLoader.load(imageURL, (tex) => {});
-      texture.repeat.set(0.005, 0.005);
-      material.map = texture;
-      material.map.wrapT = THREE.RepeatWrapping;
-      material.map.wrapS = THREE.RepeatWrapping;
+      const texture = textureLoader.load(imageURL, (tex) => {
+        material.map = tex;
+        //material.map.wrapT = THREE.RepeatWrapping;
+        //material.map.wrapS = THREE.RepeatWrapping;
+        //texture.repeat.set(0.05, 0.05);
+      });
     }
 
     return new THREE.Mesh(geometry, material);
-  }
-
-  axes() {
-    const xyz = new THREE.AxisHelper(20);
-    this.scene.add(xyz);
   }
 
   render() {

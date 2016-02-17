@@ -87,7 +87,6 @@ export class Disk {
     let p;
     if(polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
-
     if (this.checkPoints(p.vertices)) {
       return false
     }

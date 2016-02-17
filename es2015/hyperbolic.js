@@ -79,7 +79,6 @@ export const distance = (p, q, circle0) => {
 
 //calculate greatCircle, startAngle and endAngle for hyperbolic arc
 NOTE: Old version, new version is in Arc class
-TODO: test which is faster
 export const arcV1 = (p1, p2, circle) => {
   if (E.throughOrigin(p1, p2)) {
     return {

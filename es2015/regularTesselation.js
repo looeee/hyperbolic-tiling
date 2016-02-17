@@ -52,24 +52,29 @@ export class RegularTesselation {
     this.buildCentralPolygon();
 
     if (this.maxLayers > 1) {
-      //debugger;
       let t0 = performance.now();
       this.generateLayers();
       let t1 = performance.now();
-      //console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
+      console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
     this.drawLayers();
-
     //this.testing();
   }
 
   testing() {
-    let pattern = './images/textures/pattern1.png';
-    pattern = '';
-    //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+    let texture = './images/textures/pattern1.png';
+    //texture = '';
+    this.disk.drawPolygon(this.fr, 0xff0ff0, texture, false);
 
-    //let poly = this.centralPolygon.transform(this.transforms.edgeReflection);
-    //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+    let p = new Point(0, 0, false);
+    let q = new Point(-161, 161, false);
+    let w = new Point(129, 0, false);
+    let pgon = new Polygon([p,q,w], false);
+
+    //this.disk.drawPolygon(pgon, 0x5c30e0, texture, true);
+    //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+    let poly = this.centralPolygon.transform(this.transforms.edgeReflection);
+    //this.disk.drawPolygon(poly, 0x5c30e0, texture, false);
 
     //poly = poly.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);

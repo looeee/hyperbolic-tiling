@@ -42,15 +42,13 @@ window.onload = () => {
   //used across all classes
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
   window.radius = Math.floor(window.radius);
-  //tesselation = new RegularTesselation(4, 5, 4);
-  tesselation = new RegularTesselation(4, 5, 4);
-  //tesselation = new RegularTesselation(p, q, 2);
+  tesselation = new RegularTesselation(4, 5, 3);
+  //tesselation = new RegularTesselation(p, q, 3);
 }
 
 window.onresize = () => {
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
   window.radius = Math.floor(window.radius);
-  console.log(window.radius);
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();

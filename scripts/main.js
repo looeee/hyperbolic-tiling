@@ -1033,6 +1033,7 @@ var Parameters = function () {
 // *************************************************************************
 //TODO: after resizing a few times the scene stops drawing - possible memory
 //not being freed in clearScene?
+//TODO add functions to save image to disk/screen for download
 var ThreeJS = function () {
   function ThreeJS() {
     babelHelpers.classCallCheck(this, ThreeJS);
@@ -1160,26 +1161,26 @@ var ThreeJS = function () {
         //poly.moveTo(vertices[i].x, vertices[i].y);
         poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
       }
-      //console.log(poly);
-      let geometry = new THREE.ShapeGeometry(poly);
+       let geometry = new THREE.ShapeGeometry(poly);
       */
       var geometry = new THREE.Geometry();
 
       //vertex 0 = polygon barycentre
       geometry.vertices.push(new THREE.Vector3(centre.x, centre.y, 0));
+
       //push first vertex to vertices array
       //This means that when the next vertex is pushed in the loop
       //we can also create the first face triangle
       geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
 
+      //each vertex added creates a new triangle, use this to create a new face
       for (var i = 1; i < l; i++) {
         geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
         geometry.faces.push(new THREE.Face3(0, i, i + 1));
       }
 
-      //push the final faces
+      //push the final face
       geometry.faces.push(new THREE.Face3(0, l, 1));
-
       this.scene.add(this.createMesh(geometry, color, texture, wireframe));
     }
 
@@ -1196,6 +1197,10 @@ var ThreeJS = function () {
         }
       }
     }
+
+    //NOTE: some polygons are inverted due to vertex order,
+    //solved this but this might cause problems with textures
+
   }, {
     key: "createMesh",
     value: function createMesh(geometry, color, imageURL, wireframe) {
@@ -1204,27 +1209,25 @@ var ThreeJS = function () {
 
       var material = new THREE.MeshBasicMaterial({
         color: color,
-        wireframe: wireframe
+        wireframe: wireframe,
+        side: THREE.DoubleSide
       });
+
+      //material.
 
       if (imageURL) {
         var textureLoader = new THREE.TextureLoader();
 
         //load texture and apply to material in callback
-        var texture = textureLoader.load(imageURL, function (tex) {});
-        texture.repeat.set(0.005, 0.005);
-        material.map = texture;
-        material.map.wrapT = THREE.RepeatWrapping;
-        material.map.wrapS = THREE.RepeatWrapping;
+        var texture = textureLoader.load(imageURL, function (tex) {
+          material.map = tex;
+          //material.map.wrapT = THREE.RepeatWrapping;
+          //material.map.wrapS = THREE.RepeatWrapping;
+          //texture.repeat.set(0.05, 0.05);
+        });
       }
 
       return new THREE.Mesh(geometry, material);
-    }
-  }, {
-    key: "axes",
-    value: function axes() {
-      var xyz = new THREE.AxisHelper(20);
-      this.scene.add(xyz);
     }
   }, {
     key: "render",
@@ -1332,7 +1335,6 @@ var Disk = function () {
       //resize if polygon is on unit disk
       var p = undefined;
       if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();else p = polygon;
-
       if (this.checkPoints(p.vertices)) {
         return false;
       }
@@ -1410,25 +1412,30 @@ var RegularTesselation = function () {
       this.buildCentralPolygon();
 
       if (this.maxLayers > 1) {
-        //debugger;
         var t0 = performance.now();
         this.generateLayers();
         var t1 = performance.now();
-        //console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
+        console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }
       this.drawLayers();
-
       //this.testing();
     }
   }, {
     key: 'testing',
     value: function testing() {
-      var pattern = './images/textures/pattern1.png';
-      pattern = '';
-      //this.disk.drawPolygon(this.fr, 0xffffff, pattern, this.wireframe);
+      var texture = './images/textures/pattern1.png';
+      //texture = '';
+      this.disk.drawPolygon(this.fr, 0xff0ff0, texture, false);
 
-      //let poly = this.centralPolygon.transform(this.transforms.edgeReflection);
-      //this.disk.drawPolygon(poly, 0x5c30e0, pattern, this.wireframe);
+      var p = new Point(0, 0, false);
+      var q = new Point(-161, 161, false);
+      var w = new Point(129, 0, false);
+      var pgon = new Polygon([p, q, w], false);
+
+      //this.disk.drawPolygon(pgon, 0x5c30e0, texture, true);
+      //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+      var poly = this.centralPolygon.transform(this.transforms.edgeReflection);
+      //this.disk.drawPolygon(poly, 0x5c30e0, texture, false);
 
       //poly = poly.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
@@ -1737,15 +1744,13 @@ window.onload = function () {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   window.radius = Math.floor(window.radius);
-  //tesselation = new RegularTesselation(4, 5, 4);
-  tesselation = new RegularTesselation(4, 5, 4);
-  //tesselation = new RegularTesselation(p, q, 2);
+  tesselation = new RegularTesselation(4, 5, 3);
+  //tesselation = new RegularTesselation(p, q, 3);
 };
 
 window.onresize = function () {
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   window.radius = Math.floor(window.radius);
-  console.log(window.radius);
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();
