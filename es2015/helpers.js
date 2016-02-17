@@ -129,7 +129,7 @@ export class Transformations {
   initEdgeTransforms() {
     this.edgeTransforms = [];
 
-    for (let i = 0; i < this.p; i++) {
+    for(let i = 0; i < this.p; i++) {
       const adj = this.edges[i].adjacentEdge;
       //Case 1: reflection
       if (this.edges[i].orientation === -1) {

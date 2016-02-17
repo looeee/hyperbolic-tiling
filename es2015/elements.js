@@ -325,8 +325,8 @@ export class Polygon {
   //Apply a Transform to the polygon
   transform(transform) {
     const newVertices = [];
-    for (v of this.vertices) {
-      newVertices.push(v.transform(transform));
+    for (let i = 0; i < this.vertices.length; i++) {
+      newVertices.push(this.vertices[i].transform(transform));
     }
 
     return new Polygon(newVertices, this.isOnUnitDisk);
@@ -361,8 +361,8 @@ export class Polygon {
       return this;
     } else {
       const newVertices = [];
-      for (let v of this.vertices) {
-        newVertices.push(v.toUnitDisk());
+      for (let i = 0; i < this.vertices.length; i++) {
+        newVertices.push(this.vertices[i].toUnitDisk());
       }
       return new Polygon(newVertices, true);
     }
@@ -375,42 +375,11 @@ export class Polygon {
       return this;
     } else {
       const newVertices = [];
-      for (let v of this.vertices) {
-        newVertices.push(v.fromUnitDisk());
+      for (let i = 0; i < this.vertices.length; i++) {
+        newVertices.push(this.vertices[i].fromUnitDisk());
       }
       return new Polygon(newVertices, false);
     }
   }
+  
 }
-
-/*
-//reflect vertices of the polygon over the arc defined by p1, p1
-//and create a new polygon from the reflected vertices
-//NOTE: now done using transforms
-reflect(p1, p2){
-  const a = new Arc(p1, p2, this.circle, this.isOnUnitDisk);
-  const vertices = [];
-
-  if (!a.straightLine) {
-    for (let v of this.vertices) {
-      vertices.push(E.inverse(v, a.circle));
-    }
-  } else {
-    for (let v of this.vertices) {
-      vertices.push(E.lineReflection(p1, p2, v));
-    }
-  }
-  return new Polygon(vertices, this.isOnUnitDisk);
-}
-
-//NOTE: now done using transforms
-rotateAboutOrigin(angle){
-  const vertices = [];
-  for (let v of this.vertices) {
-    let point = E.rotatePointAboutOrigin(v, angle);
-    vertices.push(point);
-  }
-  return new Polygon(vertices, this.isOnUnitDisk);
-}
-
-*/

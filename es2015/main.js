@@ -42,7 +42,7 @@ window.onload = () => {
   //used across all classes
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
   window.radius = Math.floor(window.radius);
-  tesselation = new RegularTesselation(5, 4, 3);
+  tesselation = new RegularTesselation(3, 7, 3);
   //tesselation = new RegularTesselation(p, q, 2);
 }
 

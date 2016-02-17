@@ -28,7 +28,7 @@ export class ThreeJS {
   }
 
   clearScene() {
-    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+    for(let i = this.scene.children.length - 1; i >= 0; i--) {
       //this.scene.children[i].material.map.dispose();
       //this.scene.children[i].material.dispose();
       //this.scene.children[i].geometry.dispose();
@@ -52,6 +52,7 @@ export class ThreeJS {
     if (this.renderer === undefined) {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
+        preserveDrawingBuffer: true
       });
       this.renderer.setClearColor(0xffffff, 1.0);
       document.body.appendChild(this.renderer.domElement);
@@ -119,7 +120,7 @@ export class ThreeJS {
     const poly = new THREE.Shape();
 
     poly.moveTo(vertices[0].x, vertices[0].y);
-    for (let i = 0; i < l; i++) {
+    for(let i = 0; i < l; i++) {
       //poly.moveTo(vertices[i].x, vertices[i].y);
       //poly.lineTo(centre.x, centre.y);
       //poly.moveTo(vertices[i].x, vertices[i].y);

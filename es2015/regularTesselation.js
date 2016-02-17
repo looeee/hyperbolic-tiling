@@ -147,7 +147,7 @@ export class RegularTesselation {
       let qTransform = this.transforms.edgeTransforms[i];
       for (let j = 0; j < this.q - 2; j++) {
         if ((this.p === 3) && (this.q - 3 === j)) {
-          //TODO: transform central polygon accordingly
+          this.layers[i].push(this.centralPolygon.transform(qTransform));
         } else {
           this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
         }
@@ -183,7 +183,7 @@ export class RegularTesselation {
 
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
-          //TODO: transform polygon accordingly
+          this.layers[layer].push(this.centralPolygon.transform(qTransform));
         } else {
           this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
         }

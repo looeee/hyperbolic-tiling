@@ -677,29 +677,8 @@ var Polygon = function () {
     key: 'transform',
     value: function transform(_transform2) {
       var newVertices = [];
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = this.vertices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          v = _step.value;
-
-          newVertices.push(v.transform(_transform2));
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+      for (var i = 0; i < this.vertices.length; i++) {
+        newVertices.push(this.vertices[i].transform(_transform2));
       }
 
       return new Polygon(newVertices, this.isOnUnitDisk);
@@ -742,31 +721,9 @@ var Polygon = function () {
         return this;
       } else {
         var newVertices = [];
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
-
-        try {
-          for (var _iterator2 = this.vertices[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-            var _v = _step2.value;
-
-            newVertices.push(_v.toUnitDisk());
-          }
-        } catch (err) {
-          _didIteratorError2 = true;
-          _iteratorError2 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion2 && _iterator2.return) {
-              _iterator2.return();
-            }
-          } finally {
-            if (_didIteratorError2) {
-              throw _iteratorError2;
-            }
-          }
+        for (var i = 0; i < this.vertices.length; i++) {
+          newVertices.push(this.vertices[i].toUnitDisk());
         }
-
         return new Polygon(newVertices, true);
       }
     }
@@ -781,31 +738,9 @@ var Polygon = function () {
         return this;
       } else {
         var newVertices = [];
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
-
-        try {
-          for (var _iterator3 = this.vertices[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-            var _v2 = _step3.value;
-
-            newVertices.push(_v2.fromUnitDisk());
-          }
-        } catch (err) {
-          _didIteratorError3 = true;
-          _iteratorError3 = err;
-        } finally {
-          try {
-            if (!_iteratorNormalCompletion3 && _iterator3.return) {
-              _iterator3.return();
-            }
-          } finally {
-            if (_didIteratorError3) {
-              throw _iteratorError3;
-            }
-          }
+        for (var i = 0; i < this.vertices.length; i++) {
+          newVertices.push(this.vertices[i].fromUnitDisk());
         }
-
         return new Polygon(newVertices, false);
       }
     }
@@ -1160,7 +1095,8 @@ var ThreeJS = function () {
     value: function initRenderer() {
       if (this.renderer === undefined) {
         this.renderer = new THREE.WebGLRenderer({
-          antialias: true
+          antialias: true,
+          preserveDrawingBuffer: true
         });
         this.renderer.setClearColor(0xffffff, 1.0);
         document.body.appendChild(this.renderer.domElement);
@@ -1226,7 +1162,7 @@ var ThreeJS = function () {
       /*
       const poly = new THREE.Shape();
        poly.moveTo(vertices[0].x, vertices[0].y);
-      for (let i = 0; i < l; i++) {
+      for(let i = 0; i < l; i++) {
         //poly.moveTo(vertices[i].x, vertices[i].y);
         //poly.lineTo(centre.x, centre.y);
         //poly.moveTo(vertices[i].x, vertices[i].y);
@@ -1428,34 +1364,12 @@ var Disk = function () {
       if (points[0] instanceof Array) points = points[0];
 
       var test = false;
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var point = _step.value;
-
-          if (distance(point, this.centre) > window.radius) {
-            console.error('Error! Point (' + point.x + ', ' + point.y + ') lies outside the plane!');
-            test = true;
-          }
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
+      for (var i = 0; i < points.length; i++) {
+        if (distance(points[i], this.centre) > window.radius) {
+          console.error('Error! Point (' + points[i].x + ', ' + point[i].y + ') lies outside the plane!');
+          test = true;
         }
       }
-
       if (test) return true;else return false;
     }
   }]);
@@ -1694,10 +1608,10 @@ var RegularTesselation = function () {
         var qTransform = this.transforms.edgeTransforms[i];
         for (var j = 0; j < this.q - 2; j++) {
           if (this.p === 3 && this.q - 3 === j) {
-            //TODO: transform central polygon accordingly
+            this.layers[i].push(this.centralPolygon.transform(qTransform));
           } else {
-              this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
-            }
+            this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
+          }
           if (-1 % this.p !== 0) {
             qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
           }
@@ -1733,10 +1647,10 @@ var RegularTesselation = function () {
 
         for (var j = 0; j < pgonsToDo; j++) {
           if (this.p === 3 && j === pgonsToDo - 1) {
-            //TODO: transform polygon accordingly
+            this.layers[layer].push(this.centralPolygon.transform(qTransform));
           } else {
-              this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
-            }
+            this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+          }
           if (-1 % this.p !== 0) {
             qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
           }
@@ -1830,7 +1744,7 @@ window.onload = function () {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   window.radius = Math.floor(window.radius);
-  tesselation = new RegularTesselation(5, 4, 3);
+  tesselation = new RegularTesselation(3, 7, 3);
   //tesselation = new RegularTesselation(p, q, 2);
 };
 
