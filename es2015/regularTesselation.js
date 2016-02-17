@@ -53,8 +53,10 @@ export class RegularTesselation {
 
     if (this.maxLayers > 1) {
       //debugger;
+      let t0 = performance.now();
       this.generateLayers();
-
+      let t1 = performance.now();
+      //console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
     this.drawLayers();
 
@@ -75,7 +77,6 @@ export class RegularTesselation {
   }
 
   drawLayers(){
-    console.log(this.layers);
     for(let layer of this.layers){
       for(let pgon of layer){
         this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);

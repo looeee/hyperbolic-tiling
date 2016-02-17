@@ -122,7 +122,7 @@ var randomInt = function randomInt(min, max) {
 //Change it back to a float
 var toFixed = function toFixed(number, places) {
   //default to twelve as this seems to be the point after which fp errors arise
-  places = places || 12;
+  places = places || 10;
   return parseFloat(number.toFixed(places));
 };
 
@@ -367,7 +367,7 @@ var Point = function () {
       var t1 = this.toFixed(12);
       var t2 = p2.toFixed(12);
 
-      if (p1.x === p2.x && p1.y === p2.y) return true;else return false;
+      if (this.p1.x === p2.x && this.p1.y === p2.y) return true;else return false;
     }
   }, {
     key: 'transform',
@@ -492,16 +492,22 @@ var Arc = function () {
       this.clockwise = false;
       this.straightLine = true;
     } else {
+      this.hyperbolicMethod();
+    }
+  }
+
+  babelHelpers.createClass(Arc, [{
+    key: 'hyperbolicMethod',
+    value: function hyperbolicMethod() {
       var q1 = undefined,
           q2 = undefined;
       if (this.isOnUnitDisk) {
-        q1 = p2;
-        q2 = p2;
+        q1 = this.p1;
+        q2 = this.p2;
       } else {
-        q1 = p1.toUnitDisk();
-        q2 = p2.toUnitDisk();
+        q1 = this.p1.toUnitDisk();
+        q2 = this.p2.toUnitDisk();
       }
-
       var wq1 = q1.poincareToWeierstrass();
       var wq2 = q2.poincareToWeierstrass();
 
@@ -547,27 +553,14 @@ var Arc = function () {
       this.clockwise = cw;
       this.straightLine = false;
     }
-  }
-
-  babelHelpers.createClass(Arc, [{
+  }, {
     key: 'weierstrassCrossProduct',
     value: function weierstrassCrossProduct(point3D_1, point3D_2) {
-      if (point3D_1.z === 'undefined' || point3D_2.z === 'undefined') {
-        console.error('weierstrassCrossProduct: 3D points required');
-      }
       var r = {
         x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
         y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
         z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
       };
-
-      var norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
-      if (toFixed(norm) == 0) {
-        console.error('weierstrassCrossProduct: division by zero error');
-      }
-      r.x = r.x / norm;
-      r.y = r.y / norm;
-      r.z = r.z / norm;
       return r;
     }
 
@@ -580,9 +573,9 @@ var Arc = function () {
         console.warn('Arc ' + this + 'already on unit disk!');
         return this;
       } else {
-        var _p = this.p1.toUnitDisk();
+        var p1 = this.p1.toUnitDisk();
         var p2 = this.p2.toUnitDisk();
-        return new Arc(_p, p2, true);
+        return new Arc(p1, p2, true);
       }
     }
 
@@ -595,9 +588,9 @@ var Arc = function () {
         console.warn('Arc ' + this + 'not on unit disk!');
         return this;
       } else {
-        var _p2 = this.p1.fromUnitDisk();
+        var p1 = this.p1.fromUnitDisk();
         var p2 = this.p2.fromUnitDisk();
-        return new Arc(_p2, p2, false);
+        return new Arc(p1, p2, false);
       }
     }
   }]);
@@ -639,7 +632,6 @@ var Polygon = function () {
         if (distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing) {
           var p = undefined;
           var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
-
           //line not through the origin (hyperbolic arc)
           if (!arc.straightLine) {
             if (arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
@@ -1347,7 +1339,6 @@ var Disk = function () {
 
       var points = p.spacedPointsOnEdges();
       var centre = p.barycentre();
-
       this.draw.polygon(points, centre, color, texture, wireframe);
     }
 
@@ -1420,7 +1411,10 @@ var RegularTesselation = function () {
 
       if (this.maxLayers > 1) {
         //debugger;
+        var t0 = performance.now();
         this.generateLayers();
+        var t1 = performance.now();
+        //console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
       }
       this.drawLayers();
 
@@ -1442,7 +1436,6 @@ var RegularTesselation = function () {
   }, {
     key: 'drawLayers',
     value: function drawLayers() {
-      console.log(this.layers);
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -1744,7 +1737,8 @@ window.onload = function () {
   //used across all classes
   window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   window.radius = Math.floor(window.radius);
-  tesselation = new RegularTesselation(3, 7, 3);
+  //tesselation = new RegularTesselation(4, 5, 4);
+  tesselation = new RegularTesselation(4, 5, 4);
   //tesselation = new RegularTesselation(p, q, 2);
 };
 

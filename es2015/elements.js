@@ -47,7 +47,7 @@ export class Point {
     const t1 = this.toFixed(12);
     const t2 = p2.toFixed(12);
 
-    if (p1.x === p2.x && p1.y === p2.y) return true;
+    if (this.p1.x === p2.x && this.p1.y === p2.y) return true;
     else return false;
   }
 
@@ -156,81 +156,73 @@ export class Arc {
       this.straightLine = true;
     }
 
-    else {
-      let q1, q2;
-      if (this.isOnUnitDisk) {
-        q1 = p2;
-        q2 = p2;
-      }
-      else {
-        q1 = p1.toUnitDisk();
-        q2 = p2.toUnitDisk();
-      }
-
-      const wq1 = q1.poincareToWeierstrass();
-      const wq2 = q2.poincareToWeierstrass();
-
-      const wcp = this.weierstrassCrossProduct(wq1, wq2);
-
-      //calculate centre of arcCircle relative to unit disk
-      const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
-
-      //translate points to origin before calculating arctan
-      q1.x = q1.x - arcCentre.x;
-      q1.y = q1.y - arcCentre.y;
-      q2.x = q2.x - arcCentre.x;
-      q2.y = q2.y - arcCentre.y;
-
-      const r = Math.sqrt((q1.x * q1.x) + (q1.y * q1.y));
-
-      let arcCircle;
-      if (this.isOnUnitDisk) {
-        arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
-      } else {
-        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius, false);
-      }
-
-      let alpha = Math.atan2(q1.y, q1.x);
-
-      let beta = Math.atan2(q2.y, q2.x);
-
-      //angles are in (-pi, pi), transform to (0,2pi)
-      alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
-      beta = (beta < 0) ? 2 * Math.PI + beta : beta;
-
-      //check whether points are in clockwise order and assign angles accordingly
-      const cw = E.clockwise(alpha, beta);
-      if (cw) {
-        this.startAngle = alpha;
-        this.endAngle = beta;
-      } else {
-        this.startAngle = beta;
-        this.endAngle = alpha;
-      }
-
-      this.circle = arcCircle;
-      this.clockwise = cw;
-      this.straightLine = false;
+    else{
+      this.hyperbolicMethod();
     }
   }
 
-  weierstrassCrossProduct(point3D_1, point3D_2){
-    if(point3D_1.z === 'undefined' || point3D_2.z === 'undefined'){
-      console.error('weierstrassCrossProduct: 3D points required');
+  hyperbolicMethod(){
+    let q1, q2;
+    if (this.isOnUnitDisk) {
+      q1 = this.p1;
+      q2 = this.p2;
     }
+    else {
+      q1 = this.p1.toUnitDisk();
+      q2 = this.p2.toUnitDisk();
+    }
+    const wq1 = q1.poincareToWeierstrass();
+    const wq2 = q2.poincareToWeierstrass();
+
+    const wcp = this.weierstrassCrossProduct(wq1, wq2);
+
+    //calculate centre of arcCircle relative to unit disk
+    const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
+
+    //translate points to origin before calculating arctan
+    q1.x = q1.x - arcCentre.x;
+    q1.y = q1.y - arcCentre.y;
+    q2.x = q2.x - arcCentre.x;
+    q2.y = q2.y - arcCentre.y;
+
+    const r = Math.sqrt((q1.x * q1.x) + (q1.y * q1.y));
+
+    let arcCircle;
+    if (this.isOnUnitDisk) {
+      arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
+    } else {
+      arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius, false);
+    }
+
+    let alpha = Math.atan2(q1.y, q1.x);
+
+    let beta = Math.atan2(q2.y, q2.x);
+
+    //angles are in (-pi, pi), transform to (0,2pi)
+    alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
+    beta = (beta < 0) ? 2 * Math.PI + beta : beta;
+
+    //check whether points are in clockwise order and assign angles accordingly
+    const cw = E.clockwise(alpha, beta);
+    if (cw) {
+      this.startAngle = alpha;
+      this.endAngle = beta;
+    } else {
+      this.startAngle = beta;
+      this.endAngle = alpha;
+    }
+
+    this.circle = arcCircle;
+    this.clockwise = cw;
+    this.straightLine = false;
+  }
+
+  weierstrassCrossProduct(point3D_1, point3D_2){
     let r = {
       x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
       y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
       z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
     };
-
-    const norm = Math.sqrt(r.x * r.x + r.y * r.y - r.z * r.z);
-    if (E.toFixed(norm) == 0) {
-      console.error('weierstrassCrossProduct: division by zero error');
-    }
-    r.x = r.x / norm;
-    r.y = r.y / norm;
-    r.z = r.z / norm;
     return r;
   }
 
@@ -288,7 +280,6 @@ export class Polygon {
       if(E.distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing){
         let p;
         const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
-
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
           if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
@@ -381,5 +372,5 @@ export class Polygon {
       return new Polygon(newVertices, false);
     }
   }
-  
+
 }

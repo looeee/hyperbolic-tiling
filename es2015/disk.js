@@ -94,7 +94,6 @@ export class Disk {
 
     const points = p.spacedPointsOnEdges();
     const centre = p.barycentre();
-
     this.draw.polygon(points, centre, color, texture, wireframe);
 
   }

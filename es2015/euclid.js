@@ -102,7 +102,7 @@ export const randomInt = (min, max) => {
 //Change it back to a float
 export const toFixed = (number, places) => {
   //default to twelve as this seems to be the point after which fp errors arise
-  places = places || 12;
+  places = places || 10;
   return parseFloat(number.toFixed(places));
 }
 
