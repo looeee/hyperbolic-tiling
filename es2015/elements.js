@@ -256,7 +256,11 @@ export class Arc {
 // *   POLYGON CLASS
 // *
 // *************************************************************************
-
+//NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
+//making material DoubleSide but if this causes problems I'll have to add some
+//way of making sure the vertices are in the right winding order
+//TODO: would it be more efficient to calcucate the arcs that make the edges
+//when the polygon is created?
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 export class Polygon {

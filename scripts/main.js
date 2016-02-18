@@ -602,7 +602,11 @@ var Arc = function () {
 // *   POLYGON CLASS
 // *
 // *************************************************************************
-
+//NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
+//making material DoubleSide but if this causes problems I'll have to add some
+//way of making sure the vertices are in the right winding order
+//TODO: would it be more efficient to calcucate the arcs that make the edges
+//when the polygon is created?
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 
@@ -779,9 +783,9 @@ var Transform = function () {
 // *
 // *  TRANSFORMATIONS CLASS
 // *
+// *  orientation: reflection = -1 OR rotation = 1
 // *************************************************************************
 
-//orientation: reflection = -1 OR rotation = 1
 var Transformations = function () {
   function Transformations(p, q) {
     babelHelpers.classCallCheck(this, Transformations);
@@ -802,8 +806,6 @@ var Transformations = function () {
     this.identity = new Transform(identityMatrix(3));
   }
 
-  //TESTED: working
-
   babelHelpers.createClass(Transformations, [{
     key: 'initHypotenuseReflection',
     value: function initHypotenuseReflection() {
@@ -813,9 +815,6 @@ var Transformations = function () {
       this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
       this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
     }
-
-    //TESTED: working but putting gaps between objects
-
   }, {
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
@@ -837,18 +836,12 @@ var Transformations = function () {
       this.edgeReflection.matrix[2][0] = -sinh2q; //Math.sinh(num * Math.PI / (den));
       this.edgeReflection.matrix[2][2] = cosh2q; //Math.cosh(num * Math.PI / (den));
     }
-
-    //TESTED: working
-
   }, {
     key: 'initEdgeBisectorReflection',
     value: function initEdgeBisectorReflection() {
       this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
       this.edgeBisectorReflection.matrix[1][1] = -1;
     }
-
-    //TESTED: working
-
   }, {
     key: 'initPgonRotations',
     value: function initPgonRotations() {
@@ -868,9 +861,6 @@ var Transformations = function () {
         this.rotatePolygonCCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
       }
     }
-
-    //orientation: 0 -> reflection, 1 -> rotation
-
   }, {
     key: 'initEdges',
     value: function initEdges() {
@@ -882,9 +872,6 @@ var Transformations = function () {
         });
       }
     }
-
-    //TESTED: not working!
-
   }, {
     key: 'initEdgeTransforms',
     value: function initEdgeTransforms() {
@@ -1042,7 +1029,7 @@ var ThreeJS = function () {
   }
 
   babelHelpers.createClass(ThreeJS, [{
-    key: "init",
+    key: 'init',
     value: function init() {
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
@@ -1052,7 +1039,7 @@ var ThreeJS = function () {
       this.initRenderer();
     }
   }, {
-    key: "reset",
+    key: 'reset',
     value: function reset() {
       cancelAnimationFrame(this.id); // Stop the animation
       this.clearScene();
@@ -1061,7 +1048,7 @@ var ThreeJS = function () {
       this.init();
     }
   }, {
-    key: "clearScene",
+    key: 'clearScene',
     value: function clearScene() {
       for (var i = this.scene.children.length - 1; i >= 0; i--) {
         //this.scene.children[i].material.map.dispose();
@@ -1072,19 +1059,19 @@ var ThreeJS = function () {
       }
     }
   }, {
-    key: "initCamera",
+    key: 'initCamera',
     value: function initCamera() {
       this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
       this.scene.add(this.camera);
     }
   }, {
-    key: "initLighting",
+    key: 'initLighting',
     value: function initLighting() {
       var ambientLight = new THREE.AmbientLight(0xffffff);
       this.scene.add(ambientLight);
     }
   }, {
-    key: "initRenderer",
+    key: 'initRenderer',
     value: function initRenderer() {
       if (this.renderer === undefined) {
         this.renderer = new THREE.WebGLRenderer({
@@ -1100,7 +1087,7 @@ var ThreeJS = function () {
       this.render();
     }
   }, {
-    key: "disk",
+    key: 'disk',
     value: function disk(centre, radius, color) {
       if (color === undefined) color = 0xffffff;
 
@@ -1112,7 +1099,7 @@ var ThreeJS = function () {
       this.scene.add(circle);
     }
   }, {
-    key: "segment",
+    key: 'segment',
     value: function segment(circle, startAngle, endAngle, color) {
       if (color === undefined) color = 0xffffff;
 
@@ -1134,7 +1121,7 @@ var ThreeJS = function () {
       this.scene.add(s);
     }
   }, {
-    key: "line",
+    key: 'line',
     value: function line(start, end, color) {
       if (color === undefined) color = 0xffffff;
 
@@ -1148,7 +1135,7 @@ var ThreeJS = function () {
       this.scene.add(l);
     }
   }, {
-    key: "polygon",
+    key: 'polygon',
     value: function polygon(vertices, centre, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
       var l = vertices.length;
@@ -1187,7 +1174,7 @@ var ThreeJS = function () {
     //TODO learn how UVs work then write this function
 
   }, {
-    key: "setUvs",
+    key: 'setUvs',
     value: function setUvs(geometry) {
       var uvs = geometry.faceVertexUvs[0];
       for (var i = 0; i < uvs.length; i++) {
@@ -1202,7 +1189,7 @@ var ThreeJS = function () {
     //solved this but this might cause problems with textures
 
   }, {
-    key: "createMesh",
+    key: 'createMesh',
     value: function createMesh(geometry, color, imageURL, wireframe) {
       if (wireframe === undefined) wireframe = false;
       if (color === undefined) color = 0xffffff;
@@ -1230,7 +1217,7 @@ var ThreeJS = function () {
       return new THREE.Mesh(geometry, material);
     }
   }, {
-    key: "render",
+    key: 'render',
     value: function render() {
       var _this = this;
 
@@ -1239,6 +1226,20 @@ var ThreeJS = function () {
       });
 
       this.renderer.render(this.scene, this.camera);
+    }
+
+    //convert the canvas to a base64URL and send to saveImage.php
+    //TODO: make work!
+
+  }, {
+    key: 'saveImage',
+    value: function saveImage() {
+      var data = this.renderer.domElement.toDataURL('image/png');
+      console.log(data);
+      var xhttp = new XMLHttpRequest();
+      xhttp.open('POST', 'saveImage.php', true);
+      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      xhttp.send('img=' + data);
     }
   }]);
   return ThreeJS;
@@ -1381,21 +1382,23 @@ var RegularTesselation = function () {
   function RegularTesselation(p, q, maxLayers) {
     babelHelpers.classCallCheck(this, RegularTesselation);
 
-    this.layers = [];
-    for (var i = 0; i <= maxLayers; i++) {
-      this.layers[i] = [];
-    }
+    //TESTING
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
-    this.disk = new Disk();
 
     this.p = p;
     this.q = q;
     this.maxLayers = maxLayers || 5;
-    this.params = new Parameters(p, q);
 
+    this.disk = new Disk();
+    this.params = new Parameters(p, q);
     this.transforms = new Transformations(p, q);
+
+    this.layers = [];
+    for (var i = 0; i <= maxLayers; i++) {
+      this.layers[i] = [];
+    }
 
     if (this.checkParams()) {
       return false;
@@ -1406,7 +1409,7 @@ var RegularTesselation = function () {
 
   babelHelpers.createClass(RegularTesselation, [{
     key: 'init',
-    value: function init() {
+    value: function init(p, q, maxLayers) {
       this.fr = this.fundamentalRegion();
       this.buildCentralPattern();
       this.buildCentralPolygon();
@@ -1439,56 +1442,6 @@ var RegularTesselation = function () {
 
       //poly = poly.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
-    }
-  }, {
-    key: 'drawLayers',
-    value: function drawLayers() {
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = this.layers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var layer = _step.value;
-          var _iteratorNormalCompletion2 = true;
-          var _didIteratorError2 = false;
-          var _iteratorError2 = undefined;
-
-          try {
-            for (var _iterator2 = layer[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var pgon = _step2.value;
-
-              this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
-            }
-          } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                _iterator2.return();
-              }
-            } finally {
-              if (_didIteratorError2) {
-                throw _iteratorError2;
-              }
-            }
-          }
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1541,65 +1494,6 @@ var RegularTesselation = function () {
         vertices.push(p.transform(this.transforms.rotatePolygonCW[i]));
       }
       this.centralPolygon = new Polygon(vertices, true);
-    }
-  }, {
-    key: 'drawPattern',
-    value: function drawPattern(pgonArray) {
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = pgonArray[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var pgon = _step3.value;
-
-          this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-    }
-  }, {
-    key: 'transformPattern',
-    value: function transformPattern(pattern, transform) {
-      var newPattern = [];
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
-
-      try {
-        for (var _iterator4 = pattern[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var poly = _step4.value;
-
-          newPattern.push(poly.transform(transform));
-        }
-      } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
-          }
-        } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
-          }
-        }
-      }
-
-      return newPattern;
     }
   }, {
     key: 'generateLayers',
@@ -1658,6 +1552,115 @@ var RegularTesselation = function () {
         pSkip = (pSkip + 1) % this.p;
       }
     }
+  }, {
+    key: 'transformPattern',
+    value: function transformPattern(pattern, transform) {
+      var newPattern = [];
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = pattern[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var poly = _step.value;
+
+          newPattern.push(poly.transform(transform));
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return newPattern;
+    }
+  }, {
+    key: 'drawPattern',
+    value: function drawPattern(pgonArray) {
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = pgonArray[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var pgon = _step2.value;
+
+          this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
+          }
+        }
+      }
+    }
+  }, {
+    key: 'drawLayers',
+    value: function drawLayers() {
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = this.layers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var layer = _step3.value;
+          var _iteratorNormalCompletion4 = true;
+          var _didIteratorError4 = false;
+          var _iteratorError4 = undefined;
+
+          try {
+            for (var _iterator4 = layer[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+              var pgon = _step4.value;
+
+              this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
+            }
+          } catch (err) {
+            _didIteratorError4 = true;
+            _iteratorError4 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                _iterator4.return();
+              }
+            } finally {
+              if (_didIteratorError4) {
+                throw _iteratorError4;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+    }
 
     //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
     //either an elliptical or euclidean tesselation);
@@ -1697,12 +1700,17 @@ fundamentalRegion() {
   const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
   const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
   const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
-   const circle = new Circle(d, 0, r);
-   //there will be two points of intersection, of which we want the first
+
+  const circle = new Circle(d, 0, r);
+
+  //there will be two points of intersection, of which we want the first
   const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
-   const p2 = new Point(d - r, 0);
-   const vertices = [this.disk.centre, p1, p2];
-   return new Polygon(vertices);
+
+  const p2 = new Point(d - r, 0);
+
+  const vertices = [this.disk.centre, p1, p2];
+
+  return new Polygon(vertices);
 }
 */
 

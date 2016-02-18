@@ -20,13 +20,13 @@ export const distance = (p1, p2) => {
 //needs to take into account roundoff errors so returns true if
 //test is close to 0
 export const throughOrigin = (p1, p2) => {
-  if ( (toFixed(p1.x) == 0) && (toFixed(p2.x) === 0) ) {
+  if ((toFixed(p1.x) == 0) && (toFixed(p2.x) === 0)) {
     //vertical line through centre
     return true;
   }
   const test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
 
-  if ( toFixed(test) == 0 ) return true;
+  if (toFixed(test) == 0) return true;
   else return false;
 }
 
@@ -53,15 +53,17 @@ export const circleLineIntersect = (circle, p1, p2) => {
     //point 1
     const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y, circle.isOnUnitDisk);
     //point 2
-    const q2 = new Point((t + dt) * dx + p1.x,(t + dt) * dy + p1.y, circle.isOnUnitDisk);
+    const q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y, circle.isOnUnitDisk);
 
     return {
       p1: q1,
       p2: q2
     };
-  } else if (d2 === r) { //line is tangent to circle
+  }
+  else if (d2 === r) { //line is tangent to circle
     return p;
-  } else {
+  }
+  else {
     console.warn('Warning: line does not intersect circle!');
     return false;
   }
@@ -109,10 +111,10 @@ export const toFixed = (number, places) => {
 //are the angles alpha, beta in clockwise order on unit disk?
 export const clockwise = (alpha, beta) => {
   let cw = true;
-  const a = (beta > 3*Math.PI/2 && alpha < Math.PI/2);
+  const a = (beta > 3 * Math.PI / 2 && alpha < Math.PI / 2);
   const b = (beta - alpha > Math.PI);
   const c = ((alpha > beta) && !(alpha - beta > Math.PI));
-  if(a || b || c){
+  if (a || b || c) {
     cw = false;
   }
   return cw;

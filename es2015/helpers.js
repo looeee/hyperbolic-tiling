@@ -34,14 +34,13 @@ export class Transform {
 // *
 // *  TRANSFORMATIONS CLASS
 // *
+// *  orientation: reflection = -1 OR rotation = 1
 // *************************************************************************
 
-//orientation: reflection = -1 OR rotation = 1
 export class Transformations {
   constructor(p, q) {
     this.p = p;
     this.q = q;
-
 
     this.initHypotenuseReflection();
     this.initEdgeReflection();
@@ -57,7 +56,6 @@ export class Transformations {
 
   }
 
-  //TESTED: working
   initHypotenuseReflection() {
     this.hypReflection = new Transform(E.identityMatrix(3), -1);
     this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
@@ -66,15 +64,14 @@ export class Transformations {
     this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
   }
 
-  //TESTED: working but putting gaps between objects
   initEdgeReflection() {
     const cosp = Math.cos(Math.PI / this.p);
     const sinp = Math.sin(Math.PI / this.p);
     const cos2p = Math.cos(2 * Math.PI / this.p);
     const sin2p = Math.sin(2 * Math.PI / this.p);
 
-    const coshq = Math.cos(Math.PI / this.q) / sinp//Math.cosh(Math.PI / this.q);
-    const sinhq = Math.sqrt(coshq * coshq - 1);//Math.sinh(Math.PI / this.q);
+    const coshq = Math.cos(Math.PI / this.q) / sinp //Math.cosh(Math.PI / this.q);
+    const sinhq = Math.sqrt(coshq * coshq - 1); //Math.sinh(Math.PI / this.q);
 
     const cosh2q = 2 * coshq * coshq - 1;
     const sinh2q = 2 * sinhq * coshq;
@@ -87,13 +84,11 @@ export class Transformations {
     this.edgeReflection.matrix[2][2] = cosh2q //Math.cosh(num * Math.PI / (den));
   }
 
-  //TESTED: working
   initEdgeBisectorReflection() {
     this.edgeBisectorReflection = new Transform(E.identityMatrix(3), -1);
     this.edgeBisectorReflection.matrix[1][1] = -1;
   }
 
-  //TESTED: working
   initPgonRotations() {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
@@ -112,24 +107,20 @@ export class Transformations {
     }
   }
 
-  //orientation: 0 -> reflection, 1 -> rotation
   initEdges() {
     this.edges = [];
     for (let i = 0; i < this.p; i++) {
       this.edges.push({
         orientation: 1,
         adjacentEdge: i,
-      })
+      });
     }
-
-
   }
 
-  //TESTED: not working!
   initEdgeTransforms() {
     this.edgeTransforms = [];
 
-    for(let i = 0; i < this.p; i++) {
+    for (let i = 0; i < this.p; i++) {
       const adj = this.edges[i].adjacentEdge;
       //Case 1: reflection
       if (this.edges[i].orientation === -1) {
@@ -142,7 +133,8 @@ export class Transformations {
         let mat = E.multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
         mat = E.multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
         this.edgeTransforms[i] = new Transform(mat);
-      } else {
+      }
+      else {
         console.error('Error: invalid orientation value');
         console.error(this.edges[i]);
       }
@@ -180,17 +172,22 @@ export class Parameters {
       if (pgonNum === 0) { //layer 0, pgon 0
         if (this.q === 3) return this.maxExposure;
         else return this.minExposure;
-      } else return this.maxExposure; //layer 0, pgon != 0
-    } else { //layer != 0
+      }
+      else return this.maxExposure; //layer 0, pgon != 0
+    }
+    else { //layer != 0
       if (vertexNum === 0 && pgonNum === 0) {
         return this.minExposure;
-      } else if (vertexNum === 0) {
+      }
+      else if (vertexNum === 0) {
         if (this.q !== 3) return this.maxExposure;
         else return this.minExposure;
-      } else if (pgonNum === 0) {
+      }
+      else if (pgonNum === 0) {
         if (this.q !== 3) return this.minExposure;
         else return this.maxExposure;
-      } else return this.maxExposure;
+      }
+      else return this.maxExposure;
     }
   }
 
@@ -198,11 +195,13 @@ export class Parameters {
     if (exposure === this.minExposure) {
       if (this.q !== 3) return 1;
       else return 3;
-    } else if (exposure === this.maxExposure) {
+    }
+    else if (exposure === this.maxExposure) {
       if (this.p === 3) return 1;
       else if (this.q === 3) return 2;
       else return 0;
-    } else {
+    }
+    else {
       console.error('pSkip: wrong exposure value!')
       return false;
     }
@@ -213,16 +212,20 @@ export class Parameters {
       if (vertexNum === 0) {
         if (this.q !== 3) return -1;
         else return 0;
-      } else {
+      }
+      else {
         if (this.p === 3) return -1;
         else return 0;
       }
-    } else if (exposure === this.maxExposure) {
+    }
+    else if (exposure === this.maxExposure) {
       if (vertexNum === 0) {
         if (this.p === 3 || this.q === 3) return 0;
         else return -1;
-      } else return 0;
-    } else {
+      }
+      else return 0;
+    }
+    else {
       console.error('qSkip: wrong exposure value!')
       return false;
     }
@@ -233,11 +236,13 @@ export class Parameters {
       if (this.p === 3) return 1;
       else if (this.q === 3) return this.p - 5;
       else return this.p - 3;
-    } else if (exposure === this.maxExposure) {
+    }
+    else if (exposure === this.maxExposure) {
       if (this.p === 3) return 1;
       else if (this.q === 3) return this.p - 4;
       else return this.p - 2;
-    } else {
+    }
+    else {
       console.error('verticesToDo: wrong exposure value!')
       return false;
     }
@@ -249,22 +254,26 @@ export class Parameters {
         if (this.p === 3) return this.q - 4;
         else if (this.q === 3) return 1;
         else return this.q - 3;
-      } else {
+      }
+      else {
         if (this.p === 3) return this.q - 4;
         else if (this.q === 3) return 1;
         else return this.q - 2;
       }
-    } else if (exposure === this.maxExposure) {
+    }
+    else if (exposure === this.maxExposure) {
       if (vertexNum === 0) {
         if (this.p === 3) return this.q - 3;
         else if (this.q === 3) return 1;
         else return this.q - 3;
-      } else {
+      }
+      else {
         if (this.p === 3) return this.q - 3;
         else if (this.q === 3) return 1;
         else return this.q - 2;
       }
-    } else {
+    }
+    else {
       console.error('pgonsToDo: wrong exposure value!')
       return false;
     }

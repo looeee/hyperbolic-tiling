@@ -3,7 +3,10 @@ import {
   Polygon, Arc, Circle, Point
 }
 from './elements';
-import { ThreeJS } from './threejs';
+import {
+  ThreeJS
+}
+from './threejs';
 
 // * ***********************************************************************
 // *
@@ -21,7 +24,7 @@ export class Disk {
   }
 
   init() {
-    this.centre = new Point(0,0, true);
+    this.centre = new Point(0, 0, true);
     this.drawDisk();
   }
 
@@ -32,11 +35,11 @@ export class Disk {
 
   drawPoint(point, radius, color) {
     let p;
-    if(point.isOnUnitDisk){
+    if (point.isOnUnitDisk) {
       p = point.fromUnitDisk();
       this.draw.disk(p, radius, color, false);
     }
-    else{
+    else {
       p = point;
     }
 
@@ -51,7 +54,7 @@ export class Disk {
   drawArc(arc, color) {
     //resize if arc is on unit disk
     let a;
-    if(arc.isOnUnitDisk) a = arc.fromUnitDisk();
+    if (arc.isOnUnitDisk) a = arc.fromUnitDisk();
     else a = arc;
 
     if (this.checkPoints(a.p1, a.p2)) {
@@ -60,7 +63,8 @@ export class Disk {
 
     if (a.straightLine) {
       this.draw.line(a.p1, a.p2, color);
-    } else {
+    }
+    else {
       this.draw.segment(a.circle, a.startAngle, a.endAngle, color);
     }
   }
@@ -68,7 +72,7 @@ export class Disk {
   drawPolygonOutline(polygon, color) {
     //resize if polygon is on unit disk
     let p;
-    if(polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
+    if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
 
     if (this.checkPoints(p.vertices)) {
@@ -82,10 +86,10 @@ export class Disk {
     }
   }
 
-  drawPolygon(polygon, color, texture, wireframe){
+  drawPolygon(polygon, color, texture, wireframe) {
     //resize if polygon is on unit disk
     let p;
-    if(polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
+    if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
     else p = polygon;
     if (this.checkPoints(p.vertices)) {
       return false
@@ -100,10 +104,10 @@ export class Disk {
   //return true if any of the points is not in the disk
   checkPoints(...points) {
     //pass in either a list of points or an array
-    if(points[0] instanceof Array) points = points[0];
+    if (points[0] instanceof Array) points = points[0];
 
     let test = false;
-    for (let i=0; i< points.length; i++) {
+    for (let i = 0; i < points.length; i++) {
       if (E.distance(points[i], this.centre) > window.radius) {
         console.error('Error! Point (' + points[i].x + ', ' + point[i].y + ') lies outside the plane!');
         test = true;

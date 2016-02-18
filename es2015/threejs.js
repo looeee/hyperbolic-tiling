@@ -199,4 +199,15 @@ export class ThreeJS {
     this.renderer.render(this.scene, this.camera);
   }
 
+  //convert the canvas to a base64URL and send to saveImage.php
+  //TODO: make work!
+  saveImage(){
+    const data = this.renderer.domElement.toDataURL('image/png');
+    console.log(data);
+    const xhttp = new XMLHttpRequest();
+    xhttp.open('POST', 'saveImage.php', true);
+    xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhttp.send('img=' + data);
+  }
+
 }

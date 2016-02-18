@@ -25,19 +25,23 @@ from './helpers';
 // *************************************************************************
 export class RegularTesselation {
   constructor(p, q, maxLayers) {
-    this.layers = [];
-    for(let i = 0; i <= maxLayers; i++ ){ this.layers[i] = []}
+    //TESTING
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
-    this.disk = new Disk();
 
     this.p = p;
     this.q = q;
     this.maxLayers = maxLayers || 5;
-    this.params = new Parameters(p, q);
 
+    this.disk = new Disk();
+    this.params = new Parameters(p, q);
     this.transforms = new Transformations(p, q);
+
+    this.layers = [];
+    for (let i = 0; i <= maxLayers; i++) {
+      this.layers[i] = []
+    }
 
     if (this.checkParams()) {
       return false;
@@ -46,7 +50,7 @@ export class RegularTesselation {
     this.init();
   }
 
-  init() {
+  init(p, q, maxLayers) {
     this.fr = this.fundamentalRegion();
     this.buildCentralPattern();
     this.buildCentralPolygon();
@@ -69,7 +73,7 @@ export class RegularTesselation {
     let p = new Point(0, 0, false);
     let q = new Point(-161, 161, false);
     let w = new Point(129, 0, false);
-    let pgon = new Polygon([p,q,w], false);
+    let pgon = new Polygon([p, q, w], false);
 
     //this.disk.drawPolygon(pgon, 0x5c30e0, texture, true);
     //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
@@ -81,19 +85,11 @@ export class RegularTesselation {
 
   }
 
-  drawLayers(){
-    for(let layer of this.layers){
-      for(let pgon of layer){
-        this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
-      }
-    }
-  }
-
   //fundamentalRegion calculation using Dunham's method
   fundamentalRegion() {
-    const cosh2 = Math.cot(Math.PI / this.p)*Math.cot(Math.PI / this.q);
+    const cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
 
-    const sinh2 = Math.sqrt(cosh2 *cosh2 - 1);
+    const sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
 
     const coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
     const sinhq = Math.sqrt(coshq * coshq - 1);
@@ -125,27 +121,13 @@ export class RegularTesselation {
     }
   }
 
-  buildCentralPolygon(){
+  buildCentralPolygon() {
     const vertices = [];
-    for(let i = 0; i < this.p; i++){
+    for (let i = 0; i < this.p; i++) {
       const p = this.fr.vertices[1];
       vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
     }
     this.centralPolygon = new Polygon(vertices, true);
-  }
-
-  drawPattern(pgonArray) {
-    for (let pgon of pgonArray) {
-      this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
-    }
-  }
-
-  transformPattern(pattern, transform){
-    const newPattern = [];
-    for(let poly of pattern){
-      newPattern.push(poly.transform(transform));
-    }
-    return newPattern;
   }
 
   generateLayers() {
@@ -154,7 +136,8 @@ export class RegularTesselation {
       for (let j = 0; j < this.q - 2; j++) {
         if ((this.p === 3) && (this.q - 3 === j)) {
           this.layers[i].push(this.centralPolygon.transform(qTransform));
-        } else {
+        }
+        else {
           this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
         }
         if ((-1 % this.p) !== 0) {
@@ -181,7 +164,8 @@ export class RegularTesselation {
       let qSkip = this.params.qSkip(exposure, i);
       if (qSkip % this.p !== 0) {
         qTransform = this.transforms.shiftTrans(pTransform, qSkip);
-      } else {
+      }
+      else {
         qTransform = pTransform;
       }
 
@@ -190,7 +174,8 @@ export class RegularTesselation {
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
           this.layers[layer].push(this.centralPolygon.transform(qTransform));
-        } else {
+        }
+        else {
           this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
         }
         if ((-1 % this.p) !== 0) {
@@ -201,6 +186,28 @@ export class RegularTesselation {
     }
   }
 
+  transformPattern(pattern, transform) {
+    const newPattern = [];
+    for (let poly of pattern) {
+      newPattern.push(poly.transform(transform));
+    }
+    return newPattern;
+  }
+
+  drawPattern(pgonArray) {
+    for (let pgon of pgonArray) {
+      this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+    }
+  }
+
+  drawLayers() {
+    for (let layer of this.layers) {
+      for (let pgon of layer) {
+        this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+      }
+    }
+  }
+
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
   //For now also require p,q > 3, as these are special cases
@@ -208,43 +215,47 @@ export class RegularTesselation {
     if (this.maxLayers < 0 || isNaN(this.maxLayers)) {
       console.error('maxLayers must be greater than 0');
       return true;
-    } else if ((this.p - 2) * (this.q - 2) <= 4) {
+    }
+    else if ((this.p - 2) * (this.q - 2) <= 4) {
       console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
       return true;
-    } else if (this.q < 3 || isNaN(this.q)) {
+    }
+    else if (this.q < 3 || isNaN(this.q)) {
       console.error('Tesselation error: at least 3 p-gons must meet \
                     at each vertex!');
       return true;
-    } else if (this.p < 3 || isNaN(this.p)) {
+    }
+    else if (this.p < 3 || isNaN(this.p)) {
       console.error('Tesselation error: polygon needs at least 3 sides!');
       return true;
-    } else {
+    }
+    else {
       return false;
     }
   }
 }
 
 
-  /*
-  //calculate the fundamental region (triangle out of which Layer 0 is built)
-  //using Coxeter's method
-  fundamentalRegion() {
-    const s = Math.sin(Math.PI / this.p);
-    const t = Math.cos(Math.PI / this.q);
-    //multiply these by the disks radius (Coxeter used unit disk);
-    const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
-    const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
-    const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
+/*
+//calculate the fundamental region (triangle out of which Layer 0 is built)
+//using Coxeter's method
+fundamentalRegion() {
+  const s = Math.sin(Math.PI / this.p);
+  const t = Math.cos(Math.PI / this.q);
+  //multiply these by the disks radius (Coxeter used unit disk);
+  const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
+  const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
+  const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
 
-    const circle = new Circle(d, 0, r);
+  const circle = new Circle(d, 0, r);
 
-    //there will be two points of intersection, of which we want the first
-    const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
+  //there will be two points of intersection, of which we want the first
+  const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
 
-    const p2 = new Point(d - r, 0);
+  const p2 = new Point(d - r, 0);
 
-    const vertices = [this.disk.centre, p1, p2];
+  const vertices = [this.disk.centre, p1, p2];
 
-    return new Polygon(vertices);
-  }
-  */
+  return new Polygon(vertices);
+}
+*/
