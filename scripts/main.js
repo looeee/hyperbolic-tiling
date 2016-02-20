@@ -68,15 +68,15 @@ var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   var p = new Point(t * dx + p1.x, t * dy + p1.y);
 
   //distance from this point to centre
-  var d2 = distance(p, circle.centre, circle.isOnUnitDisk);
+  var d2 = distance(p, circle.centre);
 
   //line intersects circle at 2 points
   if (d2 < r) {
     var dt = Math.sqrt(r * r - d2 * d2);
     //point 1
-    var q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y, circle.isOnUnitDisk);
+    var q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
     //point 2
-    var q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y, circle.isOnUnitDisk);
+    var q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y);
 
     return {
       p1: q1,
@@ -103,14 +103,14 @@ var spacedPointOnArc = function spacedPointOnArc(circle, point, distance) {
   var yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
 
   return {
-    p1: new Point(xPos, yPos, point.isOnUnitDisk),
-    p2: new Point(xNeg, yNeg, point.isOnUnitDisk)
+    p1: new Point(xPos, yPos),
+    p2: new Point(xNeg, yNeg)
   };
 };
 
 //find the two points at a distance from point1 along line defined by point1, point2
 var spacedPointOnLine = function spacedPointOnLine(point1, point2, distance) {
-  var circle = new Circle(point1.x, point1.y, distance, point1.isOnUnitDisk);
+  var circle = new Circle(point1.x, point1.y, distance);
   return points = circleLineIntersect(circle, point1, point2);
 };
 
@@ -170,7 +170,7 @@ export const slope = (p1, p2) => {
 
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => {
-  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p1.isOnUnitDisk);
+  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 }
 
 //intersection of two circles with equations:
@@ -197,9 +197,9 @@ export const circleIntersect = (circle0, circle1) => {
   const y1 = yPartial + 2 * del * (a - c) / (dist * dist);
   const y2 = yPartial - 2 * del * (a - c) / (dist * dist);
 
-  const p1 = new Point(x1, y1, circle0.isOnUnitDisk);
+  const p1 = new Point(x1, y1);
 
-  const p2 = new Point(x2, y2, circle0.isOnUnitDisk);
+  const p2 = new Point(x2, y2);
 
   return {
     p1: p1,
@@ -212,11 +212,11 @@ export const lineReflection = (p1, p2, p3) => {
   const m = slope(p1, p2);
   //reflection in y axis
   if (m > 999999 || m < -999999) {
-    return new Point( p3.x, -p3.y, p1.isOnUnitDisk);
+    return new Point( p3.x, -p3.y);
   }
   //reflection in x axis
   else if ( toFixed(m) == 0) {
-    return new Point( -p3.x, p3.y, p1.isOnUnitDisk);
+    return new Point( -p3.x, p3.y);
   }
   //reflection in arbitrary line
   else {
@@ -224,7 +224,7 @@ export const lineReflection = (p1, p2, p3) => {
     const d = (p3.x + (p3.y - c) * m) / (1 + m * m);
     const x = 2 * d - p3.x;
     const y = 2 * d * m - p3.y + 2 * c;
-    return new Point(x,y, p1.isOnUnitDisk);
+    return new Point(x,y);
   }
 }
 
@@ -248,7 +248,7 @@ export const intersection = (p1, m1, p2, m2) => {
     y = m1 * x + c1;
   }
 
-  return new Point(x, y, p1.isOnUnitDisk);
+  return new Point(x, y);
 }
 
 //get the circle inverse of a point p with respect a circle radius r centre c
@@ -256,7 +256,7 @@ export const inverse = (point, circle) => {
   const c = circle.centre;
   const r = circle.radius;
   const alpha = (r * r) / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
-  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y, circle.isOnUnitDisk);
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
 }
 
 //angle in radians between two points on circle of radius r
@@ -272,7 +272,7 @@ export const centralAngle = (p1, p2, r) => {
 //calculate the normal vector given 2 points
 export const normalVector = (p1, p2) => {
   let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d, p1.isOnUnitDisk);
+  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
 }
 
 export const radians = (degrees) => {
@@ -303,7 +303,7 @@ export const greatCircle = (p1, p2, circle) => {
   const centre = intersection(m, m1, n, m2);
   const radius = distance(centre, p1);
 
-  return new Circle(centre.x, centre.y, radius, p1.isOnUnitDisk);
+  return new Circle(centre.x, centre.y, radius);
 }
 
 //slope of line perpendicular to a line defined by p1,p2
@@ -331,10 +331,8 @@ export const perpendicularSlope = (p1, p2) => {
 
 var Point = function () {
   function Point(x, y) {
-    var isOnUnitDisk = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
     babelHelpers.classCallCheck(this, Point);
 
-    this.isOnUnitDisk = isOnUnitDisk;
     if (toFixed(x) == 0) {
       x = 0;
     }
@@ -378,7 +376,7 @@ var Point = function () {
       var x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
       var y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
       var z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
-      var q = new Point(x, y, this.isOnUnitDisk);
+      var q = new Point(x, y);
       q.z = z;
       return q.weierstrassToPoincare();
     }
@@ -389,7 +387,7 @@ var Point = function () {
       var x = 2 * factor * this.x;
       var y = 2 * factor * this.y;
       var z = factor * (1 + this.x * this.x + this.y * this.y);
-      var p = new Point(x, y, this.isOnUnitDisk);
+      var p = new Point(x, y);
       p.z = z;
       return p;
     }
@@ -399,7 +397,7 @@ var Point = function () {
       var factor = 1 / (1 + this.z);
       var x = factor * this.x;
       var y = factor * this.y;
-      return new Point(x, y, this.isOnUnitDisk);
+      return new Point(x, y);
     }
   }, {
     key: 'clone',
@@ -410,45 +408,15 @@ var Point = function () {
   return Point;
 }();
 
-var Circle = function () {
-  function Circle(centreX, centreY, radius) {
-    var isOnUnitDisk = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
-    babelHelpers.classCallCheck(this, Circle);
+var Circle = function Circle(centreX, centreY, radius) {
+  babelHelpers.classCallCheck(this, Circle);
 
-    this.isOnUnitDisk = isOnUnitDisk;
-    if (toFixed(radius) == 0) {
-      radius = 0;
-    }
-    this.centre = new Point(centreX, centreY, this.isOnUnitDisk);
-    this.radius = radius;
+  if (toFixed(radius) == 0) {
+    radius = 0;
   }
-
-  //map from disk of window.radius to unit disk
-
-  babelHelpers.createClass(Circle, [{
-    key: 'toUnitDisk',
-    value: function toUnitDisk() {
-      if (this.isOnUnitDisk === true) {
-        console.warn('Circle ' + this + 'already on unit disk!');
-        return this;
-      }
-      return new Circle(this.centre.x / window.radius, this.centre.y / window.radius, this.radius / window.radius);
-    }
-
-    //map from unit disk to disk of window.radius
-
-  }, {
-    key: 'fromUnitDisk',
-    value: function fromUnitDisk() {
-      if (this.isOnUnitDisk === false) {
-        console.warn('Circle ' + this + 'not on unit disk!');
-        return this;
-      }
-      return new Circle(this.centre.x * window.radius, this.centre.y * window.radius, this.radius * window.radius);
-    }
-  }]);
-  return Circle;
-}();
+  this.centre = new Point(centreX, centreY);
+  this.radius = radius;
+};
 
 // * ***********************************************************************
 // *
@@ -458,10 +426,8 @@ var Circle = function () {
 
 var Arc = function () {
   function Arc(p1, p2) {
-    var isOnUnitDisk = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
     babelHelpers.classCallCheck(this, Arc);
 
-    this.isOnUnitDisk = isOnUnitDisk;
     this.p1 = p1;
     this.p2 = p2;
 
@@ -532,13 +498,60 @@ var Arc = function () {
 // *
 // *************************************************************************
 
-var Edge = function Edge(v1, v2) {
-  babelHelpers.classCallCheck(this, Edge);
+var Edge = function () {
+  function Edge(v1, v2) {
+    babelHelpers.classCallCheck(this, Edge);
 
-  this.startPoint = v1;
-  this.endPoint = v2;
-  this.arc = new Arc(v1, v2);
-};
+    this.startPoint = v1;
+    this.endPoint = v2;
+    this.arc = new Arc(v1, v2);
+
+    this.points = [];
+    this.spacedPoints();
+    console.log(this);
+  }
+
+  babelHelpers.createClass(Edge, [{
+    key: 'spacedPoints',
+    value: function spacedPoints() {
+      var spacing = 0.03;
+
+      //push the first vertex
+      this.points.push(this.startPoint);
+
+      //tiny pgons near the edges of the disk don't need to be subdivided
+      if (distance(this.startPoint, this.endPoint) > spacing) {
+        var p = undefined;
+        //line not through the origin (hyperbolic arc)
+        if (!this.arc.straightLine) {
+          if (this.arc.clockwise) p = spacedPointOnArc(this.arc.circle, this.startPoint, spacing).p1;else p = spacedPointOnArc(this.arc.circle, this.startPoint, spacing).p2;
+
+          this.points.push(p);
+
+          while (distance(p, this.endPoint) > spacing) {
+            if (this.arc.clockwise) p = spacedPointOnArc(this.arc.circle, p, spacing).p1;else p = spacedPointOnArc(this.arc.circle, p, spacing).p2;
+            this.points.push(p);
+          }
+        }
+
+        //line through origin (straight line)
+        else {
+            p = spacedPointOnLine(this.startPoint, this.endPoint, spacing).p2;
+            this.points.push(p);
+            while (distance(p, this.endPoint) > spacing) {
+              p = spacedPointOnLine(p, this.startPoint, spacing).p1;
+              this.points.push(p);
+            }
+          }
+      }
+
+      this.points.push(this.endPoint);
+
+      return this.points;
+    }
+  }]);
+  return Edge;
+}();
 
 // * ***********************************************************************
 // *
@@ -555,10 +568,8 @@ var Edge = function Edge(v1, v2) {
 
 var Polygon = function () {
   function Polygon(vertices) {
-    var isOnUnitDisk = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
     babelHelpers.classCallCheck(this, Polygon);
 
-    this.isOnUnitDisk = isOnUnitDisk;
     this.vertices = vertices;
     this.edges = [];
     this.addEdges();
@@ -574,7 +585,7 @@ var Polygon = function () {
   }, {
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
-      var spacing = 0.1;
+      var spacing = 0.03;
       var l = this.vertices.length;
       var points = [];
 
@@ -586,7 +597,7 @@ var Polygon = function () {
         //tiny pgons near the edges of the disk don't need to be subdivided
         if (distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing) {
           var p = undefined;
-          var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
+          var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
 
           //line not through the origin (hyperbolic arc)
           if (!arc.straightLine) {
@@ -628,7 +639,7 @@ var Polygon = function () {
       for (var i = 0; i < this.vertices.length; i++) {
         newVertices.push(this.vertices[i].transform(_transform2));
       }
-      return new Polygon(newVertices, this.isOnUnitDisk);
+      return new Polygon(newVertices);
     }
 
     //find the barycentre of a non-self-intersecting polygon
@@ -655,7 +666,7 @@ var Polygon = function () {
         y += (p1.y + p2.y) * f;
       }
       f = twicearea * 3;
-      return new Point(x / f, y / f, this.isOnUnitDisk);
+      return new Point(x / f, y / f);
     }
   }]);
   return Polygon;
@@ -1323,6 +1334,8 @@ var RegularTesselation = function () {
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
+    this.texture = './images/textures/pattern1.png';
+    this.texture = '';
 
     this.p = p;
     this.q = q;
@@ -1348,12 +1361,12 @@ var RegularTesselation = function () {
     key: 'init',
     value: function init(p, q, maxLayers) {
       this.fr = this.fundamentalRegion();
-      this.buildCentralPattern();
-      this.buildCentralPolygon();
+      //this.buildCentralPattern();
+      //this.buildCentralPolygon();
 
       if (this.maxLayers > 1) {
         var t0 = performance.now();
-        this.generateLayers();
+        //this.generateLayers();
         var t1 = performance.now();
         console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }
@@ -1364,7 +1377,7 @@ var RegularTesselation = function () {
     key: 'testing',
     value: function testing() {
       var texture = './images/textures/pattern1.png';
-      //texture = '';
+      texture = '';
       //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
       var p = new Point(-.200, -.200);
@@ -1372,7 +1385,7 @@ var RegularTesselation = function () {
       var w = new Point(.59, -0.2);
       var pgon = new Polygon([p, q, w]);
 
-      this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+      this.disk.drawPolygon(pgon, 0xffffff, texture, true);
       //this.disk.drawPolygonOutline(pgon, 0xffffff);
       var poly = this.fr.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xffffff, texture, false);
@@ -1566,7 +1579,8 @@ var RegularTesselation = function () {
             for (var _iterator4 = layer[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
               var pgon = _step4.value;
 
-              this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
+              //this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+              this.disk.drawPolygon(pgon, 0xffffff, this.texture, this.wireframe);
             }
           } catch (err) {
             _didIteratorError4 = true;
@@ -1601,7 +1615,6 @@ var RegularTesselation = function () {
 
     //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
     //either an elliptical or euclidean tesselation);
-    //For now also require p,q > 3, as these are special cases
 
   }, {
     key: 'checkParams',
@@ -1676,7 +1689,6 @@ Math.cot = Math.cot || function (x) {
 // *   SETUP
 // *
 // *************************************************************************
-//window.isOnUnitDisk = new Circle(0,0,1);
 var tesselation = undefined;
 var p = randomInt(4, 7);
 var q = randomInt(4, 7);

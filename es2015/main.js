@@ -29,7 +29,6 @@ Math.cot = Math.cot || function(x) {
 // *   SETUP
 // *
 // *************************************************************************
-//window.isOnUnitDisk = new Circle(0,0,1);
 let tesselation;
 let p = E.randomInt(4, 7);
 let q = E.randomInt(4, 7);

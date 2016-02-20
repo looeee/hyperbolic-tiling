@@ -29,6 +29,8 @@ export class RegularTesselation {
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q);
+    this.texture = './images/textures/pattern1.png';
+    this.texture = '';
 
     this.p = p;
     this.q = q;
@@ -52,12 +54,12 @@ export class RegularTesselation {
 
   init(p, q, maxLayers) {
     this.fr = this.fundamentalRegion();
-    this.buildCentralPattern();
-    this.buildCentralPolygon();
+    //this.buildCentralPattern();
+    //this.buildCentralPolygon();
 
     if (this.maxLayers > 1) {
       let t0 = performance.now();
-      this.generateLayers();
+      //this.generateLayers();
       let t1 = performance.now();
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
@@ -67,7 +69,7 @@ export class RegularTesselation {
 
   testing() {
     let texture = './images/textures/pattern1.png';
-    //texture = '';
+    texture = '';
     //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
     let p = new Point(-.200, -.200);
@@ -75,7 +77,7 @@ export class RegularTesselation {
     let w = new Point(.59, -0.2);
     let pgon = new Polygon([p, q, w]);
 
-    this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+    this.disk.drawPolygon(pgon, 0xffffff, texture, true);
     //this.disk.drawPolygonOutline(pgon, 0xffffff);
     let poly = this.fr.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0xffffff, texture, false);
@@ -202,14 +204,14 @@ export class RegularTesselation {
   drawLayers() {
     for (let layer of this.layers) {
       for (let pgon of layer) {
-        this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+        //this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+        this.disk.drawPolygon(pgon, 0xffffff, this.texture, this.wireframe);
       }
     }
   }
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
-  //For now also require p,q > 3, as these are special cases
   checkParams() {
     if (this.maxLayers < 0 || isNaN(this.maxLayers)) {
       console.error('maxLayers must be greater than 0');

@@ -45,15 +45,15 @@ export const circleLineIntersect = (circle, p1, p2) => {
   const p = new Point(t * dx + p1.x, t * dy + p1.y);
 
   //distance from this point to centre
-  const d2 = distance(p, circle.centre, circle.isOnUnitDisk);
+  const d2 = distance(p, circle.centre);
 
   //line intersects circle at 2 points
   if (d2 < r) {
     const dt = Math.sqrt(r * r - d2 * d2);
     //point 1
-    const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y, circle.isOnUnitDisk);
+    const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
     //point 2
-    const q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y, circle.isOnUnitDisk);
+    const q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y);
 
     return {
       p1: q1,
@@ -81,14 +81,14 @@ export const spacedPointOnArc = (circle, point, distance) => {
   const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
 
   return {
-    p1: new Point(xPos, yPos, point.isOnUnitDisk),
-    p2: new Point(xNeg, yNeg, point.isOnUnitDisk)
+    p1: new Point(xPos, yPos),
+    p2: new Point(xNeg, yNeg)
   }
 }
 
 //find the two points at a distance from point1 along line defined by point1, point2
 export const spacedPointOnLine = (point1, point2, distance) => {
-  const circle = new Circle(point1.x, point1.y, distance, point1.isOnUnitDisk);
+  const circle = new Circle(point1.x, point1.y, distance);
   return points = circleLineIntersect(circle, point1, point2);
 }
 
@@ -152,7 +152,7 @@ export const slope = (p1, p2) => {
 
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => {
-  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, p1.isOnUnitDisk);
+  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 }
 
 //intersection of two circles with equations:
@@ -179,9 +179,9 @@ export const circleIntersect = (circle0, circle1) => {
   const y1 = yPartial + 2 * del * (a - c) / (dist * dist);
   const y2 = yPartial - 2 * del * (a - c) / (dist * dist);
 
-  const p1 = new Point(x1, y1, circle0.isOnUnitDisk);
+  const p1 = new Point(x1, y1);
 
-  const p2 = new Point(x2, y2, circle0.isOnUnitDisk);
+  const p2 = new Point(x2, y2);
 
   return {
     p1: p1,
@@ -194,11 +194,11 @@ export const lineReflection = (p1, p2, p3) => {
   const m = slope(p1, p2);
   //reflection in y axis
   if (m > 999999 || m < -999999) {
-    return new Point( p3.x, -p3.y, p1.isOnUnitDisk);
+    return new Point( p3.x, -p3.y);
   }
   //reflection in x axis
   else if ( toFixed(m) == 0) {
-    return new Point( -p3.x, p3.y, p1.isOnUnitDisk);
+    return new Point( -p3.x, p3.y);
   }
   //reflection in arbitrary line
   else {
@@ -206,7 +206,7 @@ export const lineReflection = (p1, p2, p3) => {
     const d = (p3.x + (p3.y - c) * m) / (1 + m * m);
     const x = 2 * d - p3.x;
     const y = 2 * d * m - p3.y + 2 * c;
-    return new Point(x,y, p1.isOnUnitDisk);
+    return new Point(x,y);
   }
 }
 
@@ -230,7 +230,7 @@ export const intersection = (p1, m1, p2, m2) => {
     y = m1 * x + c1;
   }
 
-  return new Point(x, y, p1.isOnUnitDisk);
+  return new Point(x, y);
 }
 
 //get the circle inverse of a point p with respect a circle radius r centre c
@@ -238,7 +238,7 @@ export const inverse = (point, circle) => {
   const c = circle.centre;
   const r = circle.radius;
   const alpha = (r * r) / (Math.pow(point.x - c.x, 2) + Math.pow(point.y - c.y, 2));
-  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y, circle.isOnUnitDisk);
+  return new Point(alpha * (point.x - c.x) + c.x, alpha * (point.y - c.y) + c.y);
 }
 
 //angle in radians between two points on circle of radius r
@@ -254,7 +254,7 @@ export const centralAngle = (p1, p2, r) => {
 //calculate the normal vector given 2 points
 export const normalVector = (p1, p2) => {
   let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d, p1.isOnUnitDisk);
+  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
 }
 
 export const radians = (degrees) => {
@@ -285,7 +285,7 @@ export const greatCircle = (p1, p2, circle) => {
   const centre = intersection(m, m1, n, m2);
   const radius = distance(centre, p1);
 
-  return new Circle(centre.x, centre.y, radius, p1.isOnUnitDisk);
+  return new Circle(centre.x, centre.y, radius);
 }
 
 //slope of line perpendicular to a line defined by p1,p2
