@@ -11,10 +11,10 @@ from './threejs';
 // * ***********************************************************************
 // *
 // *  DISK CLASS
-// *  Poincare Disk representation of the hyperbolic plane. Contains any
-// *  functions used to draw to the disk which are then passed to Three.js
-// *  Also responsible for checking whether elements are on the unit Disk
-// *  and resizing them if they are
+// *  Poincare Disk representation of the hyperbolic plane (as the unit disk).
+// *  Contains any functions used to draw to the disk which check the element
+// *  to be drawn lie on the disk then passes them to Three.js for drawing
+// *
 // *************************************************************************
 export class Disk {
   constructor() {
@@ -34,29 +34,17 @@ export class Disk {
   }
 
   drawPoint(point, radius, color) {
-    let p;
-    if (point.isOnUnitDisk) {
-      p = point.fromUnitDisk();
-      this.draw.disk(p, radius, color, false);
-    }
-    else {
-      p = point;
-    }
-
-    if (this.checkPoints(p)) {
+    if (this.checkPoints(point)) {
       return false
     }
-
     this.draw.disk(point, radius, color, false);
   }
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
   drawArc(arc, color) {
-    console.log(arc);
-    //if (this.checkPoints(arc.p1, arc.p2)) {
-    //  return false
-    //}
-
+    if (this.checkPoints(arc.p1, arc.p2)) {
+      return false
+    }
     if (arc.straightLine) {
       this.draw.line(arc.p1, arc.p2, color);
     }
@@ -66,34 +54,22 @@ export class Disk {
   }
 
   drawPolygonOutline(polygon, color) {
-    //resize if polygon is on unit disk
-    let p;
-    if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
-    else p = polygon;
-
-    if (this.checkPoints(p.vertices)) {
+    if (this.checkPoints(polygon.vertices)) {
       return false
     }
-
-    const l = p.vertices.length;
+    const l = polygon.vertices.length;
     for (let i = 0; i < l; i++) {
-      const arc = new Arc(p.vertices[i], p.vertices[(i + 1) % l])
+      const arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l])
       this.drawArc(arc, color);
     }
   }
 
   drawPolygon(polygon, color, texture, wireframe) {
-    //resize if polygon is on unit disk
-    //let p;
-    //if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
-    //else p = polygon;
-    //if (this.checkPoints(p.vertices)) {
-    //  return false
-    //}
-    const p = polygon;
-
-    const points = p.spacedPointsOnEdges();
-    const centre = p.barycentre();
+    if (this.checkPoints(polygon.vertices)) {
+      return false
+    }
+    const points = polygon.spacedPointsOnEdges();
+    const centre = polygon.barycentre();
     this.draw.polygon(points, centre, color, texture, wireframe);
 
   }
@@ -106,7 +82,7 @@ export class Disk {
     let test = false;
     for (let i = 0; i < points.length; i++) {
       if (E.distance(points[i], this.centre) > 1) {
-        console.error('Error! Point (' + points[i].x + ', ' + point[i].y + ') lies outside the plane!');
+        console.error('Error! Point (' + points[i].x + ', ' + points[i].y + ') lies outside the plane!');
         test = true;
       }
     }

@@ -61,8 +61,8 @@ export class RegularTesselation {
       let t1 = performance.now();
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
-    this.drawLayers();
-    //this.testing();
+    //this.drawLayers();
+    this.testing();
   }
 
   testing() {
@@ -71,22 +71,17 @@ export class RegularTesselation {
     //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
     let p = new Point(-.200, -.200);
-    let q = new Point(-.200, .200);
-    let w = new Point(.129, 0);
+    let q = new Point(-.200, .500);
+    let w = new Point(.59, -0.2);
     let pgon = new Polygon([p, q, w]);
 
-    let a = new Arc(p,q);
-
-    this.disk.drawArc(a, 0xff0000)
-
-    //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-    //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+    this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+    //this.disk.drawPolygonOutline(pgon, 0xffffff);
     let poly = this.fr.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0xffffff, texture, false);
 
-    //poly = poly.transform(this.transforms.edgeReflection);
-    //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
-    //this.disk.drawPoint(new Point(0,0), 0.01, 0xfff000);
+    poly = poly.transform(this.transforms.edgeReflection);
+    //this.disk.drawPolygon(poly, 0xffffff, texture, false);
   }
 
   //fundamentalRegion calculation using Dunham's method

@@ -84,27 +84,6 @@ export class Point {
   clone(){
     return new Point(this.x, this.y);
   }
-
-  /*
-  //map from disk of window.radius to unit disk
-  toUnitDisk() {
-    if (this.isOnUnitDisk === true) {
-      console.warn('Point ' + this.x + ', ' + this.y + ' already on unit disk!');
-      return this;
-    }
-    return new Point(this.x / window.radius, this.y / window.radius, true);
-  }
-
-  //map from unit disk to disk of window.radius
-  fromUnitDisk() {
-    if (this.isOnUnitDisk === false) {
-      console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
-      return this;
-    }
-
-    return new Point(this.x * window.radius, this.y * window.radius, false);
-  }
-  */
 }
 
 // * ***********************************************************************
@@ -208,32 +187,6 @@ export class Arc {
     };
     return r;
   }
-
-  /*
-  //map from disk of window.radius to unit disk
-  toUnitDisk() {
-    if (this.isOnUnitDisk === true) {
-      console.warn('Arc ' + this + 'already on unit disk!');
-      return this;
-    } else {
-      let p1 = this.p1.toUnitDisk();
-      let p2 = this.p2.toUnitDisk();
-      return new Arc(p1, p2, true);
-    }
-  }
-
-  //map from unit disk to disk of window.radius
-  fromUnitDisk() {
-    if (this.isOnUnitDisk === false) {
-      console.warn('Arc ' + this + 'not on unit disk!');
-      return this;
-    } else {
-      let p1 = this.p1.fromUnitDisk();
-      let p2 = this.p2.fromUnitDisk();
-      return new Arc(p1, p2, false);
-    }
-  }
-  */
 }
 
 // * ***********************************************************************
@@ -266,8 +219,8 @@ export class Polygon {
   constructor(vertices, isOnUnitDisk = true) {
     this.isOnUnitDisk = isOnUnitDisk;
     this.vertices = vertices;
-    //this.edges = [];
-    //this.addEdges();
+    this.edges = [];
+    this.addEdges();
   }
 
   addEdges(){
@@ -277,8 +230,7 @@ export class Polygon {
   }
 
   spacedPointsOnEdges() {
-    const spacing = 50; //Math.ceil((2000 / window.radius));
-    //if(spacing < 5) spacing = 5;
+    const spacing = 0.1;
     const l = this.vertices.length;
     const points = [];
 
@@ -355,35 +307,4 @@ export class Polygon {
     f = twicearea * 3;
     return new Point(x / f, y / f, this.isOnUnitDisk);
   }
-
-  /*
-  //map from disk of window.radius to unit disk
-  toUnitDisk() {
-    if (this.isOnUnitDisk === true) {
-      console.warn('Polygon ' + this + 'already on unit disk!');
-      return this;
-    } else {
-      const newVertices = [];
-      for (let i = 0; i < this.vertices.length; i++) {
-        newVertices.push(this.vertices[i].toUnitDisk());
-      }
-      return new Polygon(newVertices, true);
-    }
-  }
-
-  //map from unit disk to disk of window.radius
-  fromUnitDisk() {
-    if (this.isOnUnitDisk === false) {
-      console.warn('Polygon ' + this + 'not on unit disk!');
-      return this;
-    } else {
-      const newVertices = [];
-      for (let i = 0; i < this.vertices.length; i++) {
-        newVertices.push(this.vertices[i].fromUnitDisk());
-      }
-      return new Polygon(newVertices, false);
-    }
-  }
-  */
-
 }

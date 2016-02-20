@@ -406,26 +406,6 @@ var Point = function () {
     value: function clone() {
       return new Point(this.x, this.y);
     }
-
-    /*
-    //map from disk of window.radius to unit disk
-    toUnitDisk() {
-      if (this.isOnUnitDisk === true) {
-        console.warn('Point ' + this.x + ', ' + this.y + ' already on unit disk!');
-        return this;
-      }
-      return new Point(this.x / window.radius, this.y / window.radius, true);
-    }
-     //map from unit disk to disk of window.radius
-    fromUnitDisk() {
-      if (this.isOnUnitDisk === false) {
-        console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
-        return this;
-      }
-       return new Point(this.x * window.radius, this.y * window.radius, false);
-    }
-    */
-
   }]);
   return Point;
 }();
@@ -541,32 +521,6 @@ var Arc = function () {
       };
       return r;
     }
-
-    /*
-    //map from disk of window.radius to unit disk
-    toUnitDisk() {
-      if (this.isOnUnitDisk === true) {
-        console.warn('Arc ' + this + 'already on unit disk!');
-        return this;
-      } else {
-        let p1 = this.p1.toUnitDisk();
-        let p2 = this.p2.toUnitDisk();
-        return new Arc(p1, p2, true);
-      }
-    }
-     //map from unit disk to disk of window.radius
-    fromUnitDisk() {
-      if (this.isOnUnitDisk === false) {
-        console.warn('Arc ' + this + 'not on unit disk!');
-        return this;
-      } else {
-        let p1 = this.p1.fromUnitDisk();
-        let p2 = this.p2.fromUnitDisk();
-        return new Arc(p1, p2, false);
-      }
-    }
-    */
-
   }]);
   return Arc;
 }();
@@ -606,8 +560,8 @@ var Polygon = function () {
 
     this.isOnUnitDisk = isOnUnitDisk;
     this.vertices = vertices;
-    //this.edges = [];
-    //this.addEdges();
+    this.edges = [];
+    this.addEdges();
   }
 
   babelHelpers.createClass(Polygon, [{
@@ -620,8 +574,7 @@ var Polygon = function () {
   }, {
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
-      var spacing = 50; //Math.ceil((2000 / window.radius));
-      //if(spacing < 5) spacing = 5;
+      var spacing = 0.1;
       var l = this.vertices.length;
       var points = [];
 
@@ -704,36 +657,6 @@ var Polygon = function () {
       f = twicearea * 3;
       return new Point(x / f, y / f, this.isOnUnitDisk);
     }
-
-    /*
-    //map from disk of window.radius to unit disk
-    toUnitDisk() {
-      if (this.isOnUnitDisk === true) {
-        console.warn('Polygon ' + this + 'already on unit disk!');
-        return this;
-      } else {
-        const newVertices = [];
-        for (let i = 0; i < this.vertices.length; i++) {
-          newVertices.push(this.vertices[i].toUnitDisk());
-        }
-        return new Polygon(newVertices, true);
-      }
-    }
-     //map from unit disk to disk of window.radius
-    fromUnitDisk() {
-      if (this.isOnUnitDisk === false) {
-        console.warn('Polygon ' + this + 'not on unit disk!');
-        return this;
-      } else {
-        const newVertices = [];
-        for (let i = 0; i < this.vertices.length; i++) {
-          newVertices.push(this.vertices[i].fromUnitDisk());
-        }
-        return new Polygon(newVertices, false);
-      }
-    }
-    */
-
   }]);
   return Polygon;
 }();
@@ -1285,10 +1208,10 @@ let geometry = new THREE.ShapeGeometry(poly);
 // * ***********************************************************************
 // *
 // *  DISK CLASS
-// *  Poincare Disk representation of the hyperbolic plane. Contains any
-// *  functions used to draw to the disk which are then passed to Three.js
-// *  Also responsible for checking whether elements are on the unit Disk
-// *  and resizing them if they are
+// *  Poincare Disk representation of the hyperbolic plane (as the unit disk).
+// *  Contains any functions used to draw to the disk which check the element
+// *  to be drawn lie on the disk then passes them to Three.js for drawing
+// *
 // *************************************************************************
 var Disk = function () {
   function Disk() {
@@ -1316,18 +1239,9 @@ var Disk = function () {
   }, {
     key: 'drawPoint',
     value: function drawPoint(point, radius, color) {
-      var p = undefined;
-      if (point.isOnUnitDisk) {
-        p = point.fromUnitDisk();
-        this.draw.disk(p, radius, color, false);
-      } else {
-        p = point;
-      }
-
-      if (this.checkPoints(p)) {
+      if (this.checkPoints(point)) {
         return false;
       }
-
       this.draw.disk(point, radius, color, false);
     }
 
@@ -1336,11 +1250,9 @@ var Disk = function () {
   }, {
     key: 'drawArc',
     value: function drawArc(arc, color) {
-      console.log(arc);
-      //if (this.checkPoints(arc.p1, arc.p2)) {
-      //  return false
-      //}
-
+      if (this.checkPoints(arc.p1, arc.p2)) {
+        return false;
+      }
       if (arc.straightLine) {
         this.draw.line(arc.p1, arc.p2, color);
       } else {
@@ -1350,34 +1262,23 @@ var Disk = function () {
   }, {
     key: 'drawPolygonOutline',
     value: function drawPolygonOutline(polygon, color) {
-      //resize if polygon is on unit disk
-      var p = undefined;
-      if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();else p = polygon;
-
-      if (this.checkPoints(p.vertices)) {
+      if (this.checkPoints(polygon.vertices)) {
         return false;
       }
-
-      var l = p.vertices.length;
+      var l = polygon.vertices.length;
       for (var i = 0; i < l; i++) {
-        var arc = new Arc(p.vertices[i], p.vertices[(i + 1) % l]);
+        var arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l]);
         this.drawArc(arc, color);
       }
     }
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
-      //resize if polygon is on unit disk
-      //let p;
-      //if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
-      //else p = polygon;
-      //if (this.checkPoints(p.vertices)) {
-      //  return false
-      //}
-      var p = polygon;
-
-      var points = p.spacedPointsOnEdges();
-      var centre = p.barycentre();
+      if (this.checkPoints(polygon.vertices)) {
+        return false;
+      }
+      var points = polygon.spacedPointsOnEdges();
+      var centre = polygon.barycentre();
       this.draw.polygon(points, centre, color, texture, wireframe);
     }
 
@@ -1396,7 +1297,7 @@ var Disk = function () {
       var test = false;
       for (var i = 0; i < points.length; i++) {
         if (distance(points[i], this.centre) > 1) {
-          console.error('Error! Point (' + points[i].x + ', ' + point[i].y + ') lies outside the plane!');
+          console.error('Error! Point (' + points[i].x + ', ' + points[i].y + ') lies outside the plane!');
           test = true;
         }
       }
@@ -1456,8 +1357,8 @@ var RegularTesselation = function () {
         var t1 = performance.now();
         console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }
-      this.drawLayers();
-      //this.testing();
+      //this.drawLayers();
+      this.testing();
     }
   }, {
     key: 'testing',
@@ -1467,22 +1368,17 @@ var RegularTesselation = function () {
       //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
       var p = new Point(-.200, -.200);
-      var q = new Point(-.200, .200);
-      var w = new Point(.129, 0);
+      var q = new Point(-.200, .500);
+      var w = new Point(.59, -0.2);
       var pgon = new Polygon([p, q, w]);
 
-      var a = new Arc(p, q);
-
-      this.disk.drawArc(a, 0xff0000);
-
-      //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-      //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+      this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+      //this.disk.drawPolygonOutline(pgon, 0xffffff);
       var poly = this.fr.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xffffff, texture, false);
 
-      //poly = poly.transform(this.transforms.edgeReflection);
-      //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
-      //this.disk.drawPoint(new Point(0,0), 0.01, 0xfff000);
+      poly = poly.transform(this.transforms.edgeReflection);
+      //this.disk.drawPolygon(poly, 0xffffff, texture, false);
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1789,17 +1685,11 @@ if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = function () {
-  //global variable to hold the radius as this must be calculated on load and is
-  //used across all classes
-  window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-  window.radius = Math.floor(window.radius);
   tesselation = new RegularTesselation(4, 5, 3);
   //tesselation = new RegularTesselation(p, q, 3);
 };
 
 window.onresize = function () {
-  window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-  window.radius = Math.floor(window.radius);
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();

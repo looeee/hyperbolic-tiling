@@ -38,18 +38,12 @@ if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = () => {
-  //global variable to hold the radius as this must be calculated on load and is
-  //used across all classes
-  window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-  window.radius = Math.floor(window.radius);
   tesselation = new RegularTesselation(4, 5, 3);
   //tesselation = new RegularTesselation(p, q, 3);
 }
 
 
 window.onresize = () => {
-  window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-  window.radius = Math.floor(window.radius);
   tesselation.disk.draw.reset();
   tesselation.disk.init();
   tesselation.init();
