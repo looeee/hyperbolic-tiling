@@ -401,31 +401,31 @@ var Point = function () {
       var y = factor * this.y;
       return new Point(x, y, this.isOnUnitDisk);
     }
-
-    //map from disk of window.radius to unit disk
-
   }, {
-    key: 'toUnitDisk',
-    value: function toUnitDisk() {
+    key: 'clone',
+    value: function clone() {
+      return new Point(this.x, this.y);
+    }
+
+    /*
+    //map from disk of window.radius to unit disk
+    toUnitDisk() {
       if (this.isOnUnitDisk === true) {
         console.warn('Point ' + this.x + ', ' + this.y + ' already on unit disk!');
         return this;
       }
       return new Point(this.x / window.radius, this.y / window.radius, true);
     }
-
-    //map from unit disk to disk of window.radius
-
-  }, {
-    key: 'fromUnitDisk',
-    value: function fromUnitDisk() {
+     //map from unit disk to disk of window.radius
+    fromUnitDisk() {
       if (this.isOnUnitDisk === false) {
         console.warn('Point ' + this.x + ', ' + this.y + ' not on unit disk!');
         return this;
       }
-
-      return new Point(this.x * window.radius, this.y * window.radius, false);
+       return new Point(this.x * window.radius, this.y * window.radius, false);
     }
+    */
+
   }]);
   return Point;
 }();
@@ -478,7 +478,7 @@ var Circle = function () {
 
 var Arc = function () {
   function Arc(p1, p2) {
-    var isOnUnitDisk = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+    var isOnUnitDisk = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
     babelHelpers.classCallCheck(this, Arc);
 
     this.isOnUnitDisk = isOnUnitDisk;
@@ -486,7 +486,7 @@ var Arc = function () {
     this.p2 = p2;
 
     if (throughOrigin(p1, p2)) {
-      this.circle = new Circle(0, 0, 1, true);
+      this.circle = new Circle(0, 0, 1);
       this.startAngle = 0;
       this.endAngle = 0;
       this.clockwise = false;
@@ -499,41 +499,19 @@ var Arc = function () {
   babelHelpers.createClass(Arc, [{
     key: 'hyperbolicMethod',
     value: function hyperbolicMethod() {
-      var q1 = undefined,
-          q2 = undefined;
-      if (this.isOnUnitDisk) {
-        q1 = this.p1;
-        q2 = this.p2;
-      } else {
-        q1 = this.p1.toUnitDisk();
-        q2 = this.p2.toUnitDisk();
-      }
-      var wq1 = q1.poincareToWeierstrass();
-      var wq2 = q2.poincareToWeierstrass();
-
-      var wcp = this.weierstrassCrossProduct(wq1, wq2);
-
       //calculate centre of arcCircle relative to unit disk
+      var wq1 = this.p1.poincareToWeierstrass();
+      var wq2 = this.p2.poincareToWeierstrass();
+      var wcp = this.weierstrassCrossProduct(wq1, wq2);
       var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
-      //translate points to origin before calculating arctan
-      q1.x = q1.x - arcCentre.x;
-      q1.y = q1.y - arcCentre.y;
-      q2.x = q2.x - arcCentre.x;
-      q2.y = q2.y - arcCentre.y;
+      var r = Math.sqrt(Math.pow(this.p1.x - arcCentre.x, 2) + Math.pow(this.p1.y - arcCentre.y, 2));
 
-      var r = Math.sqrt(q1.x * q1.x + q1.y * q1.y);
+      var arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
 
-      var arcCircle = undefined;
-      if (this.isOnUnitDisk) {
-        arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
-      } else {
-        arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius, false);
-      }
-
-      var alpha = Math.atan2(q1.y, q1.x);
-
-      var beta = Math.atan2(q2.y, q2.x);
+      //translate points to origin and calculate arctan
+      var alpha = Math.atan2(this.p1.y - arcCentre.y, this.p1.x - arcCentre.x);
+      var beta = Math.atan2(this.p2.y - arcCentre.y, this.p2.x - arcCentre.x);
 
       //angles are in (-pi, pi), transform to (0,2pi)
       alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
@@ -564,38 +542,49 @@ var Arc = function () {
       return r;
     }
 
+    /*
     //map from disk of window.radius to unit disk
-
-  }, {
-    key: 'toUnitDisk',
-    value: function toUnitDisk() {
+    toUnitDisk() {
       if (this.isOnUnitDisk === true) {
         console.warn('Arc ' + this + 'already on unit disk!');
         return this;
       } else {
-        var p1 = this.p1.toUnitDisk();
-        var p2 = this.p2.toUnitDisk();
+        let p1 = this.p1.toUnitDisk();
+        let p2 = this.p2.toUnitDisk();
         return new Arc(p1, p2, true);
       }
     }
-
-    //map from unit disk to disk of window.radius
-
-  }, {
-    key: 'fromUnitDisk',
-    value: function fromUnitDisk() {
+     //map from unit disk to disk of window.radius
+    fromUnitDisk() {
       if (this.isOnUnitDisk === false) {
         console.warn('Arc ' + this + 'not on unit disk!');
         return this;
       } else {
-        var p1 = this.p1.fromUnitDisk();
-        var p2 = this.p2.fromUnitDisk();
+        let p1 = this.p1.fromUnitDisk();
+        let p2 = this.p2.fromUnitDisk();
         return new Arc(p1, p2, false);
       }
     }
+    */
+
   }]);
   return Arc;
 }();
+
+// * ***********************************************************************
+// *
+// *   EDGE CLASS
+// *   Represents a polygon edge
+// *
+// *************************************************************************
+
+var Edge = function Edge(v1, v2) {
+  babelHelpers.classCallCheck(this, Edge);
+
+  this.startPoint = v1;
+  this.endPoint = v2;
+  this.arc = new Arc(v1, v2);
+};
 
 // * ***********************************************************************
 // *
@@ -605,7 +594,7 @@ var Arc = function () {
 //NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
 //making material DoubleSide but if this causes problems I'll have to add some
 //way of making sure the vertices are in the right winding order
-//TODO: would it be more efficient to calcucate the arcs that make the edges
+//TODO: would it be more efficient to calculate the arcs that make the edges
 //when the polygon is created?
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
@@ -617,12 +606,21 @@ var Polygon = function () {
 
     this.isOnUnitDisk = isOnUnitDisk;
     this.vertices = vertices;
+    //this.edges = [];
+    //this.addEdges();
   }
 
   babelHelpers.createClass(Polygon, [{
+    key: 'addEdges',
+    value: function addEdges() {
+      for (var i = 0; i < this.vertices.length; i++) {
+        this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
+      }
+    }
+  }, {
     key: 'spacedPointsOnEdges',
     value: function spacedPointsOnEdges() {
-      var spacing = 5; //Math.ceil((2000 / window.radius));
+      var spacing = 50; //Math.ceil((2000 / window.radius));
       //if(spacing < 5) spacing = 5;
       var l = this.vertices.length;
       var points = [];
@@ -636,6 +634,7 @@ var Polygon = function () {
         if (distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing) {
           var p = undefined;
           var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
+
           //line not through the origin (hyperbolic arc)
           if (!arc.straightLine) {
             if (arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
@@ -676,7 +675,6 @@ var Polygon = function () {
       for (var i = 0; i < this.vertices.length; i++) {
         newVertices.push(this.vertices[i].transform(_transform2));
       }
-
       return new Polygon(newVertices, this.isOnUnitDisk);
     }
 
@@ -707,39 +705,35 @@ var Polygon = function () {
       return new Point(x / f, y / f, this.isOnUnitDisk);
     }
 
+    /*
     //map from disk of window.radius to unit disk
-
-  }, {
-    key: 'toUnitDisk',
-    value: function toUnitDisk() {
+    toUnitDisk() {
       if (this.isOnUnitDisk === true) {
         console.warn('Polygon ' + this + 'already on unit disk!');
         return this;
       } else {
-        var newVertices = [];
-        for (var i = 0; i < this.vertices.length; i++) {
+        const newVertices = [];
+        for (let i = 0; i < this.vertices.length; i++) {
           newVertices.push(this.vertices[i].toUnitDisk());
         }
         return new Polygon(newVertices, true);
       }
     }
-
-    //map from unit disk to disk of window.radius
-
-  }, {
-    key: 'fromUnitDisk',
-    value: function fromUnitDisk() {
+     //map from unit disk to disk of window.radius
+    fromUnitDisk() {
       if (this.isOnUnitDisk === false) {
         console.warn('Polygon ' + this + 'not on unit disk!');
         return this;
       } else {
-        var newVertices = [];
-        for (var i = 0; i < this.vertices.length; i++) {
+        const newVertices = [];
+        for (let i = 0; i < this.vertices.length; i++) {
           newVertices.push(this.vertices[i].fromUnitDisk());
         }
         return new Polygon(newVertices, false);
       }
     }
+    */
+
   }]);
   return Polygon;
 }();
@@ -1017,10 +1011,16 @@ var Parameters = function () {
 // *
 // *  THREE JS CLASS
 // *
+// *  All operations involved in drawing to the screen occur here.
+// *  All objects are assumed to be on the unit Disk when passed here and
+// *  are converted to screen space (which will generally invole multiplying
+// *  by the radius ~ half screen resolution)
 // *************************************************************************
 //TODO: after resizing a few times the scene stops drawing - possible memory
 //not being freed in clearScene?
 //TODO add functions to save image to disk/screen for download
+//TODO perhaps all calculations should be carried out on the unit disk and
+//only multiplied by window.radius here
 var ThreeJS = function () {
   function ThreeJS() {
     babelHelpers.classCallCheck(this, ThreeJS);
@@ -1031,6 +1031,7 @@ var ThreeJS = function () {
   babelHelpers.createClass(ThreeJS, [{
     key: 'init',
     value: function init() {
+      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
 
@@ -1051,10 +1052,6 @@ var ThreeJS = function () {
     key: 'clearScene',
     value: function clearScene() {
       for (var i = this.scene.children.length - 1; i >= 0; i--) {
-        //this.scene.children[i].material.map.dispose();
-        //this.scene.children[i].material.dispose();
-        //this.scene.children[i].geometry.dispose();
-        //this.scene.children[i] = null;
         this.scene.remove(this.scene.children[i]);
       }
     }
@@ -1086,25 +1083,157 @@ var ThreeJS = function () {
 
       this.render();
     }
+
+    //TODO refactor to assume centre is on unit disk
+
   }, {
     key: 'disk',
     value: function disk(centre, radius, color) {
       if (color === undefined) color = 0xffffff;
 
-      var geometry = new THREE.CircleGeometry(radius, 100, 0, 2 * Math.PI);
+      var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
       var circle = this.createMesh(geometry, color);
-      circle.position.x = centre.x;
-      circle.position.y = centre.y;
+      circle.position.x = centre.x * this.radius;
+      circle.position.y = centre.y * this.radius;
 
       this.scene.add(circle);
+    }
+  }, {
+    key: 'polygon',
+    value: function polygon(vertices, centre, color, texture, wireframe) {
+      if (color === undefined) color = 0xffffff;
+      var l = vertices.length;
+
+      var geometry = new THREE.Geometry();
+
+      //vertex 0 = polygon barycentre
+      geometry.vertices.push(new THREE.Vector3(centre.x * this.radius, centre.y * this.radius, 0));
+
+      //push first vertex to vertices array
+      //This means that when the next vertex is pushed in the loop
+      //we can also create the first face triangle
+      geometry.vertices.push(new THREE.Vector3(vertices[0].x * this.radius, vertices[0].y * this.radius, 0));
+
+      //each vertex added creates a new triangle, use this to create a new face
+      for (var i = 1; i < l; i++) {
+        geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+        geometry.faces.push(new THREE.Face3(0, i, i + 1));
+      }
+
+      //push the final face
+      geometry.faces.push(new THREE.Face3(0, l, 1));
+
+      this.setUvs(geometry, vertices, centre);
+
+      var mesh = this.createMesh(geometry, color, texture, wireframe);
+      this.scene.add(mesh);
+
+      //this.addBoundingBoxHelper(mesh);
+      //this.disk(centre, 1, 0xff0000)
+    }
+
+    //TODO make work!
+
+  }, {
+    key: 'setUvs',
+    value: function setUvs(geometry, vertices, centre) {
+      //the incentre of the triangle (0,0), (1,0), (1,1)
+      var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
+
+      var l = vertices.length;
+
+      geometry.computeBoundingBox();
+      var max = geometry.boundingBox.max;
+      var min = geometry.boundingBox.min;
+      var offset = new THREE.Vector2(min.x, min.y);
+      var range = new THREE.Vector2(max.x - min.x, max.y - min.y);
+      var r = distance(min, max);
+      geometry.faceVertexUvs[0] = [];
+
+      for (var i = 0; i < l - 1; i++) {
+        geometry.faceVertexUvs[0].push([
+        //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
+        new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r), new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)]);
+      }
+
+      //push the final face vertex
+      geometry.faceVertexUvs[0].push([
+      //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
+      new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r), new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)]);
+
+      geometry.uvsNeedUpdate = true;
+    }
+
+    //NOTE: some polygons are inverted due to vertex order,
+    //solved this but this might cause problems with textures
+    //TODO should probably only be creating materials/textures
+    //once and then cloning where possible
+
+  }, {
+    key: 'createMesh',
+    value: function createMesh(geometry, color, imageURL, wireframe) {
+      if (wireframe === undefined) wireframe = false;
+      if (color === undefined) color = 0xffffff;
+
+      var material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: wireframe,
+        side: THREE.DoubleSide
+      });
+
+      //transparent: true,
+      if (imageURL) {
+        var texture = new THREE.TextureLoader().load(imageURL);
+        texture.wrapS = 1000;
+        texture.wrapT = 1000;
+        material.map = texture;
+        material.needsUpdate = true;
+      }
+
+      return new THREE.Mesh(geometry, material);
+    }
+  }, {
+    key: 'addBoundingBoxHelper',
+    value: function addBoundingBoxHelper(mesh) {
+      var box = new THREE.BoxHelper(mesh);
+      //box.update();
+      this.scene.add(box);
+    }
+
+    //TODO as this is a static image requestAnimationFrame is redundant
+    //however render() needs to be called after all the shapes
+    //are calculated
+
+  }, {
+    key: 'render',
+    value: function render() {
+      var _this = this;
+
+      requestAnimationFrame(function () {
+        _this.render();
+      });
+      this.renderer.render(this.scene, this.camera);
+    }
+
+    //convert the canvas to a base64URL and send to saveImage.php
+    //TODO: make work!
+
+  }, {
+    key: 'saveImage',
+    value: function saveImage() {
+      var data = this.renderer.domElement.toDataURL('image/png');
+      console.log(data);
+      var xhttp = new XMLHttpRequest();
+      xhttp.open('POST', 'saveImage.php', true);
+      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      xhttp.send('img=' + data);
     }
   }, {
     key: 'segment',
     value: function segment(circle, startAngle, endAngle, color) {
       if (color === undefined) color = 0xffffff;
 
-      var curve = new THREE.EllipseCurve(circle.centre.x, circle.centre.y, // ax, aY
-      circle.radius, circle.radius, // xRadius, yRadius
+      var curve = new THREE.EllipseCurve(circle.centre.x * this.radius, circle.centre.y * this.radius, circle.radius * this.radius, circle.radius * this.radius, // xRadius, yRadius
       startAngle, endAngle, false // aClockwise
       );
 
@@ -1127,123 +1256,31 @@ var ThreeJS = function () {
 
       var geometry = new THREE.Geometry();
 
-      geometry.vertices.push(new THREE.Vector3(start.x, start.y, 0), new THREE.Vector3(end.x, end.y, 0));
+      geometry.vertices.push(new THREE.Vector3(start.x * this.radius, start.y * this.radius, 0), new THREE.Vector3(end.x * this.radius, end.y * this.radius, 0));
       var material = new THREE.LineBasicMaterial({
         color: color
       });
       var l = new THREE.Line(geometry, material);
       this.scene.add(l);
     }
-  }, {
-    key: 'polygon',
-    value: function polygon(vertices, centre, color, texture, wireframe) {
-      if (color === undefined) color = 0xffffff;
-      var l = vertices.length;
-      /*
-      const poly = new THREE.Shape();
-       poly.moveTo(vertices[0].x, vertices[0].y);
-      for(let i = 0; i < l; i++) {
-        //poly.moveTo(vertices[i].x, vertices[i].y);
-        //poly.lineTo(centre.x, centre.y);
-        //poly.moveTo(vertices[i].x, vertices[i].y);
-        poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
-      }
-       let geometry = new THREE.ShapeGeometry(poly);
-      */
-      var geometry = new THREE.Geometry();
-
-      //vertex 0 = polygon barycentre
-      geometry.vertices.push(new THREE.Vector3(centre.x, centre.y, 0));
-
-      //push first vertex to vertices array
-      //This means that when the next vertex is pushed in the loop
-      //we can also create the first face triangle
-      geometry.vertices.push(new THREE.Vector3(vertices[0].x, vertices[0].y, 0));
-
-      //each vertex added creates a new triangle, use this to create a new face
-      for (var i = 1; i < l; i++) {
-        geometry.vertices.push(new THREE.Vector3(vertices[i].x, vertices[i].y, 0));
-        geometry.faces.push(new THREE.Face3(0, i, i + 1));
-      }
-
-      //push the final face
-      geometry.faces.push(new THREE.Face3(0, l, 1));
-      this.scene.add(this.createMesh(geometry, color, texture, wireframe));
-    }
-
-    //TODO learn how UVs work then write this function
-
-  }, {
-    key: 'setUvs',
-    value: function setUvs(geometry) {
-      var uvs = geometry.faceVertexUvs[0];
-      for (var i = 0; i < uvs.length; i++) {
-        var uv = uvs[i];
-        for (var j = 0; j < 3; j++) {
-          console.log(uv[j]);
-        }
-      }
-    }
-
-    //NOTE: some polygons are inverted due to vertex order,
-    //solved this but this might cause problems with textures
-
-  }, {
-    key: 'createMesh',
-    value: function createMesh(geometry, color, imageURL, wireframe) {
-      if (wireframe === undefined) wireframe = false;
-      if (color === undefined) color = 0xffffff;
-
-      var material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: wireframe,
-        side: THREE.DoubleSide
-      });
-
-      //material.
-
-      if (imageURL) {
-        var textureLoader = new THREE.TextureLoader();
-
-        //load texture and apply to material in callback
-        var texture = textureLoader.load(imageURL, function (tex) {
-          material.map = tex;
-          //material.map.wrapT = THREE.RepeatWrapping;
-          //material.map.wrapS = THREE.RepeatWrapping;
-          //texture.repeat.set(0.05, 0.05);
-        });
-      }
-
-      return new THREE.Mesh(geometry, material);
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-      var _this = this;
-
-      requestAnimationFrame(function () {
-        _this.render();
-      });
-
-      this.renderer.render(this.scene, this.camera);
-    }
-
-    //convert the canvas to a base64URL and send to saveImage.php
-    //TODO: make work!
-
-  }, {
-    key: 'saveImage',
-    value: function saveImage() {
-      var data = this.renderer.domElement.toDataURL('image/png');
-      console.log(data);
-      var xhttp = new XMLHttpRequest();
-      xhttp.open('POST', 'saveImage.php', true);
-      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      xhttp.send('img=' + data);
-    }
   }]);
   return ThreeJS;
 }();
+
+/*
+//OLD POLYGON METHOD
+const poly = new THREE.Shape();
+
+poly.moveTo(vertices[0].x, vertices[0].y);
+for(let i = 0; i < l; i++) {
+  //poly.moveTo(vertices[i].x, vertices[i].y);
+  //poly.lineTo(centre.x, centre.y);
+  //poly.moveTo(vertices[i].x, vertices[i].y);
+  poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
+}
+
+let geometry = new THREE.ShapeGeometry(poly);
+*/
 
 // * ***********************************************************************
 // *
@@ -1265,7 +1302,7 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'init',
     value: function init() {
-      this.centre = new Point(0, 0, true);
+      this.centre = new Point(0, 0);
       this.drawDisk();
     }
 
@@ -1274,7 +1311,7 @@ var Disk = function () {
   }, {
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, window.radius, 0x000000);
+      this.draw.disk(this.centre, 1, 0x000000);
     }
   }, {
     key: 'drawPoint',
@@ -1299,18 +1336,15 @@ var Disk = function () {
   }, {
     key: 'drawArc',
     value: function drawArc(arc, color) {
-      //resize if arc is on unit disk
-      var a = undefined;
-      if (arc.isOnUnitDisk) a = arc.fromUnitDisk();else a = arc;
+      console.log(arc);
+      //if (this.checkPoints(arc.p1, arc.p2)) {
+      //  return false
+      //}
 
-      if (this.checkPoints(a.p1, a.p2)) {
-        return false;
-      }
-
-      if (a.straightLine) {
-        this.draw.line(a.p1, a.p2, color);
+      if (arc.straightLine) {
+        this.draw.line(arc.p1, arc.p2, color);
       } else {
-        this.draw.segment(a.circle, a.startAngle, a.endAngle, color);
+        this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
       }
     }
   }, {
@@ -1334,11 +1368,13 @@ var Disk = function () {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
       //resize if polygon is on unit disk
-      var p = undefined;
-      if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();else p = polygon;
-      if (this.checkPoints(p.vertices)) {
-        return false;
-      }
+      //let p;
+      //if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
+      //else p = polygon;
+      //if (this.checkPoints(p.vertices)) {
+      //  return false
+      //}
+      var p = polygon;
 
       var points = p.spacedPointsOnEdges();
       var centre = p.barycentre();
@@ -1359,7 +1395,7 @@ var Disk = function () {
 
       var test = false;
       for (var i = 0; i < points.length; i++) {
-        if (distance(points[i], this.centre) > window.radius) {
+        if (distance(points[i], this.centre) > 1) {
           console.error('Error! Point (' + points[i].x + ', ' + point[i].y + ') lies outside the plane!');
           test = true;
         }
@@ -1428,20 +1464,25 @@ var RegularTesselation = function () {
     value: function testing() {
       var texture = './images/textures/pattern1.png';
       //texture = '';
-      this.disk.drawPolygon(this.fr, 0xff0ff0, texture, false);
+      //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
-      var p = new Point(0, 0, false);
-      var q = new Point(-161, 161, false);
-      var w = new Point(129, 0, false);
-      var pgon = new Polygon([p, q, w], false);
+      var p = new Point(-.200, -.200);
+      var q = new Point(-.200, .200);
+      var w = new Point(.129, 0);
+      var pgon = new Polygon([p, q, w]);
 
-      //this.disk.drawPolygon(pgon, 0x5c30e0, texture, true);
+      var a = new Arc(p, q);
+
+      this.disk.drawArc(a, 0xff0000);
+
       //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-      var poly = this.centralPolygon.transform(this.transforms.edgeReflection);
-      //this.disk.drawPolygon(poly, 0x5c30e0, texture, false);
+      //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+      var poly = this.fr.transform(this.transforms.edgeReflection);
+      //this.disk.drawPolygon(poly, 0xffffff, texture, false);
 
       //poly = poly.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
+      //this.disk.drawPoint(new Point(0,0), 0.01, 0xfff000);
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1464,8 +1505,8 @@ var RegularTesselation = function () {
       var yqpt = Math.sin(Math.PI / this.p) * rad2;
 
       //create points and move them from the unit disk to our radius
-      var p1 = new Point(xqpt, yqpt, true);
-      var p2 = new Point(x2pt, 0, true);
+      var p1 = new Point(xqpt, yqpt);
+      var p2 = new Point(x2pt, 0);
       var vertices = [this.disk.centre, p1, p2];
 
       return new Polygon(vertices, true);
@@ -1744,7 +1785,7 @@ var tesselation = undefined;
 var p = randomInt(4, 7);
 var q = randomInt(4, 7);
 
-if (p === 4 && q === 4) p = 5;
+if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = function () {

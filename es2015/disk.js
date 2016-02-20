@@ -24,13 +24,13 @@ export class Disk {
   }
 
   init() {
-    this.centre = new Point(0, 0, true);
+    this.centre = new Point(0, 0);
     this.drawDisk();
   }
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, window.radius, 0x000000);
+    this.draw.disk(this.centre, 1, 0x000000);
   }
 
   drawPoint(point, radius, color) {
@@ -52,20 +52,16 @@ export class Disk {
 
   //Draw an arc (hyperbolic line segment) between two points on the disk
   drawArc(arc, color) {
-    //resize if arc is on unit disk
-    let a;
-    if (arc.isOnUnitDisk) a = arc.fromUnitDisk();
-    else a = arc;
+    console.log(arc);
+    //if (this.checkPoints(arc.p1, arc.p2)) {
+    //  return false
+    //}
 
-    if (this.checkPoints(a.p1, a.p2)) {
-      return false
-    }
-
-    if (a.straightLine) {
-      this.draw.line(a.p1, a.p2, color);
+    if (arc.straightLine) {
+      this.draw.line(arc.p1, arc.p2, color);
     }
     else {
-      this.draw.segment(a.circle, a.startAngle, a.endAngle, color);
+      this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
     }
   }
 
@@ -88,12 +84,13 @@ export class Disk {
 
   drawPolygon(polygon, color, texture, wireframe) {
     //resize if polygon is on unit disk
-    let p;
-    if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
-    else p = polygon;
-    if (this.checkPoints(p.vertices)) {
-      return false
-    }
+    //let p;
+    //if (polygon.isOnUnitDisk) p = polygon.fromUnitDisk();
+    //else p = polygon;
+    //if (this.checkPoints(p.vertices)) {
+    //  return false
+    //}
+    const p = polygon;
 
     const points = p.spacedPointsOnEdges();
     const centre = p.barycentre();
@@ -108,7 +105,7 @@ export class Disk {
 
     let test = false;
     for (let i = 0; i < points.length; i++) {
-      if (E.distance(points[i], this.centre) > window.radius) {
+      if (E.distance(points[i], this.centre) > 1) {
         console.error('Error! Point (' + points[i].x + ', ' + point[i].y + ') lies outside the plane!');
         test = true;
       }

@@ -81,6 +81,11 @@ export class Point {
     return new Point(x, y, this.isOnUnitDisk);
   }
 
+  clone(){
+    return new Point(this.x, this.y);
+  }
+
+  /*
   //map from disk of window.radius to unit disk
   toUnitDisk() {
     if (this.isOnUnitDisk === true) {
@@ -99,6 +104,7 @@ export class Point {
 
     return new Point(this.x * window.radius, this.y * window.radius, false);
   }
+  */
 }
 
 // * ***********************************************************************
@@ -143,60 +149,37 @@ export class Circle {
 // *************************************************************************
 
 export class Arc {
-  constructor(p1, p2, isOnUnitDisk = false) {
+  constructor(p1, p2, isOnUnitDisk = true) {
     this.isOnUnitDisk = isOnUnitDisk;
     this.p1 = p1;
     this.p2 = p2;
 
     if (E.throughOrigin(p1, p2)) {
-      this.circle = new Circle(0, 0, 1, true);
+      this.circle = new Circle(0, 0, 1);
       this.startAngle = 0;
       this.endAngle = 0;
       this.clockwise = false;
       this.straightLine = true;
     }
-
     else{
       this.hyperbolicMethod();
     }
   }
 
   hyperbolicMethod(){
-    let q1, q2;
-    if (this.isOnUnitDisk) {
-      q1 = this.p1;
-      q2 = this.p2;
-    }
-    else {
-      q1 = this.p1.toUnitDisk();
-      q2 = this.p2.toUnitDisk();
-    }
-    const wq1 = q1.poincareToWeierstrass();
-    const wq2 = q2.poincareToWeierstrass();
-
-    const wcp = this.weierstrassCrossProduct(wq1, wq2);
-
     //calculate centre of arcCircle relative to unit disk
+    const wq1 = this.p1.poincareToWeierstrass();
+    const wq2 = this.p2.poincareToWeierstrass();
+    const wcp = this.weierstrassCrossProduct(wq1, wq2);
     const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
-    //translate points to origin before calculating arctan
-    q1.x = q1.x - arcCentre.x;
-    q1.y = q1.y - arcCentre.y;
-    q2.x = q2.x - arcCentre.x;
-    q2.y = q2.y - arcCentre.y;
+    const r = Math.sqrt(Math.pow(this.p1.x - arcCentre.x, 2) + Math.pow(this.p1.y - arcCentre.y, 2));
 
-    const r = Math.sqrt((q1.x * q1.x) + (q1.y * q1.y));
+    const arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
 
-    let arcCircle;
-    if (this.isOnUnitDisk) {
-      arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
-    } else {
-      arcCircle = new Circle(arcCentre.x * window.radius, arcCentre.y * window.radius, r * window.radius, false);
-    }
-
-    let alpha = Math.atan2(q1.y, q1.x);
-
-    let beta = Math.atan2(q2.y, q2.x);
+    //translate points to origin and calculate arctan
+    let alpha = Math.atan2(this.p1.y - arcCentre.y, this.p1.x - arcCentre.x);
+    let beta = Math.atan2(this.p2.y - arcCentre.y, this.p2.x - arcCentre.x);
 
     //angles are in (-pi, pi), transform to (0,2pi)
     alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
@@ -226,6 +209,7 @@ export class Arc {
     return r;
   }
 
+  /*
   //map from disk of window.radius to unit disk
   toUnitDisk() {
     if (this.isOnUnitDisk === true) {
@@ -249,6 +233,21 @@ export class Arc {
       return new Arc(p1, p2, false);
     }
   }
+  */
+}
+
+// * ***********************************************************************
+// *
+// *   EDGE CLASS
+// *   Represents a polygon edge
+// *
+// *************************************************************************
+class Edge {
+  constructor(v1, v2) {
+    this.startPoint = v1;
+    this.endPoint = v2;
+    this.arc = new Arc(v1, v2);
+  }
 }
 
 // * ***********************************************************************
@@ -259,7 +258,7 @@ export class Arc {
 //NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
 //making material DoubleSide but if this causes problems I'll have to add some
 //way of making sure the vertices are in the right winding order
-//TODO: would it be more efficient to calcucate the arcs that make the edges
+//TODO: would it be more efficient to calculate the arcs that make the edges
 //when the polygon is created?
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
@@ -267,10 +266,18 @@ export class Polygon {
   constructor(vertices, isOnUnitDisk = true) {
     this.isOnUnitDisk = isOnUnitDisk;
     this.vertices = vertices;
+    //this.edges = [];
+    //this.addEdges();
+  }
+
+  addEdges(){
+    for (let i = 0; i < this.vertices.length; i++) {
+      this.edges.push(new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length]))
+    }
   }
 
   spacedPointsOnEdges() {
-    let spacing = 5; //Math.ceil((2000 / window.radius));
+    const spacing = 50; //Math.ceil((2000 / window.radius));
     //if(spacing < 5) spacing = 5;
     const l = this.vertices.length;
     const points = [];
@@ -284,6 +291,7 @@ export class Polygon {
       if(E.distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing){
         let p;
         const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l], this.isOnUnitDisk);
+
         //line not through the origin (hyperbolic arc)
         if (!arc.straightLine) {
           if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
@@ -323,7 +331,6 @@ export class Polygon {
     for (let i = 0; i < this.vertices.length; i++) {
       newVertices.push(this.vertices[i].transform(transform));
     }
-
     return new Polygon(newVertices, this.isOnUnitDisk);
   }
 
@@ -349,6 +356,7 @@ export class Polygon {
     return new Point(x / f, y / f, this.isOnUnitDisk);
   }
 
+  /*
   //map from disk of window.radius to unit disk
   toUnitDisk() {
     if (this.isOnUnitDisk === true) {
@@ -376,5 +384,6 @@ export class Polygon {
       return new Polygon(newVertices, false);
     }
   }
+  */
 
 }

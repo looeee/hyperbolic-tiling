@@ -68,21 +68,25 @@ export class RegularTesselation {
   testing() {
     let texture = './images/textures/pattern1.png';
     //texture = '';
-    this.disk.drawPolygon(this.fr, 0xff0ff0, texture, false);
+    //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
-    let p = new Point(0, 0, false);
-    let q = new Point(-161, 161, false);
-    let w = new Point(129, 0, false);
-    let pgon = new Polygon([p, q, w], false);
+    let p = new Point(-.200, -.200);
+    let q = new Point(-.200, .200);
+    let w = new Point(.129, 0);
+    let pgon = new Polygon([p, q, w]);
 
-    //this.disk.drawPolygon(pgon, 0x5c30e0, texture, true);
+    let a = new Arc(p,q);
+
+    this.disk.drawArc(a, 0xff0000)
+
     //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-    let poly = this.centralPolygon.transform(this.transforms.edgeReflection);
-    //this.disk.drawPolygon(poly, 0x5c30e0, texture, false);
+    //this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+    let poly = this.fr.transform(this.transforms.edgeReflection);
+    //this.disk.drawPolygon(poly, 0xffffff, texture, false);
 
     //poly = poly.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0xec3ee0, pattern, this.wireframe);
-
+    //this.disk.drawPoint(new Point(0,0), 0.01, 0xfff000);
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -102,8 +106,8 @@ export class RegularTesselation {
     const yqpt = Math.sin(Math.PI / this.p) * rad2;
 
     //create points and move them from the unit disk to our radius
-    const p1 = new Point(xqpt, yqpt, true);
-    const p2 = new Point(x2pt, 0, true);
+    const p1 = new Point(xqpt, yqpt);
+    const p2 = new Point(x2pt, 0);
     const vertices = [this.disk.centre, p1, p2];
 
     return new Polygon(vertices, true);

@@ -34,7 +34,7 @@ let tesselation;
 let p = E.randomInt(4, 7);
 let q = E.randomInt(4, 7);
 
-if (p === 4 && q === 4) p = 5;
+if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = () => {
@@ -45,6 +45,7 @@ window.onload = () => {
   tesselation = new RegularTesselation(4, 5, 3);
   //tesselation = new RegularTesselation(p, q, 3);
 }
+
 
 window.onresize = () => {
   window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
