@@ -1285,7 +1285,7 @@ var RegularTesselation = function () {
         var qTransform = this.transforms.edgeTransforms[i];
         for (var j = 0; j < this.q - 2; j++) {
           if (this.p === 3 && this.q - 3 === j) {
-            this.layers[i].push(this.transformPattern(this.centralPattern, qtransform));
+            this.layers[i].push(this.transformPattern(this.centralPattern, qTransform));
           } else {
             this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
           }
@@ -1325,7 +1325,7 @@ var RegularTesselation = function () {
 
         for (var j = 0; j < pgonsToDo; j++) {
           if (this.p === 3 && j === pgonsToDo - 1) {
-            this.layers[layer].push(this.transformPattern(this.centralPattern, qtransform));
+            this.layers[layer].push(this.transformPattern(this.centralPattern, qTransform));
           } else {
             this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
           }
@@ -1456,7 +1456,7 @@ var RegularTesselation = function () {
         console.error('maxLayers must be greater than 0');
         return true;
       } else if ((this.p - 2) * (this.q - 2) <= 4) {
-        console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
+        console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
         return true;
       } else if (this.q < 3 || isNaN(this.q)) {
         console.error('Tesselation error: at least 3 p-gons must meet \
@@ -1535,13 +1535,16 @@ Math.cot = Math.cot || function (x) {
 // *************************************************************************
 var tesselation = undefined;
 var p = randomInt(3, 7);
-var q = randomInt(3, 6);
+var q = randomInt(3, 7);
 
-if (p === 4 && q === 4) q = 5;
+if ((p - 2) * (q - 2) < 5) {
+  q = 5;
+  p = 4;
+}
 
 //Run after load to get window width and height
 window.onload = function () {
-  //tesselation = new RegularTesselation(4, 8, 2);
+  //tesselation = new RegularTesselation(3, 7, 2);
   tesselation = new RegularTesselation(p, q, 2);
 };
 

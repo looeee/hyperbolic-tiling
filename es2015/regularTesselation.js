@@ -111,7 +111,7 @@ export class RegularTesselation {
       let qTransform = this.transforms.edgeTransforms[i];
       for (let j = 0; j < this.q - 2; j++) {
         if ((this.p === 3) && (this.q - 3 === j)) {
-          this.layers[i].push( this.transformPattern(this.centralPattern, qtransform) );
+          this.layers[i].push( this.transformPattern(this.centralPattern, qTransform) );
         }
         else {
           this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
@@ -150,10 +150,10 @@ export class RegularTesselation {
 
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
-          this.layers[layer].push( this.transformPattern(this.centralPattern, qtransform) );
+          this.layers[layer].push( this.transformPattern(this.centralPattern, qTransform) );
         }
         else {
-          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
+          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
         }
         if ((-1 % this.p) !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
@@ -193,7 +193,7 @@ export class RegularTesselation {
       return true;
     }
     else if ((this.p - 2) * (this.q - 2) <= 4) {
-      console.error('Hyperbolic tesselations require that (p-1)(q-2) > 4!');
+      console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
       return true;
     }
     else if (this.q < 3 || isNaN(this.q)) {
