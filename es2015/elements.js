@@ -186,7 +186,7 @@ class Edge {
   }
 
   spacedPoints() {
-    const spacing = 0.2;
+    const spacing = 0.05;
 
     //push the first vertex
     this.points.push(this.startPoint);

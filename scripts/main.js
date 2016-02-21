@@ -514,7 +514,7 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var spacing = 0.2;
+      var spacing = 0.05;
 
       //push the first vertex
       this.points.push(this.startPoint);
@@ -1041,59 +1041,34 @@ var ThreeJS = function () {
       geometry.vertices.push(new THREE.Vector3(_polygon.centre.x * this.radius, _polygon.centre.y * this.radius, 0));
 
       var edges = _polygon.edges;
-      //push first vertex of edge to vertices array
+      //push first vertex of polygon to vertices array
       //This means that when the next vertex is pushed in the loop
       //we can also create the first face triangle
       geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
 
+      //vertices pushed so far counting from 0
+      var count = 1;
+
       for (var i = 0; i < edges.length; i++) {
         var points = edges[i].points;
-
-        for (var j = 0; j < points.length; j++) {
+        for (var j = 1; j < points.length; j++) {
           geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
-          geometry.faces.push(new THREE.Face3(0, i * j, i * j + 1));
+          geometry.faces.push(new THREE.Face3(0, count, count + 1));
+          count++;
         }
-        //push the final face
-        geometry.faces.push(new THREE.Face3(0, geometry.vertices.length - points.length, i * points.length));
       }
+      this.setUvs(geometry, _polygon);
 
       var mesh = this.createMesh(geometry, color, texture, wireframe);
       this.scene.add(mesh);
     }
-    /*
-    polygon(vertices, centre, color, texture, wireframe) {
-      if (color === undefined) color = 0xffffff;
-      const l = vertices.length;
-       const geometry = new THREE.Geometry();
-       //vertex 0 = polygon barycentre
-      geometry.vertices.push(new THREE.Vector3(centre.x * this.radius, centre.y * this.radius, 0));
-       //push first vertex to vertices array
-      //This means that when the next vertex is pushed in the loop
-      //we can also create the first face triangle
-      geometry.vertices.push(new THREE.Vector3(vertices[0].x * this.radius, vertices[0].y * this.radius, 0));
-       //each vertex added creates a new triangle, use this to create a new face
-      for (let i = 1; i < l; i++) {
-        geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
-        geometry.faces.push(new THREE.Face3(0, i, i + 1));
-      }
-       //push the final face
-      geometry.faces.push(new THREE.Face3(0, l, 1));
-       this.setUvs(geometry, vertices, centre);
-       const mesh = this.createMesh(geometry, color, texture, wireframe);
-      this.scene.add(mesh);
-       //this.addBoundingBoxHelper(mesh);
-      //this.disk(centre, 1, 0xff0000)
-    }
-    */
-
-    //TODO make work!
-
   }, {
     key: 'setUvs',
-    value: function setUvs(geometry, vertices, centre) {
+    value: function setUvs(geometry, polygon) {
       //the incentre of the triangle (0,0), (1,0), (1,1)
       var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
+      var vertices = geometry.vertices;
       var l = vertices.length;
 
       geometry.computeBoundingBox();
@@ -1105,23 +1080,53 @@ var ThreeJS = function () {
       geometry.faceVertexUvs[0] = [];
 
       for (var i = 0; i < l - 1; i++) {
-        geometry.faceVertexUvs[0].push([
-        //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
-        new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r), new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)]);
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r), new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)]);
       }
 
       //push the final face vertex
-      geometry.faceVertexUvs[0].push([
-      //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
-      new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r), new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)]);
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r), new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)]);
 
       geometry.uvsNeedUpdate = true;
     }
 
+    /*
+    //TODO make work!
+    setUvs(geometry, vertices, centre) {
+      //the incentre of the triangle (0,0), (1,0), (1,1)
+      const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
+       const l = vertices.length;
+       geometry.computeBoundingBox();
+      const max = geometry.boundingBox.max;
+      const min = geometry.boundingBox.min;
+      const offset = new THREE.Vector2(min.x, min.y);
+      const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
+      const r = E.distance(min, max);
+      geometry.faceVertexUvs[0] = [];
+       for (let i = 0; i < l - 1; i++) {
+        geometry.faceVertexUvs[0].push(
+          [
+            //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
+            new THREE.Vector2(incentre.x, incentre.y),
+            new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
+            new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
+          ]);
+      }
+       //push the final face vertex
+      geometry.faceVertexUvs[0].push(
+        [
+          //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
+          new THREE.Vector2(incentre.x, incentre.y),
+          new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
+          new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
+        ]);
+       geometry.uvsNeedUpdate = true;
+    }
+    */
+
     //NOTE: some polygons are inverted due to vertex order,
-    //solved this but this might cause problems with textures
-    //TODO should probably only be creating materials/textures
-    //once and then cloning where possible
+    //solved this by making material doubles sided but this might cause problems with textures
+    //TODO should only be creating materials/textures
+    //once and then cloning if possible
 
   }, {
     key: 'createMesh',
@@ -1377,22 +1382,22 @@ var RegularTesselation = function () {
         var t1 = performance.now();
         console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }
-      //this.drawLayers();
-      this.testing();
+      this.drawLayers();
+      //this.testing();
     }
   }, {
     key: 'testing',
     value: function testing() {
       var texture = './images/textures/pattern1.png';
-      texture = '';
+      //texture = '';
       //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
-      var p = new Point(-.200, -.200);
-      var q = new Point(-.200, .500);
-      var w = new Point(.59, -0.2);
+      var p = new Point(-.600, -.600);
+      var q = new Point(-.400, .600);
+      var w = new Point(.6, 0.4);
       var pgon = new Polygon([p, q, w]);
 
-      this.disk.drawPolygon(pgon, 0xffffff, texture, true);
+      this.disk.drawPolygon(pgon, 0xffffff, texture, false);
       //this.disk.drawPolygonOutline(pgon, 0xffffff);
       var poly = this.fr.transform(this.transforms.edgeReflection);
       //this.disk.drawPolygon(poly, 0xffffff, texture, false);

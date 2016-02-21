@@ -87,61 +87,65 @@ export class ThreeJS {
     geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
 
     const edges = polygon.edges;
-    //push first vertex of edge to vertices array
+    //push first vertex of polygon to vertices array
     //This means that when the next vertex is pushed in the loop
     //we can also create the first face triangle
     geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
 
+    //vertices pushed so far counting from 0
+    let count = 1;
 
     for(let i = 0; i < edges.length; i++){
       const points = edges[i].points;
-
-      for(let j = 0; j < points.length; j++){
+      for(let j = 1; j < points.length; j++){
         geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
-        geometry.faces.push(new THREE.Face3(0, i*j, (i*j)+1) );
+        geometry.faces.push(new THREE.Face3(0, count, count + 1) );
+        count++;
       }
-      //push the final face
-      geometry.faces.push(new THREE.Face3(0, geometry.vertices.length - points.length, i * points.length));
     }
+    this.setUvs(geometry, polygon);
 
     const mesh = this.createMesh(geometry, color, texture, wireframe);
     this.scene.add(mesh);
 
   }
-  /*
-  polygon(vertices, centre, color, texture, wireframe) {
-    if (color === undefined) color = 0xffffff;
+
+  setUvs(geometry, polygon) {
+    //the incentre of the triangle (0,0), (1,0), (1,1)
+    const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
+
+    const vertices = geometry.vertices;
     const l = vertices.length;
 
-    const geometry = new THREE.Geometry();
+    geometry.computeBoundingBox();
+    const max = geometry.boundingBox.max;
+    const min = geometry.boundingBox.min;
+    const offset = new THREE.Vector2(min.x, min.y);
+    const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
+    const r = E.distance(min, max);
+    geometry.faceVertexUvs[0] = [];
 
-    //vertex 0 = polygon barycentre
-    geometry.vertices.push(new THREE.Vector3(centre.x * this.radius, centre.y * this.radius, 0));
-
-    //push first vertex to vertices array
-    //This means that when the next vertex is pushed in the loop
-    //we can also create the first face triangle
-    geometry.vertices.push(new THREE.Vector3(vertices[0].x * this.radius, vertices[0].y * this.radius, 0));
-
-    //each vertex added creates a new triangle, use this to create a new face
-    for (let i = 1; i < l; i++) {
-      geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
-      geometry.faces.push(new THREE.Face3(0, i, i + 1));
+    for (let i = 0; i < l - 1; i++) {
+      geometry.faceVertexUvs[0].push(
+        [
+          new THREE.Vector2(incentre.x, incentre.y),
+          new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
+          new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
+        ]);
     }
 
-    //push the final face
-    geometry.faces.push(new THREE.Face3(0, l, 1));
+    //push the final face vertex
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
+        new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
+      ]);
 
-    this.setUvs(geometry, vertices, centre);
-
-    const mesh = this.createMesh(geometry, color, texture, wireframe);
-    this.scene.add(mesh);
-
-    //this.addBoundingBoxHelper(mesh);
-    //this.disk(centre, 1, 0xff0000)
+    geometry.uvsNeedUpdate = true;
   }
-  */
 
+  /*
   //TODO make work!
   setUvs(geometry, vertices, centre) {
     //the incentre of the triangle (0,0), (1,0), (1,1)
@@ -178,11 +182,12 @@ export class ThreeJS {
 
     geometry.uvsNeedUpdate = true;
   }
+  */
 
   //NOTE: some polygons are inverted due to vertex order,
-  //solved this but this might cause problems with textures
-  //TODO should probably only be creating materials/textures
-  //once and then cloning where possible
+  //solved this by making material doubles sided but this might cause problems with textures
+  //TODO should only be creating materials/textures
+  //once and then cloning if possible
   createMesh(geometry, color, imageURL, wireframe) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
@@ -276,7 +281,42 @@ export class ThreeJS {
 }
 
 /*
-//OLD POLYGON METHOD
+//POLYGON METHOD V2
+polygon(vertices, centre, color, texture, wireframe) {
+  if (color === undefined) color = 0xffffff;
+  const l = vertices.length;
+
+  const geometry = new THREE.Geometry();
+
+  //vertex 0 = polygon barycentre
+  geometry.vertices.push(new THREE.Vector3(centre.x * this.radius, centre.y * this.radius, 0));
+
+  //push first vertex to vertices array
+  //This means that when the next vertex is pushed in the loop
+  //we can also create the first face triangle
+  geometry.vertices.push(new THREE.Vector3(vertices[0].x * this.radius, vertices[0].y * this.radius, 0));
+
+  //each vertex added creates a new triangle, use this to create a new face
+  for (let i = 1; i < l; i++) {
+    geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+    geometry.faces.push(new THREE.Face3(0, i, i + 1));
+  }
+
+  //push the final face
+  geometry.faces.push(new THREE.Face3(0, l, 1));
+
+  this.setUvs(geometry, vertices, centre);
+
+  const mesh = this.createMesh(geometry, color, texture, wireframe);
+  this.scene.add(mesh);
+
+  //this.addBoundingBoxHelper(mesh);
+  //this.disk(centre, 1, 0xff0000)
+}
+*/
+
+/*
+//POLYGON METHOD V1
 const poly = new THREE.Shape();
 
 poly.moveTo(vertices[0].x, vertices[0].y);

@@ -63,21 +63,21 @@ export class RegularTesselation {
       let t1 = performance.now();
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
-    //this.drawLayers();
-    this.testing();
+    this.drawLayers();
+    //this.testing();
   }
 
   testing() {
     let texture = './images/textures/pattern1.png';
-    texture = '';
+    //texture = '';
     //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
-    let p = new Point(-.200, -.200);
-    let q = new Point(-.200, .500);
-    let w = new Point(.59, -0.2);
+    let p = new Point(-.600, -.600);
+    let q = new Point(-.400, .600);
+    let w = new Point(.6, 0.4);
     let pgon = new Polygon([p, q, w]);
 
-    this.disk.drawPolygon(pgon, 0xffffff, texture, true);
+    this.disk.drawPolygon(pgon, 0xffffff, texture, false);
     //this.disk.drawPolygonOutline(pgon, 0xffffff);
     let poly = this.fr.transform(this.transforms.edgeReflection);
     //this.disk.drawPolygon(poly, 0xffffff, texture, false);
