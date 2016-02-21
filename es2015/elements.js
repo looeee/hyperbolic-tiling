@@ -108,11 +108,11 @@ export class Circle {
 // *************************************************************************
 
 export class Arc {
-  constructor(p1, p2) {
-    this.p1 = p1;
-    this.p2 = p2;
+  constructor(startPoint, endPoint) {
+    this.startPoint = startPoint;
+    this.endPoint = endPoint;
 
-    if (E.throughOrigin(p1, p2)) {
+    if (E.throughOrigin(startPoint, endPoint)) {
       this.circle = new Circle(0, 0, 1);
       this.startAngle = 0;
       this.endAngle = 0;
@@ -127,18 +127,18 @@ export class Arc {
   //Calculate the arc using Dunham's method
   hyperbolicMethod(){
     //calculate centre of arcCircle relative to unit disk
-    const wq1 = this.p1.poincareToWeierstrass();
-    const wq2 = this.p2.poincareToWeierstrass();
+    const wq1 = this.startPoint.poincareToWeierstrass();
+    const wq2 = this.endPoint.poincareToWeierstrass();
     const wcp = this.weierstrassCrossProduct(wq1, wq2);
     const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
-    const r = Math.sqrt(Math.pow(this.p1.x - arcCentre.x, 2) + Math.pow(this.p1.y - arcCentre.y, 2));
+    const r = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
 
     const arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
 
     //translate points to origin and calculate arctan
-    let alpha = Math.atan2(this.p1.y - arcCentre.y, this.p1.x - arcCentre.x);
-    let beta = Math.atan2(this.p2.y - arcCentre.y, this.p2.x - arcCentre.x);
+    let alpha = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);
+    let beta = Math.atan2(this.endPoint.y - arcCentre.y, this.endPoint.x - arcCentre.x);
 
     //angles are in (-pi, pi), transform to (0,2pi)
     alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
@@ -175,12 +175,9 @@ export class Arc {
 // *   Represents a polygon edge
 // *
 // *************************************************************************
-//TODO: startpoint and endpoint duplicate arc.p1, arc.p2
 class Edge {
-  constructor(v1, v2) {
-    this.arc = new Arc(v1, v2);
-    this.startPoint = v1;
-    this.endPoint = v2;
+  constructor(startPoint, endPoint) {
+    this.arc = new Arc(startPoint, endPoint);
 
     this.points = [];
     this.spacedPoints();
@@ -190,19 +187,19 @@ class Edge {
     const spacing = .05;
 
     //push the first vertex
-    this.points.push(this.startPoint);
+    this.points.push(this.arc.startPoint);
 
      //tiny pgons near the edges of the disk don't need to be subdivided
-    if(E.distance(this.startPoint, this.endPoint) > spacing){
+    if(E.distance(this.arc.startPoint, this.arc.endPoint) > spacing){
       let p;
       //line not through the origin (hyperbolic arc)
       if (!this.arc.straightLine) {
-        if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, this.startPoint, spacing).p1;
-        else p = E.spacedPointOnArc(this.arc.circle, this.startPoint, spacing).p2;
+        if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, spacing).p1;
+        else p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, spacing).p2;
 
         this.points.push(p);
 
-        while (E.distance(p, this.endPoint) > spacing) {
+        while (E.distance(p, this.arc.endPoint) > spacing) {
           if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, p, spacing).p1;
           else p = E.spacedPointOnArc(this.arc.circle, p, spacing).p2;
           this.points.push(p);
@@ -211,15 +208,15 @@ class Edge {
 
       //line through origin (straight line)
       else {
-        p = E.spacedPointOnLine(this.startPoint, this.endPoint, spacing).p2;
+        p = E.spacedPointOnLine(this.arc.startPoint, this.arc.endPoint, spacing).p2;
         this.points.push(p);
-        while (E.distance(p, this.endPoint) > spacing) {
-          p = E.spacedPointOnLine(p, this.startPoint, spacing).p1;
+        while (E.distance(p, this.arc.endPoint) > spacing) {
+          p = E.spacedPointOnLine(p, this.arc.startPoint, spacing).p1;
           this.points.push(p);
         }
       }
     }
-    this.points.push(this.endPoint);
+    this.points.push(this.arc.endPoint);
 
     return this.points;
   }
@@ -231,15 +228,15 @@ class Edge {
 // *   POLYGON CLASS
 // *
 // *************************************************************************
-//NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
-//making material DoubleSide but if this causes problems I'll have to add some
-//way of making sure the vertices are in the right winding order
+//NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
+//but may cause problems
+//NOTE: all polygons are now assumed to be triangular
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 export class Polygon {
   constructor(vertices) {
     this.vertices = vertices;
-    this.centre = this.barycentre();
+    this.centre = this.centre();
     this.edges = [];
     this.addEdges();
   }
@@ -259,25 +256,37 @@ export class Polygon {
     return new Polygon(newVertices);
   }
 
-  //find the barycentre of a non-self-intersecting polygon
-  barycentre() {
-    const l = this.vertices.length;
-    const first = this.vertices[0];
-    const last = this.vertices[l - 1];
+  //Find the incentre of triangular polygon
+  centre() {
+    const a = E.distance(this.vertices[0], this.vertices[1]);
+    const b = E.distance(this.vertices[1], this.vertices[2]);
+    const c = E.distance(this.vertices[0], this.vertices[2]);
+    const x = (a*this.vertices[2].x + b*this.vertices[0].x + c*this.vertices[1].x)/(a+b+c);
+    const y = (a*this.vertices[2].y + b*this.vertices[0].y + c*this.vertices[1].y)/(a+b+c);
+    return new Point(x, y);
 
-    let twicearea = 0,
-      x = 0,
-      y = 0,
-      p1, p2, f;
-    for (let i = 0, j = l - 1; i < l; j = i++) {
-      p1 = this.vertices[i];
-      p2 = this.vertices[j];
-      f = p1.x * p2.y - p2.x * p1.y;
-      twicearea += f;
-      x += (p1.x + p2.x) * f;
-      y += (p1.y + p2.y) * f;
-    }
-    f = twicearea * 3;
-    return new Point(x / f, y / f);
   }
 }
+
+/*
+barycentre() {
+  const l = this.vertices.length;
+  const first = this.vertices[0];
+  const last = this.vertices[l - 1];
+
+  let twicearea = 0,
+    x = 0,
+    y = 0,
+    p1, p2, f;
+  for (let i = 0, j = l - 1; i < l; j = i++) {
+    p1 = this.vertices[i];
+    p2 = this.vertices[j];
+    f = p1.x * p2.y - p2.x * p1.y;
+    twicearea += f;
+    x += (p1.x + p2.x) * f;
+    y += (p1.y + p2.y) * f;
+  }
+  f = twicearea * 3;
+  return new Point(x / f, y / f);
+}
+*/

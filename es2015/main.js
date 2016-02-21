@@ -30,15 +30,15 @@ Math.cot = Math.cot || function(x) {
 // *
 // *************************************************************************
 let tesselation;
-let p = E.randomInt(4, 7);
-let q = E.randomInt(4, 7);
+let p = E.randomInt(3, 7);
+let q = E.randomInt(3, 6);
 
 if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(4, 5, 4);
-  //tesselation = new RegularTesselation(p, q, 3);
+  //tesselation = new RegularTesselation(4, 8, 2);
+  tesselation = new RegularTesselation(p, q, 2);
 }
 
 

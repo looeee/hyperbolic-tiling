@@ -20,14 +20,11 @@ export class ThreeJS {
     this.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
-
-    this.initLighting();
-
     this.initRenderer();
   }
 
   reset() {
-    cancelAnimationFrame(this.id); // Stop the animation
+    cancelAnimationFrame(this.id); 
     this.clearScene();
     this.projector = null;
     this.camera = null;
@@ -46,11 +43,6 @@ export class ThreeJS {
     this.scene.add(this.camera);
   }
 
-  initLighting() {
-    const ambientLight = new THREE.AmbientLight(0xffffff);
-    this.scene.add(ambientLight);
-  }
-
   initRenderer() {
     if (this.renderer === undefined) {
       this.renderer = new THREE.WebGLRenderer({
@@ -62,15 +54,14 @@ export class ThreeJS {
     }
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-
     this.render();
   }
 
   disk(centre, radius, color) {
     if (color === undefined) color = 0xffffff;
-
     const geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
     const material = new THREE.MeshBasicMaterial({color: color});
+
     const circle = new THREE.Mesh(geometry, material);
     circle.position.x = centre.x * this.radius;
     circle.position.y = centre.y * this.radius;
@@ -81,10 +72,8 @@ export class ThreeJS {
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
-    //the incentre of the triangle (0,0), (1,0), (1,1) used for uvs
-    const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
-
     const geometry = new THREE.Geometry();
+
     //assign polygon barycentre to vertex 0
     geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
 
@@ -93,7 +82,6 @@ export class ThreeJS {
     //This means that when the next vertex is pushed in the loop
     //we can also create the first face triangle
     geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
-
 
     //vertices pushed so far counting from 0
     let count = 1;
@@ -113,8 +101,10 @@ export class ThreeJS {
 
   }
 
+  //The texture is assumed to be a square power of transparent png with the image
+  //in the lower right triange triangle (0,0), (1,0), (1,1)
   setUvs(geometry, edges) {
-    //the incentre of the triangle (0,0), (1,0), (1,1)
+    //the incentre of the triangle is mapped to the polygon barycentre
     const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
     geometry.faceVertexUvs[0] = [];
@@ -156,8 +146,6 @@ export class ThreeJS {
 
   //NOTE: some polygons are inverted due to vertex order,
   //solved this by making material doubles sided but this might cause problems with textures
-  //TODO should only be creating materials/textures
-  //once and then cloning if possible
   createMesh(geometry, color, imageURL, wireframe) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
@@ -167,7 +155,6 @@ export class ThreeJS {
         color: color,
         wireframe: wireframe,
         side: THREE.DoubleSide,
-        //transparent: true,
       });
       if (imageURL) {
         this.texture = new THREE.TextureLoader().load(imageURL);
@@ -178,15 +165,7 @@ export class ThreeJS {
     return new THREE.Mesh(geometry, this.material);
   }
 
-  addBoundingBoxHelper(mesh) {
-    const box = new THREE.BoxHelper(mesh);
-    //box.update();
-    this.scene.add(box);
-  }
-
-  //TODO as this is a static image requestAnimationFrame is redundant
-  //however render() needs to be called after all the shapes
-  //are calculated
+  //TODO figure out how to delay this call until all pgons are added
   render() {
     requestAnimationFrame(() => {
       this.render()
@@ -204,6 +183,20 @@ export class ThreeJS {
     xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xhttp.send('img=' + data);
   }
+}
+
+
+
+
+
+
+
+/* OLD/UNUSED FUNCTIONS
+addBoundingBoxHelper(mesh) {
+  const box = new THREE.BoxHelper(mesh);
+  //box.update();
+  this.scene.add(box);
+}
 
   segment(circle, startAngle, endAngle, color) {
     if (color === undefined) color = 0xffffff;
@@ -245,9 +238,7 @@ export class ThreeJS {
     const l = new THREE.Line(geometry, material);
     this.scene.add(l);
   }
-}
 
-/*
 //POLYGON METHOD V2
 polygon(vertices, centre, color, texture, wireframe) {
   if (color === undefined) color = 0xffffff;

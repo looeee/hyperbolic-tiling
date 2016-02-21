@@ -1,7 +1,6 @@
 import * as E from './euclid';
 
 //TODO Document these classes
-
 // * ***********************************************************************
 // *
 // *  TRANSFORM CLASS

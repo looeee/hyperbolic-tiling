@@ -29,7 +29,7 @@ export class RegularTesselation {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q);
-    this.texture = './images/textures/pattern1.png';
+    this.texture = './images/textures/fish1.png';
     //this.texture = '';
 
     this.p = p;
@@ -55,7 +55,6 @@ export class RegularTesselation {
   init(p, q, maxLayers) {
     this.fr = this.fundamentalRegion();
     this.buildCentralPattern();
-    //this.buildCentralPolygon();
 
     if (this.maxLayers > 1) {
       let t0 = performance.now();
@@ -63,28 +62,10 @@ export class RegularTesselation {
       let t1 = performance.now();
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
+    let t0 = performance.now();
     this.drawLayers();
-    //this.testing();
-  }
-
-  testing() {
-    let texture = './images/textures/pattern1.png';
-    //texture = '';
-    //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
-
-    /*
-    let p = new Point(-.600, -.600);
-    let q = new Point(-.400, .600);
-    let w = new Point(.6, 0.2);
-    let pgon = new Polygon([p, q, w]);
-
-    this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-    */
-
-    //let newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
-    //console.log(newPattern);
-    //this.drawPattern(newPattern);
-
+    let t1 = performance.now();
+    console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.')
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -124,6 +105,7 @@ export class RegularTesselation {
     this.layers[0][0] = this.centralPattern;
   }
 
+  //TODO document this function
   generateLayers() {
     for (let i = 0; i < this.p; i++) {
       let qTransform = this.transforms.edgeTransforms[i];
@@ -143,6 +125,7 @@ export class RegularTesselation {
 
   //calculate the polygons in each layer and add them to this.layers[layer] array
   //but don't draw them yet
+  //TODO document this function
   layerRecursion(exposure, layer, transform) {
     this.layers[layer].push(this.transformPattern(this.centralPattern, transform));
 
