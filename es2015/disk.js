@@ -65,7 +65,6 @@ export class Disk {
   }
 
   drawPolygon(polygon, color, texture, wireframe) {
-    console.log(polygon);
     if (this.checkPoints(polygon.vertices)) {
       return false
     }

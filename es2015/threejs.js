@@ -103,14 +103,14 @@ export class ThreeJS {
         count++;
       }
     }
-    this.setUvs(geometry, polygon);
+    this.setUvs(geometry, edges);
 
     const mesh = this.createMesh(geometry, color, texture, wireframe);
     this.scene.add(mesh);
 
   }
 
-  setUvs(geometry, polygon) {
+  setUvs(geometry, edges) {
     //the incentre of the triangle (0,0), (1,0), (1,1)
     const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
@@ -125,7 +125,35 @@ export class ThreeJS {
     const r = E.distance(min, max);
     geometry.faceVertexUvs[0] = [];
 
-    for (let i = 0; i < l - 1; i++) {
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(1, 1)
+        //new THREE.Vector2((edges[0].points[0].x - offset.x) / r, (edges[0].points[0].y - offset.y) / r),
+        //new THREE.Vector2((edges[0].points[1].x - offset.x) / r, (edges[0].points[1].y - offset.y) / r)
+      ]);
+
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(1, 1),
+        new THREE.Vector2(1, 0)
+        //new THREE.Vector2((edges[1].points[0].x - offset.x) / r, (edges[1].points[0].y - offset.y) / r),
+        //new THREE.Vector2((edges[1].points[1].x - offset.x) / r, (edges[1].points[1].y - offset.y) / r)
+      ]);
+
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(0, 0)
+        //new THREE.Vector2((edges[2].points[0].x - offset.x) / r, (edges[2].points[0].y - offset.y) / r),
+        //new THREE.Vector2((edges[2].points[1].x - offset.x) / r, (edges[2].points[1].y - offset.y) / r)
+      ]);
+
+    /*
+    for (let i = 0; i < edges.lenth; i++) {
       geometry.faceVertexUvs[0].push(
         [
           new THREE.Vector2(incentre.x, incentre.y),
@@ -135,12 +163,14 @@ export class ThreeJS {
     }
 
     //push the final face vertex
+
     geometry.faceVertexUvs[0].push(
       [
         new THREE.Vector2(incentre.x, incentre.y),
         new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
         new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
       ]);
+    */
 
     geometry.uvsNeedUpdate = true;
   }
@@ -231,7 +261,7 @@ export class ThreeJS {
   //TODO: make work!
   saveImage() {
     const data = this.renderer.domElement.toDataURL('image/png');
-    console.log(data);
+    //console.log(data);
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', 'saveImage.php', true);
     xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');

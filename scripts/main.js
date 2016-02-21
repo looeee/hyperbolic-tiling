@@ -514,7 +514,7 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var spacing = 0.05;
+      var spacing = 1.8;
 
       //push the first vertex
       this.points.push(this.startPoint);
@@ -1057,14 +1057,14 @@ var ThreeJS = function () {
           count++;
         }
       }
-      this.setUvs(geometry, _polygon);
+      this.setUvs(geometry, edges);
 
       var mesh = this.createMesh(geometry, color, texture, wireframe);
       this.scene.add(mesh);
     }
   }, {
     key: 'setUvs',
-    value: function setUvs(geometry, polygon) {
+    value: function setUvs(geometry, edges) {
       //the incentre of the triangle (0,0), (1,0), (1,1)
       var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
@@ -1079,12 +1079,38 @@ var ThreeJS = function () {
       var r = distance(min, max);
       geometry.faceVertexUvs[0] = [];
 
-      for (var i = 0; i < l - 1; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r), new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)]);
-      }
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(0, 0), new THREE.Vector2(1, 1)
+      //new THREE.Vector2((edges[0].points[0].x - offset.x) / r, (edges[0].points[0].y - offset.y) / r),
+      //new THREE.Vector2((edges[0].points[1].x - offset.x) / r, (edges[0].points[1].y - offset.y) / r)
+      ]);
 
-      //push the final face vertex
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r), new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)]);
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 1), new THREE.Vector2(1, 0)
+      //new THREE.Vector2((edges[1].points[0].x - offset.x) / r, (edges[1].points[0].y - offset.y) / r),
+      //new THREE.Vector2((edges[1].points[1].x - offset.x) / r, (edges[1].points[1].y - offset.y) / r)
+      ]);
+
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 0), new THREE.Vector2(0, 0)
+      //new THREE.Vector2((edges[2].points[0].x - offset.x) / r, (edges[2].points[0].y - offset.y) / r),
+      //new THREE.Vector2((edges[2].points[1].x - offset.x) / r, (edges[2].points[1].y - offset.y) / r)
+      ]);
+
+      /*
+      for (let i = 0; i < edges.lenth; i++) {
+        geometry.faceVertexUvs[0].push(
+          [
+            new THREE.Vector2(incentre.x, incentre.y),
+            new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
+            new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
+          ]);
+      }
+       //push the final face vertex
+       geometry.faceVertexUvs[0].push(
+        [
+          new THREE.Vector2(incentre.x, incentre.y),
+          new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
+          new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
+        ]);
+      */
 
       geometry.uvsNeedUpdate = true;
     }
@@ -1181,7 +1207,7 @@ var ThreeJS = function () {
     key: 'saveImage',
     value: function saveImage() {
       var data = this.renderer.domElement.toDataURL('image/png');
-      console.log(data);
+      //console.log(data);
       var xhttp = new XMLHttpRequest();
       xhttp.open('POST', 'saveImage.php', true);
       xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -1295,7 +1321,6 @@ var Disk = function () {
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
-      console.log(polygon);
       if (this.checkPoints(polygon.vertices)) {
         return false;
       }
@@ -1382,8 +1407,8 @@ var RegularTesselation = function () {
         var t1 = performance.now();
         console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }
-      this.drawLayers();
-      //this.testing();
+      //this.drawLayers();
+      this.testing();
     }
   }, {
     key: 'testing',
