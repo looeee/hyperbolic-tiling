@@ -70,7 +70,8 @@ export class ThreeJS {
     if (color === undefined) color = 0xffffff;
 
     const geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-    const circle = this.createMesh(geometry, color);
+    const material = new THREE.MeshBasicMaterial({color: color});
+    const circle = new THREE.Mesh(geometry, material);
     circle.position.x = centre.x * this.radius;
     circle.position.y = centre.y * this.radius;
 
@@ -161,23 +162,20 @@ export class ThreeJS {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
-    const material = new THREE.MeshBasicMaterial({
-      color: color,
-      wireframe: wireframe,
-      side: THREE.DoubleSide,
-      //transparent: true,
-    });
-
-    if (imageURL) {
-      const texture = new THREE.TextureLoader().load(imageURL);
-      texture.wrapS = 1000;
-      texture.wrapT = 1000;
-      material.map = texture;
-      material.needsUpdate = true;
+    if(!this.material){
+      this.material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: wireframe,
+        side: THREE.DoubleSide,
+        //transparent: true,
+      });
+      if (imageURL) {
+        this.texture = new THREE.TextureLoader().load(imageURL);
+        this.material.map = this.texture;
+        this.material.needsUpdate = true;
+      }
     }
-
-
-    return new THREE.Mesh(geometry, material);
+    return new THREE.Mesh(geometry, this.material);
   }
 
   addBoundingBoxHelper(mesh) {

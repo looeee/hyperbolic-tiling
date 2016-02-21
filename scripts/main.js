@@ -975,7 +975,8 @@ var ThreeJS = function () {
       if (color === undefined) color = 0xffffff;
 
       var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-      var circle = this.createMesh(geometry, color);
+      var material = new THREE.MeshBasicMaterial({ color: color });
+      var circle = new THREE.Mesh(geometry, material);
       circle.position.x = centre.x * this.radius;
       circle.position.y = centre.y * this.radius;
 
@@ -1055,22 +1056,20 @@ var ThreeJS = function () {
       if (wireframe === undefined) wireframe = false;
       if (color === undefined) color = 0xffffff;
 
-      var material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: wireframe,
-        side: THREE.DoubleSide
-      });
-
-      //transparent: true,
-      if (imageURL) {
-        var texture = new THREE.TextureLoader().load(imageURL);
-        texture.wrapS = 1000;
-        texture.wrapT = 1000;
-        material.map = texture;
-        material.needsUpdate = true;
+      if (!this.material) {
+        this.material = new THREE.MeshBasicMaterial({
+          color: color,
+          wireframe: wireframe,
+          side: THREE.DoubleSide
+        });
+        //transparent: true,
+        if (imageURL) {
+          this.texture = new THREE.TextureLoader().load(imageURL);
+          this.material.map = this.texture;
+          this.material.needsUpdate = true;
+        }
       }
-
-      return new THREE.Mesh(geometry, material);
+      return new THREE.Mesh(geometry, this.material);
     }
   }, {
     key: 'addBoundingBoxHelper',
@@ -1264,10 +1263,10 @@ var RegularTesselation = function () {
 
     //TESTING
     this.wireframe = false;
-    this.wireframe = true;
+    //this.wireframe = true;
     console.log(p, q);
     this.texture = './images/textures/pattern1.png';
-    this.texture = '';
+    //this.texture = '';
 
     this.p = p;
     this.q = q;
@@ -1294,7 +1293,7 @@ var RegularTesselation = function () {
     value: function init(p, q, maxLayers) {
       this.fr = this.fundamentalRegion();
       this.buildCentralPattern();
-      this.buildCentralPolygon();
+      //this.buildCentralPolygon();
 
       if (this.maxLayers > 1) {
         var t0 = performance.now();
@@ -1302,8 +1301,8 @@ var RegularTesselation = function () {
         var t1 = performance.now();
         console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }
-      //this.drawLayers();
-      this.testing();
+      this.drawLayers();
+      //this.testing();
     }
   }, {
     key: 'testing',
@@ -1320,9 +1319,9 @@ var RegularTesselation = function () {
        this.disk.drawPolygon(pgon, 0xffffff, texture, false);
       */
 
-      var newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
-      console.log(newPattern);
-      this.drawPattern(newPattern);
+      //let newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
+      //console.log(newPattern);
+      //this.drawPattern(newPattern);
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1359,23 +1358,13 @@ var RegularTesselation = function () {
     key: 'buildCentralPattern',
     value: function buildCentralPattern() {
       this.frCopy = this.fr.transform(this.transforms.hypReflection);
-      this.layers[0] = [this.fr, this.frCopy];
+      this.centralPattern = [this.fr, this.frCopy];
 
       for (var i = 1; i < this.p; i++) {
-        this.layers[0].push(this.layers[0][0].transform(this.transforms.rotatePolygonCW[i]));
-        this.layers[0].push(this.layers[0][1].transform(this.transforms.rotatePolygonCW[i]));
+        this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
+        this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
       }
-      this.centralPattern = this.layers[0];
-    }
-  }, {
-    key: 'buildCentralPolygon',
-    value: function buildCentralPolygon() {
-      var vertices = [];
-      for (var i = 0; i < this.p; i++) {
-        var p = this.fr.vertices[1];
-        vertices.push(p.transform(this.transforms.rotatePolygonCW[i]));
-      }
-      this.centralPolygon = new Polygon(vertices, true);
+      this.layers[0][0] = this.centralPattern;
     }
   }, {
     key: 'generateLayers',
@@ -1384,7 +1373,7 @@ var RegularTesselation = function () {
         var qTransform = this.transforms.edgeTransforms[i];
         for (var j = 0; j < this.q - 2; j++) {
           if (this.p === 3 && this.q - 3 === j) {
-            this.layers[i].push(this.centralPolygon.transform(qTransform));
+            this.layers[i].push(this.transformPattern(this.centralPattern, qtransform));
           } else {
             this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
           }
@@ -1401,7 +1390,7 @@ var RegularTesselation = function () {
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
-      this.layers[layer].push(this.centralPolygon.transform(transform));
+      this.layers[layer].push(this.transformPattern(this.centralPattern, transform));
 
       if (layer >= this.maxLayers) return;
 
@@ -1423,7 +1412,7 @@ var RegularTesselation = function () {
 
         for (var j = 0; j < pgonsToDo; j++) {
           if (this.p === 3 && j === pgonsToDo - 1) {
-            this.layers[layer].push(this.centralPolygon.transform(qTransform));
+            this.layers[layer].push(this.transformPattern(this.centralPattern, qtransform));
           } else {
             this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
           }
@@ -1444,9 +1433,9 @@ var RegularTesselation = function () {
 
       try {
         for (var _iterator = pattern[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var poly = _step.value;
+          var polygon = _step.value;
 
-          newPattern.push(poly.transform(transform));
+          newPattern.push(polygon.transform(transform));
         }
       } catch (err) {
         _didIteratorError = true;
@@ -1467,16 +1456,16 @@ var RegularTesselation = function () {
     }
   }, {
     key: 'drawPattern',
-    value: function drawPattern(pgonArray) {
+    value: function drawPattern(pattern) {
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator2 = pgonArray[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var pgon = _step2.value;
+        for (var _iterator2 = pattern[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var polygon = _step2.value;
 
-          this.disk.drawPolygon(pgon, randomInt(1000, 14777215), '', this.wireframe);
+          this.disk.drawPolygon(polygon, 0xffffff, this.texture, this.wireframe);
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -1509,10 +1498,9 @@ var RegularTesselation = function () {
 
           try {
             for (var _iterator4 = layer[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-              var pgon = _step4.value;
+              var pattern = _step4.value;
 
-              //this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
-              this.disk.drawPolygon(pgon, 0xffffff, this.texture, this.wireframe);
+              this.drawPattern(pattern);
             }
           } catch (err) {
             _didIteratorError4 = true;
@@ -1573,6 +1561,17 @@ var RegularTesselation = function () {
 }();
 
 /*
+buildCentralPolygon() {
+  const vertices = [];
+  for (let i = 0; i < this.p; i++) {
+    const p = this.fr.vertices[1];
+    vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
+  }
+  this.centralPolygon = new Polygon(vertices, true);
+}
+*/
+
+/*
 //calculate the fundamental region (triangle out of which Layer 0 is built)
 //using Coxeter's method
 fundamentalRegion() {
@@ -1629,7 +1628,7 @@ if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 5, 3);
+  tesselation = new RegularTesselation(4, 5, 4);
   //tesselation = new RegularTesselation(p, q, 3);
 };
 

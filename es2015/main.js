@@ -37,7 +37,7 @@ if (p === 4 && q === 4) q = 5;
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(4, 5, 3);
+  tesselation = new RegularTesselation(4, 5, 4);
   //tesselation = new RegularTesselation(p, q, 3);
 }
 

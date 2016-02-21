@@ -27,10 +27,10 @@ export class RegularTesselation {
   constructor(p, q, maxLayers) {
     //TESTING
     this.wireframe = false;
-    this.wireframe = true;
+    //this.wireframe = true;
     console.log(p, q);
     this.texture = './images/textures/pattern1.png';
-    this.texture = '';
+    //this.texture = '';
 
     this.p = p;
     this.q = q;
@@ -55,7 +55,7 @@ export class RegularTesselation {
   init(p, q, maxLayers) {
     this.fr = this.fundamentalRegion();
     this.buildCentralPattern();
-    this.buildCentralPolygon();
+    //this.buildCentralPolygon();
 
     if (this.maxLayers > 1) {
       let t0 = performance.now();
@@ -63,8 +63,8 @@ export class RegularTesselation {
       let t1 = performance.now();
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
-    //this.drawLayers();
-    this.testing();
+    this.drawLayers();
+    //this.testing();
   }
 
   testing() {
@@ -81,9 +81,9 @@ export class RegularTesselation {
     this.disk.drawPolygon(pgon, 0xffffff, texture, false);
     */
 
-    let newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
-    console.log(newPattern);
-    this.drawPattern(newPattern);
+    //let newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
+    //console.log(newPattern);
+    //this.drawPattern(newPattern);
 
   }
 
@@ -115,22 +115,13 @@ export class RegularTesselation {
   //of the fundamental region
   buildCentralPattern() {
     this.frCopy = this.fr.transform(this.transforms.hypReflection);
-    this.layers[0] = [this.fr, this.frCopy];
+    this.centralPattern = [this.fr, this.frCopy];
 
     for (let i = 1; i < this.p; i++) {
-      this.layers[0].push(this.layers[0][0].transform(this.transforms.rotatePolygonCW[i]));
-      this.layers[0].push(this.layers[0][1].transform(this.transforms.rotatePolygonCW[i]));
+      this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
+      this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
     }
-    this.centralPattern = this.layers[0];
-  }
-
-  buildCentralPolygon() {
-    const vertices = [];
-    for (let i = 0; i < this.p; i++) {
-      const p = this.fr.vertices[1];
-      vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
-    }
-    this.centralPolygon = new Polygon(vertices, true);
+    this.layers[0][0] = this.centralPattern;
   }
 
   generateLayers() {
@@ -138,7 +129,7 @@ export class RegularTesselation {
       let qTransform = this.transforms.edgeTransforms[i];
       for (let j = 0; j < this.q - 2; j++) {
         if ((this.p === 3) && (this.q - 3 === j)) {
-          this.layers[i].push(this.centralPolygon.transform(qTransform));
+          this.layers[i].push( this.transformPattern(this.centralPattern, qtransform) );
         }
         else {
           this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
@@ -153,7 +144,7 @@ export class RegularTesselation {
   //calculate the polygons in each layer and add them to this.layers[layer] array
   //but don't draw them yet
   layerRecursion(exposure, layer, transform) {
-    this.layers[layer].push(this.centralPolygon.transform(transform));
+    this.layers[layer].push(this.transformPattern(this.centralPattern, transform));
 
     if (layer >= this.maxLayers) return;
 
@@ -176,7 +167,7 @@ export class RegularTesselation {
 
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
-          this.layers[layer].push(this.centralPolygon.transform(qTransform));
+          this.layers[layer].push( this.transformPattern(this.centralPattern, qtransform) );
         }
         else {
           this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform)
@@ -191,23 +182,22 @@ export class RegularTesselation {
 
   transformPattern(pattern, transform) {
     const newPattern = [];
-    for (let poly of pattern) {
-      newPattern.push(poly.transform(transform));
+    for (let polygon of pattern) {
+      newPattern.push(polygon.transform(transform));
     }
     return newPattern;
   }
 
-  drawPattern(pgonArray) {
-    for (let pgon of pgonArray) {
-      this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
+  drawPattern(pattern) {
+    for (let polygon of pattern) {
+      this.disk.drawPolygon(polygon, 0xffffff, this.texture, this.wireframe);
     }
   }
 
   drawLayers() {
     for (let layer of this.layers) {
-      for (let pgon of layer) {
-        //this.disk.drawPolygon(pgon, E.randomInt(1000, 14777215), '', this.wireframe);
-        this.disk.drawPolygon(pgon, 0xffffff, this.texture, this.wireframe);
+      for (let pattern of layer) {
+        this.drawPattern(pattern);
       }
     }
   }
@@ -238,6 +228,16 @@ export class RegularTesselation {
   }
 }
 
+/*
+buildCentralPolygon() {
+  const vertices = [];
+  for (let i = 0; i < this.p; i++) {
+    const p = this.fr.vertices[1];
+    vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
+  }
+  this.centralPolygon = new Polygon(vertices, true);
+}
+*/
 
 /*
 //calculate the fundamental region (triangle out of which Layer 0 is built)
