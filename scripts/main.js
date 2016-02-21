@@ -497,24 +497,24 @@ var Arc = function () {
 // *   Represents a polygon edge
 // *
 // *************************************************************************
+//TODO: startpoint and endpoint duplicate arc.p1, arc.p2
 
 var Edge = function () {
   function Edge(v1, v2) {
     babelHelpers.classCallCheck(this, Edge);
 
+    this.arc = new Arc(v1, v2);
     this.startPoint = v1;
     this.endPoint = v2;
-    this.arc = new Arc(v1, v2);
 
     this.points = [];
     this.spacedPoints();
-    console.log(this);
   }
 
   babelHelpers.createClass(Edge, [{
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var spacing = 0.03;
+      var spacing = 0.2;
 
       //push the first vertex
       this.points.push(this.startPoint);
@@ -571,6 +571,7 @@ var Polygon = function () {
     babelHelpers.classCallCheck(this, Polygon);
 
     this.vertices = vertices;
+    this.centre = this.barycentre();
     this.edges = [];
     this.addEdges();
   }
@@ -955,6 +956,7 @@ var Parameters = function () {
 //TODO add functions to save image to disk/screen for download
 //TODO perhaps all calculations should be carried out on the unit disk and
 //only multiplied by window.radius here
+
 var ThreeJS = function () {
   function ThreeJS() {
     babelHelpers.classCallCheck(this, ThreeJS);
@@ -1017,9 +1019,6 @@ var ThreeJS = function () {
 
       this.render();
     }
-
-    //TODO refactor to assume centre is on unit disk
-
   }, {
     key: 'disk',
     value: function disk(centre, radius, color) {
@@ -1034,37 +1033,58 @@ var ThreeJS = function () {
     }
   }, {
     key: 'polygon',
-    value: function polygon(vertices, centre, color, texture, wireframe) {
+    value: function polygon(_polygon, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
-      var l = vertices.length;
-
       var geometry = new THREE.Geometry();
 
-      //vertex 0 = polygon barycentre
-      geometry.vertices.push(new THREE.Vector3(centre.x * this.radius, centre.y * this.radius, 0));
+      //assign polygon barycentre to vertex 0
+      geometry.vertices.push(new THREE.Vector3(_polygon.centre.x * this.radius, _polygon.centre.y * this.radius, 0));
 
-      //push first vertex to vertices array
+      var edges = _polygon.edges;
+      //push first vertex of edge to vertices array
       //This means that when the next vertex is pushed in the loop
       //we can also create the first face triangle
-      geometry.vertices.push(new THREE.Vector3(vertices[0].x * this.radius, vertices[0].y * this.radius, 0));
+      geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
 
-      //each vertex added creates a new triangle, use this to create a new face
-      for (var i = 1; i < l; i++) {
-        geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
-        geometry.faces.push(new THREE.Face3(0, i, i + 1));
+      for (var i = 0; i < edges.length; i++) {
+        var points = edges[i].points;
+
+        for (var j = 0; j < points.length; j++) {
+          geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
+          geometry.faces.push(new THREE.Face3(0, i * j, i * j + 1));
+        }
+        //push the final face
+        geometry.faces.push(new THREE.Face3(0, geometry.vertices.length - points.length, i * points.length));
       }
-
-      //push the final face
-      geometry.faces.push(new THREE.Face3(0, l, 1));
-
-      this.setUvs(geometry, vertices, centre);
 
       var mesh = this.createMesh(geometry, color, texture, wireframe);
       this.scene.add(mesh);
-
-      //this.addBoundingBoxHelper(mesh);
+    }
+    /*
+    polygon(vertices, centre, color, texture, wireframe) {
+      if (color === undefined) color = 0xffffff;
+      const l = vertices.length;
+       const geometry = new THREE.Geometry();
+       //vertex 0 = polygon barycentre
+      geometry.vertices.push(new THREE.Vector3(centre.x * this.radius, centre.y * this.radius, 0));
+       //push first vertex to vertices array
+      //This means that when the next vertex is pushed in the loop
+      //we can also create the first face triangle
+      geometry.vertices.push(new THREE.Vector3(vertices[0].x * this.radius, vertices[0].y * this.radius, 0));
+       //each vertex added creates a new triangle, use this to create a new face
+      for (let i = 1; i < l; i++) {
+        geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+        geometry.faces.push(new THREE.Face3(0, i, i + 1));
+      }
+       //push the final face
+      geometry.faces.push(new THREE.Face3(0, l, 1));
+       this.setUvs(geometry, vertices, centre);
+       const mesh = this.createMesh(geometry, color, texture, wireframe);
+      this.scene.add(mesh);
+       //this.addBoundingBoxHelper(mesh);
       //this.disk(centre, 1, 0xff0000)
     }
+    */
 
     //TODO make work!
 
@@ -1201,21 +1221,6 @@ var ThreeJS = function () {
   return ThreeJS;
 }();
 
-/*
-//OLD POLYGON METHOD
-const poly = new THREE.Shape();
-
-poly.moveTo(vertices[0].x, vertices[0].y);
-for(let i = 0; i < l; i++) {
-  //poly.moveTo(vertices[i].x, vertices[i].y);
-  //poly.lineTo(centre.x, centre.y);
-  //poly.moveTo(vertices[i].x, vertices[i].y);
-  poly.lineTo(vertices[(i + 1) % l].x, vertices[(i + 1) % l].y);
-}
-
-let geometry = new THREE.ShapeGeometry(poly);
-*/
-
 // * ***********************************************************************
 // *
 // *  DISK CLASS
@@ -1285,12 +1290,14 @@ var Disk = function () {
   }, {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
+      console.log(polygon);
       if (this.checkPoints(polygon.vertices)) {
         return false;
       }
-      var points = polygon.spacedPointsOnEdges();
-      var centre = polygon.barycentre();
-      this.draw.polygon(points, centre, color, texture, wireframe);
+      //const points = polygon.spacedPointsOnEdges();
+      //const centre = polygon.barycentre();
+      //this.draw.polygon(points, centre, color, texture, wireframe);
+      this.draw.polygon(polygon, color, texture, wireframe);
     }
 
     //return true if any of the points is not in the disk
@@ -1361,12 +1368,12 @@ var RegularTesselation = function () {
     key: 'init',
     value: function init(p, q, maxLayers) {
       this.fr = this.fundamentalRegion();
-      //this.buildCentralPattern();
-      //this.buildCentralPolygon();
+      this.buildCentralPattern();
+      this.buildCentralPolygon();
 
       if (this.maxLayers > 1) {
         var t0 = performance.now();
-        //this.generateLayers();
+        this.generateLayers();
         var t1 = performance.now();
         console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
       }

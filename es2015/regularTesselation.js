@@ -54,12 +54,12 @@ export class RegularTesselation {
 
   init(p, q, maxLayers) {
     this.fr = this.fundamentalRegion();
-    //this.buildCentralPattern();
-    //this.buildCentralPolygon();
+    this.buildCentralPattern();
+    this.buildCentralPolygon();
 
     if (this.maxLayers > 1) {
       let t0 = performance.now();
-      //this.generateLayers();
+      this.generateLayers();
       let t1 = performance.now();
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }

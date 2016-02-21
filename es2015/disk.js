@@ -65,13 +65,14 @@ export class Disk {
   }
 
   drawPolygon(polygon, color, texture, wireframe) {
+    console.log(polygon);
     if (this.checkPoints(polygon.vertices)) {
       return false
     }
-    const points = polygon.spacedPointsOnEdges();
-    const centre = polygon.barycentre();
-    this.draw.polygon(points, centre, color, texture, wireframe);
-
+    //const points = polygon.spacedPointsOnEdges();
+    //const centre = polygon.barycentre();
+    //this.draw.polygon(points, centre, color, texture, wireframe);
+    this.draw.polygon(polygon, color, texture, wireframe);
   }
 
   //return true if any of the points is not in the disk

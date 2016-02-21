@@ -174,19 +174,19 @@ export class Arc {
 // *   Represents a polygon edge
 // *
 // *************************************************************************
+//TODO: startpoint and endpoint duplicate arc.p1, arc.p2
 class Edge {
   constructor(v1, v2) {
+    this.arc = new Arc(v1, v2);
     this.startPoint = v1;
     this.endPoint = v2;
-    this.arc = new Arc(v1, v2);
 
     this.points = [];
     this.spacedPoints();
-    console.log(this);
   }
 
   spacedPoints() {
-    const spacing = 0.03;
+    const spacing = 0.2;
 
     //push the first vertex
     this.points.push(this.startPoint);
@@ -242,6 +242,7 @@ class Edge {
 export class Polygon {
   constructor(vertices) {
     this.vertices = vertices;
+    this.centre = this.barycentre();
     this.edges = [];
     this.addEdges();
   }

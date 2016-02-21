@@ -68,7 +68,6 @@ export class ThreeJS {
     this.render();
   }
 
-  //TODO refactor to assume centre is on unit disk
   disk(centre, radius, color) {
     if (color === undefined) color = 0xffffff;
 
@@ -80,6 +79,36 @@ export class ThreeJS {
     this.scene.add(circle);
   }
 
+  polygon(polygon, color, texture, wireframe) {
+    if (color === undefined) color = 0xffffff;
+    const geometry = new THREE.Geometry();
+
+    //assign polygon barycentre to vertex 0
+    geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
+
+    const edges = polygon.edges;
+    //push first vertex of edge to vertices array
+    //This means that when the next vertex is pushed in the loop
+    //we can also create the first face triangle
+    geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
+
+
+    for(let i = 0; i < edges.length; i++){
+      const points = edges[i].points;
+
+      for(let j = 0; j < points.length; j++){
+        geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
+        geometry.faces.push(new THREE.Face3(0, i*j, (i*j)+1) );
+      }
+      //push the final face
+      geometry.faces.push(new THREE.Face3(0, geometry.vertices.length - points.length, i * points.length));
+    }
+
+    const mesh = this.createMesh(geometry, color, texture, wireframe);
+    this.scene.add(mesh);
+
+  }
+  /*
   polygon(vertices, centre, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
     const l = vertices.length;
@@ -111,6 +140,7 @@ export class ThreeJS {
     //this.addBoundingBoxHelper(mesh);
     //this.disk(centre, 1, 0xff0000)
   }
+  */
 
   //TODO make work!
   setUvs(geometry, vertices, centre) {
