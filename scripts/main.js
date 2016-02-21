@@ -442,6 +442,8 @@ var Arc = function () {
     }
   }
 
+  //Calculate the arc using Dunham's method
+
   babelHelpers.createClass(Arc, [{
     key: 'hyperbolicMethod',
     value: function hyperbolicMethod() {
@@ -514,7 +516,7 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var spacing = .01;
+      var spacing = .05;
 
       //push the first vertex
       this.points.push(this.startPoint);
@@ -544,7 +546,6 @@ var Edge = function () {
             }
           }
       }
-
       this.points.push(this.endPoint);
 
       return this.points;
@@ -905,8 +906,6 @@ var Parameters = function () {
 //TODO: after resizing a few times the scene stops drawing - possible memory
 //not being freed in clearScene?
 //TODO add functions to save image to disk/screen for download
-//TODO perhaps all calculations should be carried out on the unit disk and
-//only multiplied by window.radius here
 
 var ThreeJS = function () {
   function ThreeJS() {
@@ -1313,18 +1312,17 @@ var RegularTesselation = function () {
       //texture = '';
       //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
-      var p = new Point(-.600, -.600);
-      var q = new Point(-.400, .600);
-      var w = new Point(.6, 0.2);
-      var pgon = new Polygon([p, q, w]);
+      /*
+      let p = new Point(-.600, -.600);
+      let q = new Point(-.400, .600);
+      let w = new Point(.6, 0.2);
+      let pgon = new Polygon([p, q, w]);
+       this.disk.drawPolygon(pgon, 0xffffff, texture, false);
+      */
 
-      this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-      //this.disk.drawPolygonOutline(pgon, 0xffffff);
-      var poly = this.fr.transform(this.transforms.edgeReflection);
-      //this.disk.drawPolygon(poly, 0xffffff, texture, false);
-
-      poly = poly.transform(this.transforms.edgeReflection);
-      //this.disk.drawPolygon(poly, 0xffffff, texture, false);
+      var newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
+      console.log(newPattern);
+      this.drawPattern(newPattern);
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1363,10 +1361,11 @@ var RegularTesselation = function () {
       this.frCopy = this.fr.transform(this.transforms.hypReflection);
       this.layers[0] = [this.fr, this.frCopy];
 
-      for (var i = 0; i < this.p; i++) {
+      for (var i = 1; i < this.p; i++) {
         this.layers[0].push(this.layers[0][0].transform(this.transforms.rotatePolygonCW[i]));
         this.layers[0].push(this.layers[0][1].transform(this.transforms.rotatePolygonCW[i]));
       }
+      this.centralPattern = this.layers[0];
     }
   }, {
     key: 'buildCentralPolygon',

@@ -11,8 +11,6 @@ import * as E from './euclid';
 //TODO: after resizing a few times the scene stops drawing - possible memory
 //not being freed in clearScene?
 //TODO add functions to save image to disk/screen for download
-//TODO perhaps all calculations should be carried out on the unit disk and
-//only multiplied by window.radius here
 export class ThreeJS {
   constructor() {
     this.init();

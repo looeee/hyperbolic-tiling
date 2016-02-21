@@ -72,18 +72,19 @@ export class RegularTesselation {
     //texture = '';
     //this.disk.drawPolygon(this.fr, 0xffffff, texture, false);
 
+    /*
     let p = new Point(-.600, -.600);
     let q = new Point(-.400, .600);
     let w = new Point(.6, 0.2);
     let pgon = new Polygon([p, q, w]);
 
     this.disk.drawPolygon(pgon, 0xffffff, texture, false);
-    //this.disk.drawPolygonOutline(pgon, 0xffffff);
-    let poly = this.fr.transform(this.transforms.edgeReflection);
-    //this.disk.drawPolygon(poly, 0xffffff, texture, false);
+    */
 
-    poly = poly.transform(this.transforms.edgeReflection);
-    //this.disk.drawPolygon(poly, 0xffffff, texture, false);
+    let newPattern = this.transformPattern(this.centralPattern, this.transforms.edgeReflection);
+    console.log(newPattern);
+    this.drawPattern(newPattern);
+
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -116,10 +117,11 @@ export class RegularTesselation {
     this.frCopy = this.fr.transform(this.transforms.hypReflection);
     this.layers[0] = [this.fr, this.frCopy];
 
-    for (let i = 0; i < this.p; i++) {
+    for (let i = 1; i < this.p; i++) {
       this.layers[0].push(this.layers[0][0].transform(this.transforms.rotatePolygonCW[i]));
       this.layers[0].push(this.layers[0][1].transform(this.transforms.rotatePolygonCW[i]));
     }
+    this.centralPattern = this.layers[0];
   }
 
   buildCentralPolygon() {

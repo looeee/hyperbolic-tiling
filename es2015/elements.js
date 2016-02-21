@@ -124,6 +124,7 @@ export class Arc {
     }
   }
 
+  //Calculate the arc using Dunham's method
   hyperbolicMethod(){
     //calculate centre of arcCircle relative to unit disk
     const wq1 = this.p1.poincareToWeierstrass();
@@ -186,7 +187,7 @@ class Edge {
   }
 
   spacedPoints() {
-    const spacing = .01;
+    const spacing = .05;
 
     //push the first vertex
     this.points.push(this.startPoint);
@@ -218,9 +219,7 @@ class Edge {
         }
       }
     }
-
     this.points.push(this.endPoint);
-
 
     return this.points;
   }
