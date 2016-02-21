@@ -32,16 +32,21 @@ Math.cot = Math.cot || function(x) {
 let tesselation;
 let p = E.randomInt(3, 7);
 let q = E.randomInt(3, 7);
+let maxLayers;
 
 if ((p-2)*(q-2) < 5){
   q = 5;
   p = 4
 }
 
+if(p * q < 22) maxLayers = 4;
+else if(p * q < 29) maxLayers = 3;
+else maxLayers = 2
+
 //Run after load to get window width and height
 window.onload = () => {
-  //tesselation = new RegularTesselation(3, 7, 2);
-  tesselation = new RegularTesselation(p, q, 2);
+  //tesselation = new RegularTesselation(8, 6, 2);
+  tesselation = new RegularTesselation(p, q, maxLayers);
 }
 
 

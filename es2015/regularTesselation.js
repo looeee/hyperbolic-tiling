@@ -28,7 +28,7 @@ export class RegularTesselation {
     //TESTING
     this.wireframe = false;
     //this.wireframe = true;
-    console.log(p, q);
+    console.log(p, q, maxLayers);
     this.texture = './images/textures/fish1.png';
     //this.texture = '';
 

@@ -1191,7 +1191,7 @@ var RegularTesselation = function () {
     //TESTING
     this.wireframe = false;
     //this.wireframe = true;
-    console.log(p, q);
+    console.log(p, q, maxLayers);
     this.texture = './images/textures/fish1.png';
     //this.texture = '';
 
@@ -1536,16 +1536,19 @@ Math.cot = Math.cot || function (x) {
 var tesselation = undefined;
 var p = randomInt(3, 7);
 var q = randomInt(3, 7);
+var maxLayers = undefined;
 
 if ((p - 2) * (q - 2) < 5) {
   q = 5;
   p = 4;
 }
 
+if (p * q < 22) maxLayers = 4;else if (p * q < 29) maxLayers = 3;else maxLayers = 2;
+
 //Run after load to get window width and height
 window.onload = function () {
-  //tesselation = new RegularTesselation(3, 7, 2);
-  tesselation = new RegularTesselation(p, q, 2);
+  //tesselation = new RegularTesselation(8, 6, 2);
+  tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
 window.onresize = function () {
