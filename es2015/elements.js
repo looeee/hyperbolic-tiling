@@ -186,7 +186,7 @@ class Edge {
   }
 
   spacedPoints() {
-    const spacing = 1.8;
+    const spacing = .01;
 
     //push the first vertex
     this.points.push(this.startPoint);
@@ -235,8 +235,6 @@ class Edge {
 //NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
 //making material DoubleSide but if this causes problems I'll have to add some
 //way of making sure the vertices are in the right winding order
-//TODO: would it be more efficient to calculate the arcs that make the edges
-//when the polygon is created?
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 export class Polygon {
@@ -251,54 +249,6 @@ export class Polygon {
     for (let i = 0; i < this.vertices.length; i++) {
       this.edges.push(new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length]))
     }
-  }
-
-  spacedPointsOnEdges() {
-    const spacing = 0.03;
-    const l = this.vertices.length;
-    const points = [];
-
-    //push the first vertex
-    points.push(this.vertices[0]);
-
-    //loop over the edges
-    for (let i = 0; i < l; i++) {
-       //tiny pgons near the edges of the disk don't need to be subdivided
-      if(E.distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing){
-        let p;
-        const arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
-
-        //line not through the origin (hyperbolic arc)
-        if (!arc.straightLine) {
-          if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;
-          else p = E.spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
-
-          points.push(p);
-
-          while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
-            if (arc.clockwise) p = E.spacedPointOnArc(arc.circle, p, spacing).p1;
-            else p = E.spacedPointOnArc(arc.circle, p, spacing).p2;
-            points.push(p);
-          }
-        }
-
-        //line through origin (straight line)
-        else {
-          p = E.spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
-          points.push(p);
-          while (E.distance(p, this.vertices[(i + 1) % l]) > spacing) {
-            p = E.spacedPointOnLine(p, this.vertices[i], spacing).p1;
-            points.push(p);
-          }
-        }
-      }
-
-      //push the last vertex on each edge (but don't push first vertex again)
-      if ((i + 1) % l !== 0) {
-        points.push(this.vertices[(i + 1) % l]);
-      }
-    }
-    return points;
   }
 
   //Apply a Transform to the polygon

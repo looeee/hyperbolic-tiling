@@ -514,7 +514,7 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var spacing = 1.8;
+      var spacing = .01;
 
       //push the first vertex
       this.points.push(this.startPoint);
@@ -561,8 +561,6 @@ var Edge = function () {
 //NOTE: sometimes polygons will be backwards facing. Currently I have solved this by
 //making material DoubleSide but if this causes problems I'll have to add some
 //way of making sure the vertices are in the right winding order
-//TODO: would it be more efficient to calculate the arcs that make the edges
-//when the polygon is created?
 //@param vertices: array of Points
 //@param circle: Circle representing current Poincare Disk dimensions
 
@@ -582,53 +580,6 @@ var Polygon = function () {
       for (var i = 0; i < this.vertices.length; i++) {
         this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
       }
-    }
-  }, {
-    key: 'spacedPointsOnEdges',
-    value: function spacedPointsOnEdges() {
-      var spacing = 0.03;
-      var l = this.vertices.length;
-      var points = [];
-
-      //push the first vertex
-      points.push(this.vertices[0]);
-
-      //loop over the edges
-      for (var i = 0; i < l; i++) {
-        //tiny pgons near the edges of the disk don't need to be subdivided
-        if (distance(this.vertices[i], this.vertices[(i + 1) % l]) > spacing) {
-          var p = undefined;
-          var arc = new Arc(this.vertices[i], this.vertices[(i + 1) % l]);
-
-          //line not through the origin (hyperbolic arc)
-          if (!arc.straightLine) {
-            if (arc.clockwise) p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p1;else p = spacedPointOnArc(arc.circle, this.vertices[i], spacing).p2;
-
-            points.push(p);
-
-            while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
-              if (arc.clockwise) p = spacedPointOnArc(arc.circle, p, spacing).p1;else p = spacedPointOnArc(arc.circle, p, spacing).p2;
-              points.push(p);
-            }
-          }
-
-          //line through origin (straight line)
-          else {
-              p = spacedPointOnLine(this.vertices[i], this.vertices[(i + 1) % l], spacing).p2;
-              points.push(p);
-              while (distance(p, this.vertices[(i + 1) % l]) > spacing) {
-                p = spacedPointOnLine(p, this.vertices[i], spacing).p1;
-                points.push(p);
-              }
-            }
-        }
-
-        //push the last vertex on each edge (but don't push first vertex again)
-        if ((i + 1) % l !== 0) {
-          points.push(this.vertices[(i + 1) % l]);
-        }
-      }
-      return points;
     }
 
     //Apply a Transform to the polygon
@@ -1031,12 +982,17 @@ var ThreeJS = function () {
 
       this.scene.add(circle);
     }
+
+    //Note: polygons assumed to be triangular!
+
   }, {
     key: 'polygon',
     value: function polygon(_polygon, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
-      var geometry = new THREE.Geometry();
+      //the incentre of the triangle (0,0), (1,0), (1,1) used for uvs
+      var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
+      var geometry = new THREE.Geometry();
       //assign polygon barycentre to vertex 0
       geometry.vertices.push(new THREE.Vector3(_polygon.centre.x * this.radius, _polygon.centre.y * this.radius, 0));
 
@@ -1068,86 +1024,26 @@ var ThreeJS = function () {
       //the incentre of the triangle (0,0), (1,0), (1,1)
       var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
-      var vertices = geometry.vertices;
-      var l = vertices.length;
-
-      geometry.computeBoundingBox();
-      var max = geometry.boundingBox.max;
-      var min = geometry.boundingBox.min;
-      var offset = new THREE.Vector2(min.x, min.y);
-      var range = new THREE.Vector2(max.x - min.x, max.y - min.y);
-      var r = distance(min, max);
       geometry.faceVertexUvs[0] = [];
 
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(0, 0), new THREE.Vector2(1, 1)
-      //new THREE.Vector2((edges[0].points[0].x - offset.x) / r, (edges[0].points[0].y - offset.y) / r),
-      //new THREE.Vector2((edges[0].points[1].x - offset.x) / r, (edges[0].points[1].y - offset.y) / r)
-      ]);
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 1), new THREE.Vector2(1, 0)
-      //new THREE.Vector2((edges[1].points[0].x - offset.x) / r, (edges[1].points[0].y - offset.y) / r),
-      //new THREE.Vector2((edges[1].points[1].x - offset.x) / r, (edges[1].points[1].y - offset.y) / r)
-      ]);
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 0), new THREE.Vector2(0, 0)
-      //new THREE.Vector2((edges[2].points[0].x - offset.x) / r, (edges[2].points[0].y - offset.y) / r),
-      //new THREE.Vector2((edges[2].points[1].x - offset.x) / r, (edges[2].points[1].y - offset.y) / r)
-      ]);
-
-      /*
-      for (let i = 0; i < edges.lenth; i++) {
-        geometry.faceVertexUvs[0].push(
-          [
-            new THREE.Vector2(incentre.x, incentre.y),
-            new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
-            new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
-          ]);
+      //EDGE 0
+      var e = edges[0].points.length - 1;
+      for (var i = 0; i < e; i++) {
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(i * (1 / e), i * (1 / e)), new THREE.Vector2((i + 1) * (1 / e), (i + 1) * (1 / e))]);
       }
-       //push the final face vertex
-       geometry.faceVertexUvs[0].push(
-        [
-          new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
-          new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
-        ]);
-      */
+      //EDGE 1
+      e = edges[1].points.length - 1;
+      for (var i = 0; i < e; i++) {
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 1 - i * (1 / e)), new THREE.Vector2(1, 1 - (i + 1) * (1 / e))]);
+      }
+      //EDGE 2
+      e = edges[2].points.length - 1;
+      for (var i = 0; i < e; i++) {
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1 - i * (1 / e), 0), new THREE.Vector2(1 - (i + 1) * (1 / e), 0)]);
+      }
 
       geometry.uvsNeedUpdate = true;
     }
-
-    /*
-    //TODO make work!
-    setUvs(geometry, vertices, centre) {
-      //the incentre of the triangle (0,0), (1,0), (1,1)
-      const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
-       const l = vertices.length;
-       geometry.computeBoundingBox();
-      const max = geometry.boundingBox.max;
-      const min = geometry.boundingBox.min;
-      const offset = new THREE.Vector2(min.x, min.y);
-      const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
-      const r = E.distance(min, max);
-      geometry.faceVertexUvs[0] = [];
-       for (let i = 0; i < l - 1; i++) {
-        geometry.faceVertexUvs[0].push(
-          [
-            //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
-            new THREE.Vector2(incentre.x, incentre.y),
-            new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
-            new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
-          ]);
-      }
-       //push the final face vertex
-      geometry.faceVertexUvs[0].push(
-        [
-          //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
-          new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
-          new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
-        ]);
-       geometry.uvsNeedUpdate = true;
-    }
-    */
 
     //NOTE: some polygons are inverted due to vertex order,
     //solved this by making material doubles sided but this might cause problems with textures
@@ -1419,7 +1315,7 @@ var RegularTesselation = function () {
 
       var p = new Point(-.600, -.600);
       var q = new Point(-.400, .600);
-      var w = new Point(.6, 0.4);
+      var w = new Point(.6, 0.2);
       var pgon = new Polygon([p, q, w]);
 
       this.disk.drawPolygon(pgon, 0xffffff, texture, false);

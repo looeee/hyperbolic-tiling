@@ -74,7 +74,7 @@ export class RegularTesselation {
 
     let p = new Point(-.600, -.600);
     let q = new Point(-.400, .600);
-    let w = new Point(.6, 0.4);
+    let w = new Point(.6, 0.2);
     let pgon = new Polygon([p, q, w]);
 
     this.disk.drawPolygon(pgon, 0xffffff, texture, false);

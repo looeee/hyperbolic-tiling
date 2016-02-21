@@ -79,10 +79,13 @@ export class ThreeJS {
     this.scene.add(circle);
   }
 
+  //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
-    const geometry = new THREE.Geometry();
+    //the incentre of the triangle (0,0), (1,0), (1,1) used for uvs
+    const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
+    const geometry = new THREE.Geometry();
     //assign polygon barycentre to vertex 0
     geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
 
@@ -92,14 +95,15 @@ export class ThreeJS {
     //we can also create the first face triangle
     geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
 
+
     //vertices pushed so far counting from 0
     let count = 1;
 
-    for(let i = 0; i < edges.length; i++){
+    for (let i = 0; i < edges.length; i++) {
       const points = edges[i].points;
-      for(let j = 1; j < points.length; j++){
+      for (let j = 1; j < points.length; j++) {
         geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
-        geometry.faces.push(new THREE.Face3(0, count, count + 1) );
+        geometry.faces.push(new THREE.Face3(0, count, count + 1));
         count++;
       }
     }
@@ -114,105 +118,42 @@ export class ThreeJS {
     //the incentre of the triangle (0,0), (1,0), (1,1)
     const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
 
-    const vertices = geometry.vertices;
-    const l = vertices.length;
-
-    geometry.computeBoundingBox();
-    const max = geometry.boundingBox.max;
-    const min = geometry.boundingBox.min;
-    const offset = new THREE.Vector2(min.x, min.y);
-    const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
-    const r = E.distance(min, max);
     geometry.faceVertexUvs[0] = [];
 
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(incentre.x, incentre.y),
-        new THREE.Vector2(0, 0),
-        new THREE.Vector2(1, 1)
-        //new THREE.Vector2((edges[0].points[0].x - offset.x) / r, (edges[0].points[0].y - offset.y) / r),
-        //new THREE.Vector2((edges[0].points[1].x - offset.x) / r, (edges[0].points[1].y - offset.y) / r)
-      ]);
-
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(incentre.x, incentre.y),
-        new THREE.Vector2(1, 1),
-        new THREE.Vector2(1, 0)
-        //new THREE.Vector2((edges[1].points[0].x - offset.x) / r, (edges[1].points[0].y - offset.y) / r),
-        //new THREE.Vector2((edges[1].points[1].x - offset.x) / r, (edges[1].points[1].y - offset.y) / r)
-      ]);
-
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(incentre.x, incentre.y),
-        new THREE.Vector2(1, 0),
-        new THREE.Vector2(0, 0)
-        //new THREE.Vector2((edges[2].points[0].x - offset.x) / r, (edges[2].points[0].y - offset.y) / r),
-        //new THREE.Vector2((edges[2].points[1].x - offset.x) / r, (edges[2].points[1].y - offset.y) / r)
-      ]);
-
-    /*
-    for (let i = 0; i < edges.lenth; i++) {
+    //EDGE 0
+    let e = edges[0].points.length - 1;
+    for(let i = 0; i < e; i++){
       geometry.faceVertexUvs[0].push(
         [
           new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
-          new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
+          new THREE.Vector2(i*(1/e), i*(1/e)),
+          new THREE.Vector2((i+1)*(1/e), (i+1)*(1/e))
         ]);
+
     }
-
-    //push the final face vertex
-
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(incentre.x, incentre.y),
-        new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
-        new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
-      ]);
-    */
-
-    geometry.uvsNeedUpdate = true;
-  }
-
-  /*
-  //TODO make work!
-  setUvs(geometry, vertices, centre) {
-    //the incentre of the triangle (0,0), (1,0), (1,1)
-    const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
-
-    const l = vertices.length;
-
-    geometry.computeBoundingBox();
-    const max = geometry.boundingBox.max;
-    const min = geometry.boundingBox.min;
-    const offset = new THREE.Vector2(min.x, min.y);
-    const range = new THREE.Vector2(max.x - min.x, max.y - min.y);
-    const r = E.distance(min, max);
-    geometry.faceVertexUvs[0] = [];
-
-    for (let i = 0; i < l - 1; i++) {
+    //EDGE 1
+    e = edges[1].points.length -1;
+    for(let i = 0; i < e; i++){
       geometry.faceVertexUvs[0].push(
         [
-          //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
           new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2((vertices[i].x + offset.x) / r, (vertices[i].y + offset.y) / r),
-          new THREE.Vector2((vertices[i + 1].x + offset.x) / r, (vertices[i + 1].y + offset.y) / r)
+          new THREE.Vector2(1, 1-i*(1/e)),
+          new THREE.Vector2(1, 1-(i+1)*(1/e))
+        ]);
+    }
+    //EDGE 2
+    e = edges[2].points.length -1;
+    for(let i = 0; i < e; i++){
+      geometry.faceVertexUvs[0].push(
+        [
+          new THREE.Vector2(incentre.x, incentre.y),
+          new THREE.Vector2(1-i*(1/e), 0),
+          new THREE.Vector2(1-(i+1)*(1/e), 0)
         ]);
     }
 
-    //push the final face vertex
-    geometry.faceVertexUvs[0].push(
-      [
-        //new THREE.Vector2((centre.x + offset.x) / r, (centre.y + offset.y) / r),
-        new THREE.Vector2(incentre.x, incentre.y),
-        new THREE.Vector2((vertices[l - 1].x + offset.x) / r, (vertices[l - 1].y + offset.y) / r),
-        new THREE.Vector2((vertices[0].x + offset.x) / r, (vertices[0].y + offset.y) / r)
-      ]);
-
     geometry.uvsNeedUpdate = true;
   }
-  */
 
   //NOTE: some polygons are inverted due to vertex order,
   //solved this by making material doubles sided but this might cause problems with textures
