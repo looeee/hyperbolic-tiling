@@ -47,7 +47,9 @@ export class ThreeJS {
     if (this.renderer === undefined) {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
-        preserveDrawingBuffer: true
+        //alpha: true,
+        //premultipliedAlpha: true,
+        //preserveDrawingBuffer: true
       });
       this.renderer.setClearColor(0xffffff, 1.0);
       document.body.appendChild(this.renderer.domElement);
@@ -165,16 +167,15 @@ export class ThreeJS {
     if (imageURL) {
       const texture = new THREE.TextureLoader().load(imageURL,
       () => {
+        //texture.minFilter = THREE.LinearMipMapLinearFilter,
         material.map = texture;
-        material.needsUpdate = true;
         this.render();
       });
-
     }
     return material;
   }
 
-  //TODO figure out how to delay this call until all pgons are added
+  //Only call render once by default.
   render(sceneGetsUpdate = false) {
     if(sceneGetsUpdate){
       requestAnimationFrame(() => {

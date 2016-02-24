@@ -367,12 +367,15 @@ var Point = function () {
 
       if (this.p1.x === p2.x && this.p1.y === p2.y) return true;else return false;
     }
+
+    //move the point to Hyperboloid (Weierstrass) space, apply the transform,
+    //then move back
+
   }, {
     key: 'transform',
     value: function transform(_transform) {
       var mat = _transform.matrix;
       var p = this.poincareToWeierstrass();
-
       var x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
       var y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
       var z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
@@ -646,7 +649,7 @@ var Transform = function () {
 // *
 // *  TRANSFORMATIONS CLASS
 // *
-// *  orientation: reflection = -1 OR rotation = 1
+// *
 // *************************************************************************
 
 var Transformations = function () {
@@ -669,6 +672,8 @@ var Transformations = function () {
     this.identity = new Transform(identityMatrix(3));
   }
 
+  //reflect across the hypotenuse of the fundamental region of a tesselation
+
   babelHelpers.createClass(Transformations, [{
     key: 'initHypotenuseReflection',
     value: function initHypotenuseReflection() {
@@ -678,6 +683,11 @@ var Transformations = function () {
       this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
       this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
     }
+
+    //refelct across the first edge of the polygon (which crosses the radius
+    // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
+    //across any edge
+
   }, {
     key: 'initEdgeReflection',
     value: function initEdgeReflection() {
@@ -705,6 +715,10 @@ var Transformations = function () {
       this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
       this.edgeBisectorReflection.matrix[1][1] = -1;
     }
+
+    //set up clockwise and anticlockwise rotations which will rotate by
+    // PI/(number of sides of central polygon)
+
   }, {
     key: 'initPgonRotations',
     value: function initPgonRotations() {
@@ -724,13 +738,16 @@ var Transformations = function () {
         this.rotatePolygonCCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
       }
     }
+
+    //orientation: either reflection = -1 OR rotation = 1
+
   }, {
     key: 'initEdges',
     value: function initEdges() {
       this.edges = [];
       for (var i = 0; i < this.p; i++) {
         this.edges.push({
-          orientation: 1,
+          orientation: -1,
           adjacentEdge: i
         });
       }
@@ -744,9 +761,10 @@ var Transformations = function () {
         var adj = this.edges[i].adjacentEdge;
         //Case 1: reflection
         if (this.edges[i].orientation === -1) {
-          var mat = multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
-          mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj]);
+          var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
+          mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
           this.edgeTransforms[i] = new Transform(mat);
+          console.log(mat);
         }
         //Case 2: rotation
         else if (this.edges[i].orientation === 1) {
@@ -843,10 +861,10 @@ var Parameters = function () {
   }, {
     key: 'verticesToDo',
     value: function verticesToDo(exposure) {
-      if (exposure === this.minExposure) {
-        if (this.p === 3) return 1;else if (this.q === 3) return this.p - 5;else return this.p - 3;
+      if (this.p === 3) return 1;else if (exposure === this.minExposure) {
+        if (this.q === 3) return this.p - 5;else return this.p - 3;
       } else if (exposure === this.maxExposure) {
-        if (this.p === 3) return 1;else if (this.q === 3) return this.p - 4;else return this.p - 2;
+        if (this.q === 3) return this.p - 4;else return this.p - 2;
       } else {
         console.error('verticesToDo: wrong exposure value!');
         return false;
@@ -855,18 +873,10 @@ var Parameters = function () {
   }, {
     key: 'pgonsToDo',
     value: function pgonsToDo(exposure, vertexNum) {
-      if (exposure === this.minExposure) {
-        if (vertexNum === 0) {
-          if (this.p === 3) return this.q - 4;else if (this.q === 3) return 1;else return this.q - 3;
-        } else {
-          if (this.p === 3) return this.q - 4;else if (this.q === 3) return 1;else return this.q - 2;
-        }
+      if (this.q === 3) return 1;else if (vertexNum === 0) return this.q - 3;else if (exposure === this.minExposure) {
+        if (this.p === 3) return this.q - 4;else return this.q - 2;
       } else if (exposure === this.maxExposure) {
-        if (vertexNum === 0) {
-          if (this.p === 3) return this.q - 3;else if (this.q === 3) return 1;else return this.q - 3;
-        } else {
-          if (this.p === 3) return this.q - 3;else if (this.q === 3) return 1;else return this.q - 2;
-        }
+        if (this.p === 3) return this.q - 3;else return this.q - 2;
       } else {
         console.error('pgonsToDo: wrong exposure value!');
         return false;
@@ -931,9 +941,11 @@ var ThreeJS = function () {
     value: function initRenderer() {
       if (this.renderer === undefined) {
         this.renderer = new THREE.WebGLRenderer({
-          antialias: true,
-          preserveDrawingBuffer: true
+          antialias: true
         });
+        //alpha: true,
+        //premultipliedAlpha: true,
+        //preserveDrawingBuffer: true
         this.renderer.setClearColor(0xffffff, 1.0);
         document.body.appendChild(this.renderer.domElement);
       }
@@ -1046,8 +1058,8 @@ var ThreeJS = function () {
       if (imageURL) {
         (function () {
           var texture = new THREE.TextureLoader().load(imageURL, function () {
+            //texture.minFilter = THREE.LinearMipMapLinearFilter,
             material.map = texture;
-            material.needsUpdate = true;
             _this.render();
           });
         })();
@@ -1055,7 +1067,7 @@ var ThreeJS = function () {
       return material;
     }
 
-    //TODO figure out how to delay this call until all pgons are added
+    //Only call render once by default.
 
   }, {
     key: 'render',

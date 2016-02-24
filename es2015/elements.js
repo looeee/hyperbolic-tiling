@@ -50,17 +50,17 @@ export class Point {
     else return false;
   }
 
+  //move the point to Hyperboloid (Weierstrass) space, apply the transform,
+  //then move back
   transform(transform) {
     const mat = transform.matrix;
     const p = this.poincareToWeierstrass();
-
     const x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
     const y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
     const z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
     const q =  new Point(x, y);
     q.z = z;
     return q.weierstrassToPoincare();
-
   }
 
   poincareToWeierstrass() {

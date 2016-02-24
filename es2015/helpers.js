@@ -33,7 +33,7 @@ export class Transform {
 // *
 // *  TRANSFORMATIONS CLASS
 // *
-// *  orientation: reflection = -1 OR rotation = 1
+// *
 // *************************************************************************
 
 export class Transformations {
@@ -55,6 +55,7 @@ export class Transformations {
 
   }
 
+  //reflect across the hypotenuse of the fundamental region of a tesselation
   initHypotenuseReflection() {
     this.hypReflection = new Transform(E.identityMatrix(3), -1);
     this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
@@ -63,6 +64,9 @@ export class Transformations {
     this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
   }
 
+  //refelct across the first edge of the polygon (which crosses the radius
+  // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
+  //across any edge
   initEdgeReflection() {
     const cosp = Math.cos(Math.PI / this.p);
     const sinp = Math.sin(Math.PI / this.p);
@@ -88,6 +92,8 @@ export class Transformations {
     this.edgeBisectorReflection.matrix[1][1] = -1;
   }
 
+  //set up clockwise and anticlockwise rotations which will rotate by
+  // PI/(number of sides of central polygon)
   initPgonRotations() {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
@@ -106,11 +112,12 @@ export class Transformations {
     }
   }
 
+  //orientation: either reflection = -1 OR rotation = 1
   initEdges() {
     this.edges = [];
     for (let i = 0; i < this.p; i++) {
       this.edges.push({
-        orientation: 1,
+        orientation: -1,
         adjacentEdge: i,
       });
     }
@@ -123,9 +130,10 @@ export class Transformations {
       const adj = this.edges[i].adjacentEdge;
       //Case 1: reflection
       if (this.edges[i].orientation === -1) {
-        let mat = E.multiplyMatrices(this.rotatePolygonCW[i], this.edgeReflection);
-        mat = E.multiplyMatrices(mat, this.rotatePolygonCCW[adj]);
+        let mat = E.multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
+        mat = E.multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
         this.edgeTransforms[i] = new Transform(mat);
+        console.log(mat);
       }
       //Case 2: rotation
       else if (this.edges[i].orientation === 1) {
@@ -231,14 +239,13 @@ export class Parameters {
   }
 
   verticesToDo(exposure) {
-    if (exposure === this.minExposure) {
-      if (this.p === 3) return 1;
-      else if (this.q === 3) return this.p - 5;
+    if (this.p === 3) return 1;
+    else if (exposure === this.minExposure) {
+      if (this.q === 3) return this.p - 5;
       else return this.p - 3;
     }
     else if (exposure === this.maxExposure) {
-      if (this.p === 3) return 1;
-      else if (this.q === 3) return this.p - 4;
+      if (this.q === 3) return this.p - 4;
       else return this.p - 2;
     }
     else {
@@ -248,29 +255,15 @@ export class Parameters {
   }
 
   pgonsToDo(exposure, vertexNum) {
-    if (exposure === this.minExposure) {
-      if (vertexNum === 0) {
-        if (this.p === 3) return this.q - 4;
-        else if (this.q === 3) return 1;
-        else return this.q - 3;
-      }
-      else {
-        if (this.p === 3) return this.q - 4;
-        else if (this.q === 3) return 1;
-        else return this.q - 2;
-      }
+    if(this.q === 3) return 1;
+    else if(vertexNum === 0) return this.q - 3;
+    else if (exposure === this.minExposure) {
+      if (this.p === 3) return this.q - 4;
+      else return this.q - 2;
     }
     else if (exposure === this.maxExposure) {
-      if (vertexNum === 0) {
-        if (this.p === 3) return this.q - 3;
-        else if (this.q === 3) return 1;
-        else return this.q - 3;
-      }
-      else {
-        if (this.p === 3) return this.q - 3;
-        else if (this.q === 3) return 1;
-        else return this.q - 2;
-      }
+      if (this.p === 3) return this.q - 3;
+      else return this.q - 2;
     }
     else {
       console.error('pgonsToDo: wrong exposure value!')
