@@ -54,7 +54,7 @@ export class ThreeJS {
     }
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.render();
+    //this.render();
   }
 
   disk(centre, radius, color) {
@@ -161,21 +161,26 @@ export class ThreeJS {
       color: color,
       wireframe: wireframe,
       side: THREE.DoubleSide,
-      //map: new THREE.TextureLoader().load(imageURL),
     });
     if (imageURL) {
-      const texture = new THREE.TextureLoader().load(imageURL);
-      material.map = texture;
-      //material.needsUpdate = true; //might be needed if not rendering by frame
+      const texture = new THREE.TextureLoader().load(imageURL,
+      () => {
+        material.map = texture;
+        material.needsUpdate = true;
+        this.render();
+      });
+
     }
     return material;
   }
 
   //TODO figure out how to delay this call until all pgons are added
-  render() {
-    requestAnimationFrame(() => {
-      this.render()
-    });
+  render(sceneGetsUpdate = false) {
+    if(sceneGetsUpdate){
+      requestAnimationFrame(() => {
+        this.render()
+      });
+    }
     this.renderer.render(this.scene, this.camera);
   }
 

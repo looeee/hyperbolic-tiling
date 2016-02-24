@@ -939,7 +939,7 @@ var ThreeJS = function () {
       }
 
       this.renderer.setSize(window.innerWidth, window.innerHeight);
-      this.render();
+      //this.render();
     }
   }, {
     key: 'disk',
@@ -1036,16 +1036,21 @@ var ThreeJS = function () {
   }, {
     key: 'createMaterial',
     value: function createMaterial(color, imageURL, wireframe) {
+      var _this = this;
+
       var material = new THREE.MeshBasicMaterial({
         color: color,
         wireframe: wireframe,
         side: THREE.DoubleSide
       });
-      //map: new THREE.TextureLoader().load(imageURL),
       if (imageURL) {
-        var texture = new THREE.TextureLoader().load(imageURL);
-        material.map = texture;
-        //material.needsUpdate = true; //might be needed if not rendering by frame
+        (function () {
+          var texture = new THREE.TextureLoader().load(imageURL, function () {
+            material.map = texture;
+            material.needsUpdate = true;
+            _this.render();
+          });
+        })();
       }
       return material;
     }
@@ -1055,11 +1060,15 @@ var ThreeJS = function () {
   }, {
     key: 'render',
     value: function render() {
-      var _this = this;
+      var _this2 = this;
 
-      requestAnimationFrame(function () {
-        _this.render();
-      });
+      var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+      if (sceneGetsUpdate) {
+        requestAnimationFrame(function () {
+          _this2.render();
+        });
+      }
       this.renderer.render(this.scene, this.camera);
     }
 
@@ -1405,50 +1414,10 @@ var RegularTesselation = function () {
   }, {
     key: 'drawLayers',
     value: function drawLayers() {
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = this.layers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var layer = _step3.value;
-          var _iteratorNormalCompletion4 = true;
-          var _didIteratorError4 = false;
-          var _iteratorError4 = undefined;
-
-          try {
-            for (var _iterator4 = layer[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-              var pattern = _step4.value;
-
-              this.drawPattern(pattern);
-            }
-          } catch (err) {
-            _didIteratorError4 = true;
-            _iteratorError4 = err;
-          } finally {
-            try {
-              if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                _iterator4.return();
-              }
-            } finally {
-              if (_didIteratorError4) {
-                throw _iteratorError4;
-              }
-            }
-          }
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
+      for (var i = 0; i < this.layers.length; i++) {
+        var layer = this.layers[i];
+        for (var j = 0; j < layer.length; j++) {
+          this.drawPattern(layer[j]);
         }
       }
     }

@@ -178,9 +178,10 @@ export class RegularTesselation {
   }
 
   drawLayers() {
-    for (let layer of this.layers) {
-      for (let pattern of layer) {
-        this.drawPattern(pattern);
+    for (let i = 0; i < this.layers.length; i++) {
+      const layer = this.layers[i];
+      for (let j = 0; j < layer.length; j++) {
+        this.drawPattern(layer[j]);
       }
     }
   }
