@@ -24,7 +24,7 @@ export class ThreeJS {
   }
 
   reset() {
-    cancelAnimationFrame(this.id); 
+    cancelAnimationFrame(this.id);
     this.clearScene();
     this.projector = null;
     this.camera = null;
@@ -151,18 +151,24 @@ export class ThreeJS {
     if (color === undefined) color = 0xffffff;
 
     if(!this.material){
-      this.material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: wireframe,
-        side: THREE.DoubleSide,
-      });
-      if (imageURL) {
-        this.texture = new THREE.TextureLoader().load(imageURL);
-        this.material.map = this.texture;
-        this.material.needsUpdate = true;
-      }
+      this.material = this.createMaterial(color, imageURL, wireframe);
     }
     return new THREE.Mesh(geometry, this.material);
+  }
+
+  createMaterial(color, imageURL, wireframe){
+    const material = new THREE.MeshBasicMaterial({
+      color: color,
+      wireframe: wireframe,
+      side: THREE.DoubleSide,
+      //map: new THREE.TextureLoader().load(imageURL),
+    });
+    if (imageURL) {
+      const texture = new THREE.TextureLoader().load(imageURL);
+      material.map = texture;
+      //material.needsUpdate = true; //might be needed if not rendering by frame
+    }
+    return material;
   }
 
   //TODO figure out how to delay this call until all pgons are added

@@ -1029,18 +1029,25 @@ var ThreeJS = function () {
       if (color === undefined) color = 0xffffff;
 
       if (!this.material) {
-        this.material = new THREE.MeshBasicMaterial({
-          color: color,
-          wireframe: wireframe,
-          side: THREE.DoubleSide
-        });
-        if (imageURL) {
-          this.texture = new THREE.TextureLoader().load(imageURL);
-          this.material.map = this.texture;
-          this.material.needsUpdate = true;
-        }
+        this.material = this.createMaterial(color, imageURL, wireframe);
       }
       return new THREE.Mesh(geometry, this.material);
+    }
+  }, {
+    key: 'createMaterial',
+    value: function createMaterial(color, imageURL, wireframe) {
+      var material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: wireframe,
+        side: THREE.DoubleSide
+      });
+      //map: new THREE.TextureLoader().load(imageURL),
+      if (imageURL) {
+        var texture = new THREE.TextureLoader().load(imageURL);
+        material.map = texture;
+        //material.needsUpdate = true; //might be needed if not rendering by frame
+      }
+      return material;
     }
 
     //TODO figure out how to delay this call until all pgons are added
@@ -1536,19 +1543,15 @@ Math.cot = Math.cot || function (x) {
 var tesselation = undefined;
 var p = randomInt(3, 7);
 var q = randomInt(3, 7);
-var maxLayers = undefined;
-
 if ((p - 2) * (q - 2) < 5) {
   q = 5;
   p = 4;
 }
 
-if (p * q < 22) maxLayers = 4;else if (p * q < 29) maxLayers = 3;else maxLayers = 2;
-
 //Run after load to get window width and height
 window.onload = function () {
-  //tesselation = new RegularTesselation(8, 6, 2);
-  tesselation = new RegularTesselation(p, q, maxLayers);
+  tesselation = new RegularTesselation(4, 5, 3);
+  //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
 window.onresize = function () {
