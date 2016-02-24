@@ -19,12 +19,6 @@ import * as E from './euclid';
 
 export class Point {
   constructor(x, y) {
-    if (E.toFixed(x) == 0) {
-      x = 0;
-    }
-    if (E.toFixed(y) == 0) {
-      y = 0;
-    }
     this.x = x;
     this.y = y;
 
@@ -93,9 +87,6 @@ export class Point {
 
 export class Circle {
   constructor(centreX, centreY, radius) {
-    if (E.toFixed(radius) == 0) {
-      radius = 0;
-    }
     this.centre = new Point(centreX, centreY);
     this.radius = radius;
   }
@@ -132,9 +123,9 @@ export class Arc {
     const wcp = this.weierstrassCrossProduct(wq1, wq2);
     const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
-    const r = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
+    const arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
 
-    const arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
+    const arcCircle = new Circle(arcCentre.x, arcCentre.y, arcRadius, true);
 
     //translate points to origin and calculate arctan
     let alpha = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);

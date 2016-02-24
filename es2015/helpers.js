@@ -117,11 +117,34 @@ export class Transformations {
     this.edges = [];
     for (let i = 0; i < this.p; i++) {
       this.edges.push({
-        orientation: -1,
+        orientation: 1,
         adjacentEdge: i,
       });
     }
   }
+
+  /*
+  //TESTING: manually setting edges for {4, q} tilings
+  initEdges() {
+    this.edges = [];
+    this.edges.push({
+      orientation: 1,
+      adjacentEdge: 3,
+    });
+    this.edges.push({
+      orientation: 1,
+      adjacentEdge: 2,
+    });
+    this.edges.push({
+      orientation: 1,
+      adjacentEdge: 1,
+    });
+    this.edges.push({
+      orientation: 1,
+      adjacentEdge: 0,
+    });
+  }
+  */
 
   initEdgeTransforms() {
     this.edgeTransforms = [];
@@ -133,7 +156,6 @@ export class Transformations {
         let mat = E.multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
         mat = E.multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
         this.edgeTransforms[i] = new Transform(mat);
-        console.log(mat);
       }
       //Case 2: rotation
       else if (this.edges[i].orientation === 1) {
@@ -142,7 +164,7 @@ export class Transformations {
         this.edgeTransforms[i] = new Transform(mat);
       }
       else {
-        console.error('Error: invalid orientation value');
+        console.error('initEdgeTransforms(): invalid orientation value');
         console.error(this.edges[i]);
       }
       this.edgeTransforms[i].orientation = this.edges[adj].orientation;

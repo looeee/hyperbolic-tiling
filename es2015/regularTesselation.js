@@ -29,7 +29,7 @@ export class RegularTesselation {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q, maxLayers);
-    this.texture = './images/textures/fish1.png';
+    this.texture = './images/textures/fish3.png';
     //this.texture = '';
 
     this.p = p;
@@ -86,7 +86,8 @@ export class RegularTesselation {
 
     //create points and move them from the unit disk to our radius
     const p1 = new Point(xqpt, yqpt);
-    const p2 = new Point(x2pt, 0);
+    //const p2 = new Point(x2pt, 0);
+    const p2 = p1.transform(this.transforms.edgeBisectorReflection);
     const vertices = [this.disk.centre, p1, p2];
 
     return new Polygon(vertices, true);
@@ -95,12 +96,13 @@ export class RegularTesselation {
   //calculate the central polygon which is made up of transformed copies
   //of the fundamental region
   buildCentralPattern() {
-    this.frCopy = this.fr.transform(this.transforms.hypReflection);
-    this.centralPattern = [this.fr, this.frCopy];
+    //this.frCopy = this.fr.transform(this.transforms.hypReflection);
+    this.centralPattern = [this.fr];
+    this.centralPattern.push(this.centralPattern[0].transform(this.transforms.hypReflection));
 
-    for (let i = 1; i < this.p; i++) {
-      this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
-      this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
+    for (let i = 1; i < this.p/2; i++) {
+      this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i*2]));
+      this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i*2]));
     }
     this.layers[0][0] = this.centralPattern;
   }

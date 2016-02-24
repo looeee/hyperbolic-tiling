@@ -333,12 +333,6 @@ var Point = function () {
   function Point(x, y) {
     babelHelpers.classCallCheck(this, Point);
 
-    if (toFixed(x) == 0) {
-      x = 0;
-    }
-    if (toFixed(y) == 0) {
-      y = 0;
-    }
     this.x = x;
     this.y = y;
 
@@ -414,9 +408,6 @@ var Point = function () {
 var Circle = function Circle(centreX, centreY, radius) {
   babelHelpers.classCallCheck(this, Circle);
 
-  if (toFixed(radius) == 0) {
-    radius = 0;
-  }
   this.centre = new Point(centreX, centreY);
   this.radius = radius;
 };
@@ -456,9 +447,9 @@ var Arc = function () {
       var wcp = this.weierstrassCrossProduct(wq1, wq2);
       var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
 
-      var r = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
+      var arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
 
-      var arcCircle = new Circle(arcCentre.x, arcCentre.y, r, true);
+      var arcCircle = new Circle(arcCentre.x, arcCentre.y, arcRadius, true);
 
       //translate points to origin and calculate arctan
       var alpha = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);
@@ -747,11 +738,35 @@ var Transformations = function () {
       this.edges = [];
       for (var i = 0; i < this.p; i++) {
         this.edges.push({
-          orientation: -1,
+          orientation: 1,
           adjacentEdge: i
         });
       }
     }
+
+    /*
+    //TESTING: manually setting edges for {4, q} tilings
+    initEdges() {
+      this.edges = [];
+      this.edges.push({
+        orientation: 1,
+        adjacentEdge: 3,
+      });
+      this.edges.push({
+        orientation: 1,
+        adjacentEdge: 2,
+      });
+      this.edges.push({
+        orientation: 1,
+        adjacentEdge: 1,
+      });
+      this.edges.push({
+        orientation: 1,
+        adjacentEdge: 0,
+      });
+    }
+    */
+
   }, {
     key: 'initEdgeTransforms',
     value: function initEdgeTransforms() {
@@ -764,7 +779,6 @@ var Transformations = function () {
           var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
           mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
           this.edgeTransforms[i] = new Transform(mat);
-          console.log(mat);
         }
         //Case 2: rotation
         else if (this.edges[i].orientation === 1) {
@@ -772,7 +786,7 @@ var Transformations = function () {
             mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
             this.edgeTransforms[i] = new Transform(mat);
           } else {
-            console.error('Error: invalid orientation value');
+            console.error('initEdgeTransforms(): invalid orientation value');
             console.error(this.edges[i]);
           }
         this.edgeTransforms[i].orientation = this.edges[adj].orientation;
@@ -1220,7 +1234,7 @@ var RegularTesselation = function () {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q, maxLayers);
-    this.texture = './images/textures/fish1.png';
+    this.texture = './images/textures/fish3.png';
     //this.texture = '';
 
     this.p = p;
@@ -1282,7 +1296,8 @@ var RegularTesselation = function () {
 
       //create points and move them from the unit disk to our radius
       var p1 = new Point(xqpt, yqpt);
-      var p2 = new Point(x2pt, 0);
+      //const p2 = new Point(x2pt, 0);
+      var p2 = p1.transform(this.transforms.edgeBisectorReflection);
       var vertices = [this.disk.centre, p1, p2];
 
       return new Polygon(vertices, true);
@@ -1294,12 +1309,13 @@ var RegularTesselation = function () {
   }, {
     key: 'buildCentralPattern',
     value: function buildCentralPattern() {
-      this.frCopy = this.fr.transform(this.transforms.hypReflection);
-      this.centralPattern = [this.fr, this.frCopy];
+      //this.frCopy = this.fr.transform(this.transforms.hypReflection);
+      this.centralPattern = [this.fr];
+      this.centralPattern.push(this.centralPattern[0].transform(this.transforms.hypReflection));
 
-      for (var i = 1; i < this.p; i++) {
-        this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
-        this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
+      for (var i = 1; i < this.p / 2; i++) {
+        this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i * 2]));
+        this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i * 2]));
       }
       this.layers[0][0] = this.centralPattern;
     }
@@ -1531,7 +1547,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 5, 3);
+  tesselation = new RegularTesselation(4, 5, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
