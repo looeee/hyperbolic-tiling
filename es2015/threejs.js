@@ -8,9 +8,6 @@ import * as E from './euclid';
 // *  are converted to screen space (which will generally invole multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
-//TODO: after resizing a few times the scene stops drawing - possible memory
-//not being freed in clearScene?
-//TODO add functions to save image to disk/screen for download
 export class ThreeJS {
   constructor() {
     this.init();
@@ -196,12 +193,6 @@ export class ThreeJS {
     xhttp.send('img=' + data);
   }
 }
-
-
-
-
-
-
 
 /* OLD/UNUSED FUNCTIONS
 addBoundingBoxHelper(mesh) {

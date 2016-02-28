@@ -25,42 +25,37 @@ export class Point {
 
     this.checkPoint();
 
-    //start with z = 0; this will used to transform to/from Weierstrass form
+    //start with z = 0; this will used to transform to/from hyperboloid form
     this.z = 0;
   }
 
-  toFixed(places) {
-    this.x = E.toFixed(this.x, places);
-    this.y = E.toFixed(this.y, places);
-  }
-
   //compare two points taking rounding errors into account
-  compare(p2) {
-    if (typeof p2 === 'undefined') {
+  compare(otherPoint) {
+    if (typeof otherPoint === 'undefined') {
       console.warn('Warning: point not defined.')
       return false;
     }
     const t1 = this.toFixed(12);
-    const t2 = p2.toFixed(12);
+    const t2 = otherPoint.toFixed(12);
 
-    if (this.p1.x === p2.x && this.p1.y === p2.y) return true;
+    if (this.p1.x === otherPoint.x && this.p1.y === otherPoint.y) return true;
     else return false;
   }
 
-  //move the point to Hyperboloid (Weierstrass) space, apply the transform,
+  //move the point to hyperboloid (Weierstrass) space, apply the transform,
   //then move back
   transform(transform) {
     const mat = transform.matrix;
-    const p = this.poincareToWeierstrass();
+    const p = this.poincareToHyperboloid();
     const x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
     const y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
     const z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
     const q =  new Point(x, y);
     q.z = z;
-    return q.weierstrassToPoincare();
+    return q.hyperboloidToPoincare();
   }
 
-  poincareToWeierstrass() {
+  poincareToHyperboloid() {
     const factor = 1 / (1 - this.x * this.x - this.y * this.y);
     const x = 2 * factor * this.x;
     const y = 2 * factor * this.y;
@@ -70,7 +65,7 @@ export class Point {
     return p;
   }
 
-  weierstrassToPoincare() {
+  hyperboloidToPoincare() {
     const factor = 1 / (1 + this.z);
     const x = factor * this.x;
     const y = factor * this.y;
@@ -82,7 +77,7 @@ export class Point {
   }
 
   //check that the point lies in the unit disk and warn otherwise
-  //(don't check points that are in Weierstrass form with z !==0)
+  //(don't check points that are in hyperboloid form with z !==0)
   checkPoint(){
     if (this.z === 0 && E.distance(this, {x: 0, y:0 }) > 1) {
       console.warn('Error! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
@@ -122,20 +117,19 @@ export class Arc {
       this.straightLine = true;
     }
     else{
-      this.hyperbolicMethod();
+      this.calculateArc();
     }
   }
 
   //Calculate the arc using Dunham's method
-  hyperbolicMethod(){
+  calculateArc(){
     //calculate centre of arcCircle relative to unit disk
-    const wq1 = this.startPoint.poincareToWeierstrass();
-    const wq2 = this.endPoint.poincareToWeierstrass();
-    const wcp = this.weierstrassCrossProduct(wq1, wq2);
+    const wq1 = this.startPoint.poincareToHyperboloid();
+    const wq2 = this.endPoint.poincareToHyperboloid();
+    const wcp = this.hyperboloidCrossProduct(wq1, wq2);
+
     const arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
-
     const arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
-
     const arcCircle = new Circle(arcCentre.x, arcCentre.y, arcRadius, true);
 
     //translate points to origin and calculate arctan
@@ -148,26 +142,28 @@ export class Arc {
 
     //check whether points are in clockwise order and assign angles accordingly
     const cw = E.clockwise(alpha, beta);
-    if (cw) {
-      this.startAngle = alpha;
-      this.endAngle = beta;
-    } else {
-      this.startAngle = beta;
-      this.endAngle = alpha;
-    }
+
+    //TODO test if angles need to be set by cw here
+    //if (cw) {
+    this.startAngle = alpha;
+    this.endAngle = beta;
+    //} else {
+    //  this.startAngle = beta;
+    //  this.endAngle = alpha;
+    //}
 
     this.circle = arcCircle;
     this.clockwise = cw;
     this.straightLine = false;
   }
 
-  weierstrassCrossProduct(point3D_1, point3D_2){
-    let r = {
+  hyperboloidCrossProduct(point3D_1, point3D_2){
+    let h = {
       x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
       y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
       z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
     };
-    return r;
+    return h;
   }
 }
 
@@ -180,47 +176,51 @@ export class Arc {
 class Edge {
   constructor(startPoint, endPoint) {
     this.arc = new Arc(startPoint, endPoint);
-
-    this.points = [];
+    //This set the spacing between vertices along the arcs of the polygons
+    this.spacing = .05;
     this.spacedPoints();
   }
 
   spacedPoints() {
-    const spacing = .05;
-
+    this.points = [];
     //push the first vertex
     this.points.push(this.arc.startPoint);
 
      //tiny pgons near the edges of the disk don't need to be subdivided
-    if(E.distance(this.arc.startPoint, this.arc.endPoint) > spacing){
-      let p;
-      //line not through the origin (hyperbolic arc)
+    if(E.distance(this.arc.startPoint, this.arc.endPoint) > this.spacing){
       if (!this.arc.straightLine) {
-        if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, spacing).p1;
-        else p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, spacing).p2;
-
-        this.points.push(p);
-
-        while (E.distance(p, this.arc.endPoint) > spacing) {
-          if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, p, spacing).p1;
-          else p = E.spacedPointOnArc(this.arc.circle, p, spacing).p2;
-          this.points.push(p);
-        }
+        this.pointsOnArc();
       }
-
-      //line through origin (straight line)
       else {
-        p = E.spacedPointOnLine(this.arc.startPoint, this.arc.endPoint, spacing).p2;
-        this.points.push(p);
-        while (E.distance(p, this.arc.endPoint) > spacing) {
-          p = E.spacedPointOnLine(p, this.arc.startPoint, spacing).p1;
-          this.points.push(p);
-        }
+        this.pointsOnStraightLine();
       }
     }
-    this.points.push(this.arc.endPoint);
 
-    return this.points;
+    //push the final vertex
+    this.points.push(this.arc.endPoint);
+  }
+
+  pointsOnStraightLine(){
+    let p = E.spacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing).p2;
+    this.points.push(p);
+    while (E.distance(p, this.arc.endPoint) > this.spacing) {
+      p = E.spacedPointOnLine(p, this.arc.startPoint, this.spacing).p1;
+      this.points.push(p);
+    }
+  }
+
+  pointsOnArc(){
+    let p;
+    if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, this.spacing).p1;
+    else p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, this.spacing).p2;
+
+    this.points.push(p);
+
+    while (E.distance(p, this.arc.endPoint) > this.spacing) {
+      if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, p, this.spacing).p1;
+      else p = E.spacedPointOnArc(this.arc.circle, p, this.spacing).p2;
+      this.points.push(p);
+    }
   }
 
 }
@@ -271,29 +271,6 @@ export class Polygon {
   }
 }
 
-/*
-barycentre() {
-  const l = this.vertices.length;
-  const first = this.vertices[0];
-  const last = this.vertices[l - 1];
-
-  let twicearea = 0,
-    x = 0,
-    y = 0,
-    p1, p2, f;
-  for (let i = 0, j = l - 1; i < l; j = i++) {
-    p1 = this.vertices[i];
-    p2 = this.vertices[j];
-    f = p1.x * p2.y - p2.x * p1.y;
-    twicearea += f;
-    x += (p1.x + p2.x) * f;
-    y += (p1.y + p2.y) * f;
-  }
-  f = twicearea * 3;
-  return new Point(x / f, y / f);
-}
-*/
-
 // * ***********************************************************************
 // *
 // *  DISK CLASS
@@ -305,11 +282,6 @@ barycentre() {
 export class Disk {
   constructor() {
     this.draw = new ThreeJS();
-
-    this.init();
-  }
-
-  init() {
     this.centre = new Point(0, 0);
     this.drawDisk();
   }
@@ -320,9 +292,6 @@ export class Disk {
   }
 
   drawPoint(point, radius, color) {
-    if (this.checkPoints(point)) {
-      return false
-    }
     this.draw.disk(point, radius, color, false);
   }
 
@@ -348,3 +317,27 @@ export class Disk {
     this.draw.polygon(polygon, color, texture, wireframe);
   }
 }
+
+
+/*
+barycentre() {
+  const l = this.vertices.length;
+  const first = this.vertices[0];
+  const last = this.vertices[l - 1];
+
+  let twicearea = 0,
+    x = 0,
+    y = 0,
+    p1, p2, f;
+  for (let i = 0, j = l - 1; i < l; j = i++) {
+    p1 = this.vertices[i];
+    p2 = this.vertices[j];
+    f = p1.x * p2.y - p2.x * p1.y;
+    twicearea += f;
+    x += (p1.x + p2.x) * f;
+    y += (p1.y + p2.y) * f;
+  }
+  f = twicearea * 3;
+  return new Point(x / f, y / f);
+}
+*/

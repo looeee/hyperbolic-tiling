@@ -11,38 +11,35 @@ from './elements';
 // *
 // *************************************************************************
 
-//distance between two points
-export const distance = (p1, p2) => {
-  return Math.sqrt(Math.pow((p2.x - p1.x), 2) + Math.pow((p2.y - p1.y), 2));
+export const distance = (point1, point2) => {
+  return Math.sqrt(Math.pow((point2.x - point1.x), 2) + Math.pow((point2.y - point1.y), 2));
 }
 
 //does the line connecting p1, p2 go through the point (0,0)?
-//needs to take into account roundoff errors so returns true if
-//test is close to 0
-export const throughOrigin = (p1, p2) => {
-  if ((toFixed(p1.x) == 0) && (toFixed(p2.x) === 0)) {
-    //vertical line through centre
+export const throughOrigin = (point1, point2) => {
+  //vertical line through centre
+  if ((toFixed(point1.x) == 0) && (toFixed(point2.x) === 0)) {
     return true;
   }
-  const test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+  const test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
 
   if (toFixed(test) == 0) return true;
   else return false;
 }
 
-export const circleLineIntersect = (circle, p1, p2) => {
+export const circleLineIntersect = (circle, point1, point2) => {
   const cx = circle.centre.x;
   const cy = circle.centre.y;
   const r = circle.radius;
 
-  const d = distance(p1, p2);
+  const d = distance(point1, point2);
   //unit vector p1 p2
-  const dx = (p2.x - p1.x) / d;
-  const dy = (p2.y - p1.y) / d;
+  const dx = (point2.x - point1.x) / d;
+  const dy = (point2.y - point1.y) / d;
 
   //point on line closest to circle centre
-  const t = dx * (cx - p1.x) + dy * (cy - p1.y);
-  const p = new Point(t * dx + p1.x, t * dy + p1.y);
+  const t = dx * (cx - point1.x) + dy * (cy - point1.y);
+  const p = new Point(t * dx + point1.x, t * dy + point1.y);
 
   //distance from this point to centre
   const d2 = distance(p, circle.centre);
@@ -51,9 +48,9 @@ export const circleLineIntersect = (circle, p1, p2) => {
   if (d2 < r) {
     const dt = Math.sqrt(r * r - d2 * d2);
     //point 1
-    const q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
+    const q1 = new Point((t - dt) * dx + point1.x, (t - dt) * dy + point1.y);
     //point 2
-    const q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y);
+    const q2 = new Point((t + dt) * dx + point1.x, (t + dt) * dy + point1.y);
 
     return {
       p1: q1,

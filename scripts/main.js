@@ -35,9 +35,6 @@ babelHelpers;
 // *  are converted to screen space (which will generally invole multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
-//TODO: after resizing a few times the scene stops drawing - possible memory
-//not being freed in clearScene?
-//TODO add functions to save image to disk/screen for download
 
 var ThreeJS = function () {
   function ThreeJS() {
@@ -250,37 +247,34 @@ var ThreeJS = function () {
 // *
 // *************************************************************************
 
-//distance between two points
-var distance = function distance(p1, p2) {
-  return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+var distance = function distance(point1, point2) {
+  return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
 };
 
 //does the line connecting p1, p2 go through the point (0,0)?
-//needs to take into account roundoff errors so returns true if
-//test is close to 0
-var throughOrigin = function throughOrigin(p1, p2) {
-  if (toFixed(p1.x) == 0 && toFixed(p2.x) === 0) {
-    //vertical line through centre
+var throughOrigin = function throughOrigin(point1, point2) {
+  //vertical line through centre
+  if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
     return true;
   }
-  var test = (-p1.x * p2.y + p1.x * p1.y) / (p2.x - p1.x) + p1.y;
+  var test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
 
   if (toFixed(test) == 0) return true;else return false;
 };
 
-var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
+var circleLineIntersect = function circleLineIntersect(circle, point1, point2) {
   var cx = circle.centre.x;
   var cy = circle.centre.y;
   var r = circle.radius;
 
-  var d = distance(p1, p2);
+  var d = distance(point1, point2);
   //unit vector p1 p2
-  var dx = (p2.x - p1.x) / d;
-  var dy = (p2.y - p1.y) / d;
+  var dx = (point2.x - point1.x) / d;
+  var dy = (point2.y - point1.y) / d;
 
   //point on line closest to circle centre
-  var t = dx * (cx - p1.x) + dy * (cy - p1.y);
-  var p = new Point(t * dx + p1.x, t * dy + p1.y);
+  var t = dx * (cx - point1.x) + dy * (cy - point1.y);
+  var p = new Point(t * dx + point1.x, t * dy + point1.y);
 
   //distance from this point to centre
   var d2 = distance(p, circle.centre);
@@ -289,9 +283,9 @@ var circleLineIntersect = function circleLineIntersect(circle, p1, p2) {
   if (d2 < r) {
     var dt = Math.sqrt(r * r - d2 * d2);
     //point 1
-    var q1 = new Point((t - dt) * dx + p1.x, (t - dt) * dy + p1.y);
+    var q1 = new Point((t - dt) * dx + point1.x, (t - dt) * dy + point1.y);
     //point 2
-    var q2 = new Point((t + dt) * dx + p1.x, (t + dt) * dy + p1.y);
+    var q2 = new Point((t + dt) * dx + point1.x, (t + dt) * dy + point1.y);
 
     return {
       p1: q1,
@@ -553,50 +547,43 @@ var Point = function () {
 
     this.checkPoint();
 
-    //start with z = 0; this will used to transform to/from Weierstrass form
+    //start with z = 0; this will used to transform to/from hyperboloid form
     this.z = 0;
   }
 
+  //compare two points taking rounding errors into account
+
   babelHelpers.createClass(Point, [{
-    key: 'toFixed',
-    value: function toFixed$$(places) {
-      this.x = toFixed(this.x, places);
-      this.y = toFixed(this.y, places);
-    }
-
-    //compare two points taking rounding errors into account
-
-  }, {
     key: 'compare',
-    value: function compare(p2) {
-      if (typeof p2 === 'undefined') {
+    value: function compare(otherPoint) {
+      if (typeof otherPoint === 'undefined') {
         console.warn('Warning: point not defined.');
         return false;
       }
       var t1 = this.toFixed(12);
-      var t2 = p2.toFixed(12);
+      var t2 = otherPoint.toFixed(12);
 
-      if (this.p1.x === p2.x && this.p1.y === p2.y) return true;else return false;
+      if (this.p1.x === otherPoint.x && this.p1.y === otherPoint.y) return true;else return false;
     }
 
-    //move the point to Hyperboloid (Weierstrass) space, apply the transform,
+    //move the point to hyperboloid (Weierstrass) space, apply the transform,
     //then move back
 
   }, {
     key: 'transform',
     value: function transform(_transform) {
       var mat = _transform.matrix;
-      var p = this.poincareToWeierstrass();
+      var p = this.poincareToHyperboloid();
       var x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
       var y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
       var z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
       var q = new Point(x, y);
       q.z = z;
-      return q.weierstrassToPoincare();
+      return q.hyperboloidToPoincare();
     }
   }, {
-    key: 'poincareToWeierstrass',
-    value: function poincareToWeierstrass() {
+    key: 'poincareToHyperboloid',
+    value: function poincareToHyperboloid() {
       var factor = 1 / (1 - this.x * this.x - this.y * this.y);
       var x = 2 * factor * this.x;
       var y = 2 * factor * this.y;
@@ -606,8 +593,8 @@ var Point = function () {
       return p;
     }
   }, {
-    key: 'weierstrassToPoincare',
-    value: function weierstrassToPoincare() {
+    key: 'hyperboloidToPoincare',
+    value: function hyperboloidToPoincare() {
       var factor = 1 / (1 + this.z);
       var x = factor * this.x;
       var y = factor * this.y;
@@ -620,7 +607,7 @@ var Point = function () {
     }
 
     //check that the point lies in the unit disk and warn otherwise
-    //(don't check points that are in Weierstrass form with z !==0)
+    //(don't check points that are in hyperboloid form with z !==0)
 
   }, {
     key: 'checkPoint',
@@ -660,23 +647,22 @@ var Arc = function () {
       this.clockwise = false;
       this.straightLine = true;
     } else {
-      this.hyperbolicMethod();
+      this.calculateArc();
     }
   }
 
   //Calculate the arc using Dunham's method
 
   babelHelpers.createClass(Arc, [{
-    key: 'hyperbolicMethod',
-    value: function hyperbolicMethod() {
+    key: 'calculateArc',
+    value: function calculateArc() {
       //calculate centre of arcCircle relative to unit disk
-      var wq1 = this.startPoint.poincareToWeierstrass();
-      var wq2 = this.endPoint.poincareToWeierstrass();
-      var wcp = this.weierstrassCrossProduct(wq1, wq2);
+      var wq1 = this.startPoint.poincareToHyperboloid();
+      var wq2 = this.endPoint.poincareToHyperboloid();
+      var wcp = this.hyperboloidCrossProduct(wq1, wq2);
+
       var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
-
       var arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
-
       var arcCircle = new Circle(arcCentre.x, arcCentre.y, arcRadius, true);
 
       //translate points to origin and calculate arctan
@@ -689,27 +675,29 @@ var Arc = function () {
 
       //check whether points are in clockwise order and assign angles accordingly
       var cw = clockwise(alpha, beta);
-      if (cw) {
-        this.startAngle = alpha;
-        this.endAngle = beta;
-      } else {
-        this.startAngle = beta;
-        this.endAngle = alpha;
-      }
+
+      //TODO test if angles need to be set by cw here
+      //if (cw) {
+      this.startAngle = alpha;
+      this.endAngle = beta;
+      //} else {
+      //  this.startAngle = beta;
+      //  this.endAngle = alpha;
+      //}
 
       this.circle = arcCircle;
       this.clockwise = cw;
       this.straightLine = false;
     }
   }, {
-    key: 'weierstrassCrossProduct',
-    value: function weierstrassCrossProduct(point3D_1, point3D_2) {
-      var r = {
+    key: 'hyperboloidCrossProduct',
+    value: function hyperboloidCrossProduct(point3D_1, point3D_2) {
+      var h = {
         x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
         y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
         z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
       };
-      return r;
+      return h;
     }
   }]);
   return Arc;
@@ -727,47 +715,52 @@ var Edge = function () {
     babelHelpers.classCallCheck(this, Edge);
 
     this.arc = new Arc(startPoint, endPoint);
-
-    this.points = [];
+    //This set the spacing between vertices along the arcs of the polygons
+    this.spacing = .05;
     this.spacedPoints();
   }
 
   babelHelpers.createClass(Edge, [{
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var spacing = .05;
-
+      this.points = [];
       //push the first vertex
       this.points.push(this.arc.startPoint);
 
       //tiny pgons near the edges of the disk don't need to be subdivided
-      if (distance(this.arc.startPoint, this.arc.endPoint) > spacing) {
-        var p = undefined;
-        //line not through the origin (hyperbolic arc)
+      if (distance(this.arc.startPoint, this.arc.endPoint) > this.spacing) {
         if (!this.arc.straightLine) {
-          if (this.arc.clockwise) p = spacedPointOnArc(this.arc.circle, this.arc.startPoint, spacing).p1;else p = spacedPointOnArc(this.arc.circle, this.arc.startPoint, spacing).p2;
-
-          this.points.push(p);
-
-          while (distance(p, this.arc.endPoint) > spacing) {
-            if (this.arc.clockwise) p = spacedPointOnArc(this.arc.circle, p, spacing).p1;else p = spacedPointOnArc(this.arc.circle, p, spacing).p2;
-            this.points.push(p);
-          }
+          this.pointsOnArc();
+        } else {
+          this.pointsOnStraightLine();
         }
-
-        //line through origin (straight line)
-        else {
-            p = spacedPointOnLine(this.arc.startPoint, this.arc.endPoint, spacing).p2;
-            this.points.push(p);
-            while (distance(p, this.arc.endPoint) > spacing) {
-              p = spacedPointOnLine(p, this.arc.startPoint, spacing).p1;
-              this.points.push(p);
-            }
-          }
       }
-      this.points.push(this.arc.endPoint);
 
-      return this.points;
+      //push the final vertex
+      this.points.push(this.arc.endPoint);
+    }
+  }, {
+    key: 'pointsOnStraightLine',
+    value: function pointsOnStraightLine() {
+      var p = spacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing).p2;
+      this.points.push(p);
+      while (distance(p, this.arc.endPoint) > this.spacing) {
+        p = spacedPointOnLine(p, this.arc.startPoint, this.spacing).p1;
+        this.points.push(p);
+      }
+    }
+  }, {
+    key: 'pointsOnArc',
+    value: function pointsOnArc() {
+      var p = undefined;
+      if (this.arc.clockwise) p = spacedPointOnArc(this.arc.circle, this.arc.startPoint, this.spacing).p1;else p = spacedPointOnArc(this.arc.circle, this.arc.startPoint, this.spacing).p2;
+
+      this.points.push(p);
+
+      while (distance(p, this.arc.endPoint) > this.spacing) {
+        if (this.arc.clockwise) p = spacedPointOnArc(this.arc.circle, p, this.spacing).p1;else p = spacedPointOnArc(this.arc.circle, p, this.spacing).p2;
+        this.points.push(p);
+      }
     }
   }]);
   return Edge;
@@ -836,20 +829,13 @@ var Disk = function () {
     babelHelpers.classCallCheck(this, Disk);
 
     this.draw = new ThreeJS();
-
-    this.init();
+    this.centre = new Point(0, 0);
+    this.drawDisk();
   }
 
+  //draw the disk background
+
   babelHelpers.createClass(Disk, [{
-    key: 'init',
-    value: function init() {
-      this.centre = new Point(0, 0);
-      this.drawDisk();
-    }
-
-    //draw the disk background
-
-  }, {
     key: 'drawDisk',
     value: function drawDisk() {
       this.draw.disk(this.centre, 1, 0x000000);
@@ -857,9 +843,6 @@ var Disk = function () {
   }, {
     key: 'drawPoint',
     value: function drawPoint(point, radius, color) {
-      if (this.checkPoints(point)) {
-        return false;
-      }
       this.draw.disk(point, radius, color, false);
     }
 
@@ -891,6 +874,29 @@ var Disk = function () {
   }]);
   return Disk;
 }();
+
+/*
+barycentre() {
+  const l = this.vertices.length;
+  const first = this.vertices[0];
+  const last = this.vertices[l - 1];
+
+  let twicearea = 0,
+    x = 0,
+    y = 0,
+    p1, p2, f;
+  for (let i = 0, j = l - 1; i < l; j = i++) {
+    p1 = this.vertices[i];
+    p2 = this.vertices[j];
+    f = p1.x * p2.y - p2.x * p1.y;
+    twicearea += f;
+    x += (p1.x + p2.x) * f;
+    y += (p1.y + p2.y) * f;
+  }
+  f = twicearea * 3;
+  return new Point(x / f, y / f);
+}
+*/
 
 //TODO Document these classes
 // * ***********************************************************************
@@ -1523,10 +1529,11 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(6, 4, 1);
+  tesselation = new RegularTesselation(4, 5, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
+//TODO: resize is not working well, fix it!
 window.onresize = function () {
   tesselation.disk.draw.reset();
   tesselation.disk.init();
