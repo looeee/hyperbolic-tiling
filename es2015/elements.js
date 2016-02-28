@@ -1,4 +1,5 @@
 import * as E from './euclid';
+import { ThreeJS } from './threejs';
 
 // * ***********************************************************************
 // * ***********************************************************************
@@ -21,6 +22,8 @@ export class Point {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+
+    this.checkPoint();
 
     //start with z = 0; this will used to transform to/from Weierstrass form
     this.z = 0;
@@ -76,6 +79,14 @@ export class Point {
 
   clone(){
     return new Point(this.x, this.y);
+  }
+
+  //check that the point lies in the unit disk and warn otherwise
+  //(don't check points that are in Weierstrass form with z !==0)
+  checkPoint(){
+    if (this.z === 0 && E.distance(this, {x: 0, y:0 }) > 1) {
+      console.warn('Error! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
+    }
   }
 }
 
@@ -216,16 +227,17 @@ class Edge {
 
 // * ***********************************************************************
 // *
-// *   POLYGON CLASS
+// *  POLYGON CLASS
 // *
+// *  NOTE: all polygons are assumed to be triangular
 // *************************************************************************
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
-//NOTE: all polygons are now assumed to be triangular
 //@param vertices: array of Points
-//@param circle: Circle representing current Poincare Disk dimensions
+//@param upper: Bool, use upper or lower texture
 export class Polygon {
-  constructor(vertices) {
+  constructor(vertices, upper) {
+    this.upper = upper || true;
     this.vertices = vertices;
     this.centre = this.centre();
     this.edges = [];
@@ -281,3 +293,58 @@ barycentre() {
   return new Point(x / f, y / f);
 }
 */
+
+// * ***********************************************************************
+// *
+// *  DISK CLASS
+// *  Poincare Disk representation of the hyperbolic plane (as the unit disk).
+// *  Contains any functions used to draw to the disk which check the element
+// *  to be drawn lie on the disk then passes them to Three.js for drawing
+// *
+// *************************************************************************
+export class Disk {
+  constructor() {
+    this.draw = new ThreeJS();
+
+    this.init();
+  }
+
+  init() {
+    this.centre = new Point(0, 0);
+    this.drawDisk();
+  }
+
+  //draw the disk background
+  drawDisk() {
+    this.draw.disk(this.centre, 1, 0x000000);
+  }
+
+  drawPoint(point, radius, color) {
+    if (this.checkPoints(point)) {
+      return false
+    }
+    this.draw.disk(point, radius, color, false);
+  }
+
+  //Draw an arc (hyperbolic line segment) between two points on the disk
+  drawArc(arc, color) {
+    if (arc.straightLine) {
+      this.draw.line(arc.p1, arc.p2, color);
+    }
+    else {
+      this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
+    }
+  }
+
+  drawPolygonOutline(polygon, color) {
+    const l = polygon.vertices.length;
+    for (let i = 0; i < l; i++) {
+      const arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l])
+      this.drawArc(arc, color);
+    }
+  }
+
+  drawPolygon(polygon, color, texture, wireframe) {
+    this.draw.polygon(polygon, color, texture, wireframe);
+  }
+}

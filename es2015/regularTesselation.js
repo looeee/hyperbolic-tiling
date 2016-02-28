@@ -1,11 +1,7 @@
 import * as E from './euclid';
-import {
-  Disk
-}
-from './disk';
 
 import {
-  Polygon, Arc, Circle, Point
+  Polygon, Arc, Circle, Point, Disk
 }
 from './elements';
 
@@ -30,7 +26,11 @@ export class RegularTesselation {
     //this.wireframe = true;
     console.log(p, q, maxLayers);
     this.texture = './images/textures/fish3.png';
+    this.textureUpper = './images/textures/fish-black1.png';
+    this.textureLower = './images/textures/fish-white1-flipped.png';
     //this.texture = '';
+
+    //this.draw = new ThreeJS();
 
     this.p = p;
     this.q = q;

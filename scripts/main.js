@@ -28,6 +28,221 @@ babelHelpers;
 
 // * ***********************************************************************
 // *
+// *  THREE JS CLASS
+// *
+// *  All operations involved in drawing to the screen occur here.
+// *  All objects are assumed to be on the unit Disk when passed here and
+// *  are converted to screen space (which will generally invole multiplying
+// *  by the radius ~ half screen resolution)
+// *************************************************************************
+//TODO: after resizing a few times the scene stops drawing - possible memory
+//not being freed in clearScene?
+//TODO add functions to save image to disk/screen for download
+
+var ThreeJS = function () {
+  function ThreeJS() {
+    babelHelpers.classCallCheck(this, ThreeJS);
+
+    this.init();
+  }
+
+  babelHelpers.createClass(ThreeJS, [{
+    key: 'init',
+    value: function init() {
+      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+      if (this.scene === undefined) this.scene = new THREE.Scene();
+      this.initCamera();
+      this.initRenderer();
+    }
+  }, {
+    key: 'reset',
+    value: function reset() {
+      cancelAnimationFrame(this.id);
+      this.clearScene();
+      this.projector = null;
+      this.camera = null;
+      this.init();
+    }
+  }, {
+    key: 'clearScene',
+    value: function clearScene() {
+      for (var i = this.scene.children.length - 1; i >= 0; i--) {
+        this.scene.remove(this.scene.children[i]);
+      }
+    }
+  }, {
+    key: 'initCamera',
+    value: function initCamera() {
+      this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+      this.scene.add(this.camera);
+    }
+  }, {
+    key: 'initRenderer',
+    value: function initRenderer() {
+      if (this.renderer === undefined) {
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: true
+        });
+        //alpha: true,
+        //premultipliedAlpha: true,
+        //preserveDrawingBuffer: true
+        this.renderer.setClearColor(0xffffff, 1.0);
+        document.body.appendChild(this.renderer.domElement);
+      }
+
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      //this.render();
+    }
+  }, {
+    key: 'disk',
+    value: function disk(centre, radius, color) {
+      if (color === undefined) color = 0xffffff;
+      var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
+      var material = new THREE.MeshBasicMaterial({ color: color });
+
+      var circle = new THREE.Mesh(geometry, material);
+      circle.position.x = centre.x * this.radius;
+      circle.position.y = centre.y * this.radius;
+
+      this.scene.add(circle);
+    }
+
+    //Note: polygons assumed to be triangular!
+
+  }, {
+    key: 'polygon',
+    value: function polygon(_polygon, color, texture, wireframe) {
+      if (color === undefined) color = 0xffffff;
+      var geometry = new THREE.Geometry();
+
+      //assign polygon barycentre to vertex 0
+      geometry.vertices.push(new THREE.Vector3(_polygon.centre.x * this.radius, _polygon.centre.y * this.radius, 0));
+
+      var edges = _polygon.edges;
+      //push first vertex of polygon to vertices array
+      //This means that when the next vertex is pushed in the loop
+      //we can also create the first face triangle
+      geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
+
+      //vertices pushed so far counting from 0
+      var count = 1;
+
+      for (var i = 0; i < edges.length; i++) {
+        var points = edges[i].points;
+        for (var j = 1; j < points.length; j++) {
+          geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
+          geometry.faces.push(new THREE.Face3(0, count, count + 1));
+          count++;
+        }
+      }
+      this.setUvs(geometry, edges);
+
+      var mesh = this.createMesh(geometry, color, texture, wireframe);
+      this.scene.add(mesh);
+    }
+
+    //The texture is assumed to be a square power of transparent png with the image
+    //in the lower right triange triangle (0,0), (1,0), (1,1)
+
+  }, {
+    key: 'setUvs',
+    value: function setUvs(geometry, edges) {
+      //the incentre of the triangle is mapped to the polygon barycentre
+      var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
+
+      geometry.faceVertexUvs[0] = [];
+
+      //EDGE 0
+      var e = edges[0].points.length - 1;
+      for (var i = 0; i < e; i++) {
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(i * (1 / e), i * (1 / e)), new THREE.Vector2((i + 1) * (1 / e), (i + 1) * (1 / e))]);
+      }
+      //EDGE 1
+      e = edges[1].points.length - 1;
+      for (var i = 0; i < e; i++) {
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 1 - i * (1 / e)), new THREE.Vector2(1, 1 - (i + 1) * (1 / e))]);
+      }
+      //EDGE 2
+      e = edges[2].points.length - 1;
+      for (var i = 0; i < e; i++) {
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1 - i * (1 / e), 0), new THREE.Vector2(1 - (i + 1) * (1 / e), 0)]);
+      }
+
+      geometry.uvsNeedUpdate = true;
+    }
+
+    //NOTE: some polygons are inverted due to vertex order,
+    //solved this by making material doubles sided but this might cause problems with textures
+
+  }, {
+    key: 'createMesh',
+    value: function createMesh(geometry, color, imageURL, wireframe) {
+      if (wireframe === undefined) wireframe = false;
+      if (color === undefined) color = 0xffffff;
+
+      if (!this.material) {
+        this.material = this.createMaterial(color, imageURL, wireframe);
+      }
+      return new THREE.Mesh(geometry, this.material);
+    }
+  }, {
+    key: 'createMaterial',
+    value: function createMaterial(color, imageURL, wireframe) {
+      var _this = this;
+
+      var material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: wireframe,
+        side: THREE.DoubleSide
+      });
+      if (imageURL) {
+        (function () {
+          var texture = new THREE.TextureLoader().load(imageURL, function () {
+            //texture.minFilter = THREE.LinearMipMapLinearFilter,
+            material.map = texture;
+            _this.render();
+          });
+        })();
+      }
+      return material;
+    }
+
+    //Only call render once by default.
+
+  }, {
+    key: 'render',
+    value: function render() {
+      var _this2 = this;
+
+      var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+      if (sceneGetsUpdate) {
+        requestAnimationFrame(function () {
+          _this2.render();
+        });
+      }
+      this.renderer.render(this.scene, this.camera);
+    }
+
+    //convert the canvas to a base64URL and send to saveImage.php
+    //TODO: make work!
+
+  }, {
+    key: 'saveImage',
+    value: function saveImage() {
+      var data = this.renderer.domElement.toDataURL('image/png');
+      //console.log(data);
+      var xhttp = new XMLHttpRequest();
+      xhttp.open('POST', 'saveImage.php', true);
+      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      xhttp.send('img=' + data);
+    }
+  }]);
+  return ThreeJS;
+}();
+
+// * ***********************************************************************
+// *
 // *   EUCLIDEAN FUNCTIONS
 // *   a place to stash all the functions that are euclidean geometrical
 // *   operations
@@ -336,6 +551,8 @@ var Point = function () {
     this.x = x;
     this.y = y;
 
+    this.checkPoint();
+
     //start with z = 0; this will used to transform to/from Weierstrass form
     this.z = 0;
   }
@@ -400,6 +617,17 @@ var Point = function () {
     key: 'clone',
     value: function clone() {
       return new Point(this.x, this.y);
+    }
+
+    //check that the point lies in the unit disk and warn otherwise
+    //(don't check points that are in Weierstrass form with z !==0)
+
+  }, {
+    key: 'checkPoint',
+    value: function checkPoint() {
+      if (this.z === 0 && distance(this, { x: 0, y: 0 }) > 1) {
+        console.warn('Error! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
+      }
     }
   }]);
   return Point;
@@ -547,19 +775,20 @@ var Edge = function () {
 
 // * ***********************************************************************
 // *
-// *   POLYGON CLASS
+// *  POLYGON CLASS
 // *
+// *  NOTE: all polygons are assumed to be triangular
 // *************************************************************************
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
-//NOTE: all polygons are now assumed to be triangular
 //@param vertices: array of Points
-//@param circle: Circle representing current Poincare Disk dimensions
+//@param upper: Bool, use upper or lower texture
 
 var Polygon = function () {
-  function Polygon(vertices) {
+  function Polygon(vertices, upper) {
     babelHelpers.classCallCheck(this, Polygon);
 
+    this.upper = upper || true;
     this.vertices = vertices;
     this.centre = this.centre();
     this.edges = [];
@@ -600,6 +829,67 @@ var Polygon = function () {
     }
   }]);
   return Polygon;
+}();
+
+var Disk = function () {
+  function Disk() {
+    babelHelpers.classCallCheck(this, Disk);
+
+    this.draw = new ThreeJS();
+
+    this.init();
+  }
+
+  babelHelpers.createClass(Disk, [{
+    key: 'init',
+    value: function init() {
+      this.centre = new Point(0, 0);
+      this.drawDisk();
+    }
+
+    //draw the disk background
+
+  }, {
+    key: 'drawDisk',
+    value: function drawDisk() {
+      this.draw.disk(this.centre, 1, 0x000000);
+    }
+  }, {
+    key: 'drawPoint',
+    value: function drawPoint(point, radius, color) {
+      if (this.checkPoints(point)) {
+        return false;
+      }
+      this.draw.disk(point, radius, color, false);
+    }
+
+    //Draw an arc (hyperbolic line segment) between two points on the disk
+
+  }, {
+    key: 'drawArc',
+    value: function drawArc(arc, color) {
+      if (arc.straightLine) {
+        this.draw.line(arc.p1, arc.p2, color);
+      } else {
+        this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
+      }
+    }
+  }, {
+    key: 'drawPolygonOutline',
+    value: function drawPolygonOutline(polygon, color) {
+      var l = polygon.vertices.length;
+      for (var i = 0; i < l; i++) {
+        var arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l]);
+        this.drawArc(arc, color);
+      }
+    }
+  }, {
+    key: 'drawPolygon',
+    value: function drawPolygon(polygon, color, texture, wireframe) {
+      this.draw.polygon(polygon, color, texture, wireframe);
+    }
+  }]);
+  return Disk;
 }();
 
 //TODO Document these classes
@@ -901,324 +1191,6 @@ var Parameters = function () {
 }();
 
 // * ***********************************************************************
-// *
-// *  THREE JS CLASS
-// *
-// *  All operations involved in drawing to the screen occur here.
-// *  All objects are assumed to be on the unit Disk when passed here and
-// *  are converted to screen space (which will generally invole multiplying
-// *  by the radius ~ half screen resolution)
-// *************************************************************************
-//TODO: after resizing a few times the scene stops drawing - possible memory
-//not being freed in clearScene?
-//TODO add functions to save image to disk/screen for download
-
-var ThreeJS = function () {
-  function ThreeJS() {
-    babelHelpers.classCallCheck(this, ThreeJS);
-
-    this.init();
-  }
-
-  babelHelpers.createClass(ThreeJS, [{
-    key: 'init',
-    value: function init() {
-      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-      if (this.scene === undefined) this.scene = new THREE.Scene();
-      this.initCamera();
-      this.initRenderer();
-    }
-  }, {
-    key: 'reset',
-    value: function reset() {
-      cancelAnimationFrame(this.id);
-      this.clearScene();
-      this.projector = null;
-      this.camera = null;
-      this.init();
-    }
-  }, {
-    key: 'clearScene',
-    value: function clearScene() {
-      for (var i = this.scene.children.length - 1; i >= 0; i--) {
-        this.scene.remove(this.scene.children[i]);
-      }
-    }
-  }, {
-    key: 'initCamera',
-    value: function initCamera() {
-      this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
-      this.scene.add(this.camera);
-    }
-  }, {
-    key: 'initRenderer',
-    value: function initRenderer() {
-      if (this.renderer === undefined) {
-        this.renderer = new THREE.WebGLRenderer({
-          antialias: true
-        });
-        //alpha: true,
-        //premultipliedAlpha: true,
-        //preserveDrawingBuffer: true
-        this.renderer.setClearColor(0xffffff, 1.0);
-        document.body.appendChild(this.renderer.domElement);
-      }
-
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-      //this.render();
-    }
-  }, {
-    key: 'disk',
-    value: function disk(centre, radius, color) {
-      if (color === undefined) color = 0xffffff;
-      var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-      var material = new THREE.MeshBasicMaterial({ color: color });
-
-      var circle = new THREE.Mesh(geometry, material);
-      circle.position.x = centre.x * this.radius;
-      circle.position.y = centre.y * this.radius;
-
-      this.scene.add(circle);
-    }
-
-    //Note: polygons assumed to be triangular!
-
-  }, {
-    key: 'polygon',
-    value: function polygon(_polygon, color, texture, wireframe) {
-      if (color === undefined) color = 0xffffff;
-      var geometry = new THREE.Geometry();
-
-      //assign polygon barycentre to vertex 0
-      geometry.vertices.push(new THREE.Vector3(_polygon.centre.x * this.radius, _polygon.centre.y * this.radius, 0));
-
-      var edges = _polygon.edges;
-      //push first vertex of polygon to vertices array
-      //This means that when the next vertex is pushed in the loop
-      //we can also create the first face triangle
-      geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
-
-      //vertices pushed so far counting from 0
-      var count = 1;
-
-      for (var i = 0; i < edges.length; i++) {
-        var points = edges[i].points;
-        for (var j = 1; j < points.length; j++) {
-          geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
-          geometry.faces.push(new THREE.Face3(0, count, count + 1));
-          count++;
-        }
-      }
-      this.setUvs(geometry, edges);
-
-      var mesh = this.createMesh(geometry, color, texture, wireframe);
-      this.scene.add(mesh);
-    }
-
-    //The texture is assumed to be a square power of transparent png with the image
-    //in the lower right triange triangle (0,0), (1,0), (1,1)
-
-  }, {
-    key: 'setUvs',
-    value: function setUvs(geometry, edges) {
-      //the incentre of the triangle is mapped to the polygon barycentre
-      var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
-
-      geometry.faceVertexUvs[0] = [];
-
-      //EDGE 0
-      var e = edges[0].points.length - 1;
-      for (var i = 0; i < e; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(i * (1 / e), i * (1 / e)), new THREE.Vector2((i + 1) * (1 / e), (i + 1) * (1 / e))]);
-      }
-      //EDGE 1
-      e = edges[1].points.length - 1;
-      for (var i = 0; i < e; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 1 - i * (1 / e)), new THREE.Vector2(1, 1 - (i + 1) * (1 / e))]);
-      }
-      //EDGE 2
-      e = edges[2].points.length - 1;
-      for (var i = 0; i < e; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1 - i * (1 / e), 0), new THREE.Vector2(1 - (i + 1) * (1 / e), 0)]);
-      }
-
-      geometry.uvsNeedUpdate = true;
-    }
-
-    //NOTE: some polygons are inverted due to vertex order,
-    //solved this by making material doubles sided but this might cause problems with textures
-
-  }, {
-    key: 'createMesh',
-    value: function createMesh(geometry, color, imageURL, wireframe) {
-      if (wireframe === undefined) wireframe = false;
-      if (color === undefined) color = 0xffffff;
-
-      if (!this.material) {
-        this.material = this.createMaterial(color, imageURL, wireframe);
-      }
-      return new THREE.Mesh(geometry, this.material);
-    }
-  }, {
-    key: 'createMaterial',
-    value: function createMaterial(color, imageURL, wireframe) {
-      var _this = this;
-
-      var material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: wireframe,
-        side: THREE.DoubleSide
-      });
-      if (imageURL) {
-        (function () {
-          var texture = new THREE.TextureLoader().load(imageURL, function () {
-            //texture.minFilter = THREE.LinearMipMapLinearFilter,
-            material.map = texture;
-            _this.render();
-          });
-        })();
-      }
-      return material;
-    }
-
-    //Only call render once by default.
-
-  }, {
-    key: 'render',
-    value: function render() {
-      var _this2 = this;
-
-      var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
-
-      if (sceneGetsUpdate) {
-        requestAnimationFrame(function () {
-          _this2.render();
-        });
-      }
-      this.renderer.render(this.scene, this.camera);
-    }
-
-    //convert the canvas to a base64URL and send to saveImage.php
-    //TODO: make work!
-
-  }, {
-    key: 'saveImage',
-    value: function saveImage() {
-      var data = this.renderer.domElement.toDataURL('image/png');
-      //console.log(data);
-      var xhttp = new XMLHttpRequest();
-      xhttp.open('POST', 'saveImage.php', true);
-      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      xhttp.send('img=' + data);
-    }
-  }]);
-  return ThreeJS;
-}();
-
-// * ***********************************************************************
-// *
-// *  DISK CLASS
-// *  Poincare Disk representation of the hyperbolic plane (as the unit disk).
-// *  Contains any functions used to draw to the disk which check the element
-// *  to be drawn lie on the disk then passes them to Three.js for drawing
-// *
-// *************************************************************************
-var Disk = function () {
-  function Disk() {
-    babelHelpers.classCallCheck(this, Disk);
-
-    this.draw = new ThreeJS();
-
-    this.init();
-  }
-
-  babelHelpers.createClass(Disk, [{
-    key: 'init',
-    value: function init() {
-      this.centre = new Point(0, 0);
-      this.drawDisk();
-    }
-
-    //draw the disk background
-
-  }, {
-    key: 'drawDisk',
-    value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0x000000);
-    }
-  }, {
-    key: 'drawPoint',
-    value: function drawPoint(point, radius, color) {
-      if (this.checkPoints(point)) {
-        return false;
-      }
-      this.draw.disk(point, radius, color, false);
-    }
-
-    //Draw an arc (hyperbolic line segment) between two points on the disk
-
-  }, {
-    key: 'drawArc',
-    value: function drawArc(arc, color) {
-      if (this.checkPoints(arc.p1, arc.p2)) {
-        return false;
-      }
-      if (arc.straightLine) {
-        this.draw.line(arc.p1, arc.p2, color);
-      } else {
-        this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
-      }
-    }
-  }, {
-    key: 'drawPolygonOutline',
-    value: function drawPolygonOutline(polygon, color) {
-      if (this.checkPoints(polygon.vertices)) {
-        return false;
-      }
-      var l = polygon.vertices.length;
-      for (var i = 0; i < l; i++) {
-        var arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l]);
-        this.drawArc(arc, color);
-      }
-    }
-  }, {
-    key: 'drawPolygon',
-    value: function drawPolygon(polygon, color, texture, wireframe) {
-      if (this.checkPoints(polygon.vertices)) {
-        return false;
-      }
-      //const points = polygon.spacedPointsOnEdges();
-      //const centre = polygon.barycentre();
-      //this.draw.polygon(points, centre, color, texture, wireframe);
-      this.draw.polygon(polygon, color, texture, wireframe);
-    }
-
-    //return true if any of the points is not in the disk
-
-  }, {
-    key: 'checkPoints',
-    value: function checkPoints() {
-      for (var _len = arguments.length, points = Array(_len), _key = 0; _key < _len; _key++) {
-        points[_key] = arguments[_key];
-      }
-
-      //pass in either a list of points or an array
-      if (points[0] instanceof Array) points = points[0];
-
-      var test = false;
-      for (var i = 0; i < points.length; i++) {
-        if (distance(points[i], this.centre) > 1) {
-          console.error('Error! Point (' + points[i].x + ', ' + points[i].y + ') lies outside the plane!');
-          test = true;
-        }
-      }
-      if (test) return true;else return false;
-    }
-  }]);
-  return Disk;
-}();
-
-// * ***********************************************************************
 // *    TESSELATION CLASS
 // *    Creates a regular Tesselation of the Poincare Disk
 // *    q: number of p-gons meeting at each vertex
@@ -1235,7 +1207,11 @@ var RegularTesselation = function () {
     //this.wireframe = true;
     console.log(p, q, maxLayers);
     this.texture = './images/textures/fish3.png';
+    this.textureUpper = './images/textures/fish-black1.png';
+    this.textureLower = './images/textures/fish-white1-flipped.png';
     //this.texture = '';
+
+    //this.draw = new ThreeJS();
 
     this.p = p;
     this.q = q;
@@ -1547,7 +1523,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 5, 2);
+  tesselation = new RegularTesselation(6, 4, 1);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
