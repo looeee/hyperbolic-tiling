@@ -44,16 +44,12 @@ export class ThreeJS {
     if (this.renderer === undefined) {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
-        //alpha: true,
-        //premultipliedAlpha: true,
-        //preserveDrawingBuffer: true
       });
       this.renderer.setClearColor(0xffffff, 1.0);
       document.body.appendChild(this.renderer.domElement);
     }
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    //this.render();
   }
 
   disk(centre, radius, color) {
@@ -97,7 +93,6 @@ export class ThreeJS {
 
     const mesh = this.createMesh(geometry, color, texture, wireframe);
     this.scene.add(mesh);
-
   }
 
   //The texture is assumed to be a square power of transparent png with the image
@@ -145,34 +140,39 @@ export class ThreeJS {
 
   //NOTE: some polygons are inverted due to vertex order,
   //solved this by making material doubles sided but this might cause problems with textures
-  createMesh(geometry, color, imageURL, wireframe) {
+  createMesh(geometry, color, textures, wireframe) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
-    if(!this.material){
-      this.material = this.createMaterial(color, imageURL, wireframe);
+    if(!this.pattern){
+      this.createPattern(color, textures, wireframe);
     }
-    return new THREE.Mesh(geometry, this.material);
+
+    return new THREE.Mesh(geometry, this.pattern.materials[0]);
   }
 
-  createMaterial(color, imageURL, wireframe){
-    const material = new THREE.MeshBasicMaterial({
-      color: color,
-      wireframe: wireframe,
-      side: THREE.DoubleSide,
-    });
-    if (imageURL) {
-      const texture = new THREE.TextureLoader().load(imageURL,
-      () => {
-        //texture.minFilter = THREE.LinearMipMapLinearFilter,
-        material.map = texture;
-        this.render();
+  createPattern(color, textures, wireframe){
+    this.pattern = new THREE.MultiMaterial();
+
+    for( let i = 0; i < textures.length; i++){
+      const material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: wireframe,
+        side: THREE.DoubleSide,
       });
+
+      const texture = new THREE.TextureLoader().load(textures[i],
+        () => {
+          material.map = texture;
+          this.render();
+        });
+
+      this.pattern.materials.push(material);
     }
-    return material;
   }
 
   //Only call render once by default.
+  //TODO: currently calling once per texture in this.pattern
   render(sceneGetsUpdate = false) {
     if(sceneGetsUpdate){
       requestAnimationFrame(() => {

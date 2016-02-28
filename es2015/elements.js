@@ -235,9 +235,10 @@ class Edge {
 //but may cause problems
 //@param vertices: array of Points
 //@param upper: Bool, use upper or lower texture
+//@param materialIndex: which material from THREE.Multimaterial to use
 export class Polygon {
-  constructor(vertices, upper) {
-    this.upper = upper || true;
+  constructor(vertices, materialIndex = 0) {
+    this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.centre = this.centre();
     this.edges = [];

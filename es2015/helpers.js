@@ -64,7 +64,7 @@ export class Transformations {
     this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
   }
 
-  //refelct across the first edge of the polygon (which crosses the radius
+  //reflect across the first edge of the polygon (which crosses the radius
   // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
   //across any edge
   initEdgeReflection() {

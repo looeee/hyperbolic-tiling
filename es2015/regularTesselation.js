@@ -25,12 +25,9 @@ export class RegularTesselation {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q, maxLayers);
-    this.texture = './images/textures/fish3.png';
-    this.textureUpper = './images/textures/fish-black1.png';
-    this.textureLower = './images/textures/fish-white1-flipped.png';
+    //this.textures = ['./images/textures/fish3.png'];
+    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.texture = '';
-
-    //this.draw = new ThreeJS();
 
     this.p = p;
     this.q = q;
@@ -175,7 +172,7 @@ export class RegularTesselation {
 
   drawPattern(pattern) {
     for (let polygon of pattern) {
-      this.disk.drawPolygon(polygon, 0xffffff, this.texture, this.wireframe);
+      this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
     }
   }
 

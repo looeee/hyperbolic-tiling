@@ -80,15 +80,11 @@ var ThreeJS = function () {
         this.renderer = new THREE.WebGLRenderer({
           antialias: true
         });
-        //alpha: true,
-        //premultipliedAlpha: true,
-        //preserveDrawingBuffer: true
         this.renderer.setClearColor(0xffffff, 1.0);
         document.body.appendChild(this.renderer.domElement);
       }
 
       this.renderer.setSize(window.innerWidth, window.innerHeight);
-      //this.render();
     }
   }, {
     key: 'disk',
@@ -173,38 +169,45 @@ var ThreeJS = function () {
 
   }, {
     key: 'createMesh',
-    value: function createMesh(geometry, color, imageURL, wireframe) {
+    value: function createMesh(geometry, color, textures, wireframe) {
       if (wireframe === undefined) wireframe = false;
       if (color === undefined) color = 0xffffff;
 
-      if (!this.material) {
-        this.material = this.createMaterial(color, imageURL, wireframe);
+      if (!this.pattern) {
+        this.createPattern(color, textures, wireframe);
       }
-      return new THREE.Mesh(geometry, this.material);
+
+      return new THREE.Mesh(geometry, this.pattern.materials[0]);
     }
   }, {
-    key: 'createMaterial',
-    value: function createMaterial(color, imageURL, wireframe) {
+    key: 'createPattern',
+    value: function createPattern(color, textures, wireframe) {
       var _this = this;
 
-      var material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: wireframe,
-        side: THREE.DoubleSide
-      });
-      if (imageURL) {
-        (function () {
-          var texture = new THREE.TextureLoader().load(imageURL, function () {
-            //texture.minFilter = THREE.LinearMipMapLinearFilter,
-            material.map = texture;
-            _this.render();
-          });
-        })();
+      this.pattern = new THREE.MultiMaterial();
+
+      var _loop = function _loop(i) {
+        var material = new THREE.MeshBasicMaterial({
+          color: color,
+          wireframe: wireframe,
+          side: THREE.DoubleSide
+        });
+
+        var texture = new THREE.TextureLoader().load(textures[i], function () {
+          material.map = texture;
+          _this.render();
+        });
+
+        _this.pattern.materials.push(material);
+      };
+
+      for (var i = 0; i < textures.length; i++) {
+        _loop(i);
       }
-      return material;
     }
 
     //Only call render once by default.
+    //TODO: currently calling once per texture in this.pattern
 
   }, {
     key: 'render',
@@ -776,12 +779,14 @@ var Edge = function () {
 //but may cause problems
 //@param vertices: array of Points
 //@param upper: Bool, use upper or lower texture
+//@param materialIndex: which material from THREE.Multimaterial to use
 
 var Polygon = function () {
-  function Polygon(vertices, upper) {
+  function Polygon(vertices) {
+    var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
     babelHelpers.classCallCheck(this, Polygon);
 
-    this.upper = upper || true;
+    this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.centre = this.centre();
     this.edges = [];
@@ -971,7 +976,7 @@ var Transformations = function () {
       this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
     }
 
-    //refelct across the first edge of the polygon (which crosses the radius
+    //reflect across the first edge of the polygon (which crosses the radius
     // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
     //across any edge
 
@@ -1212,12 +1217,9 @@ var RegularTesselation = function () {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q, maxLayers);
-    this.texture = './images/textures/fish3.png';
-    this.textureUpper = './images/textures/fish-black1.png';
-    this.textureLower = './images/textures/fish-white1-flipped.png';
+    //this.textures = ['./images/textures/fish3.png'];
+    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.texture = '';
-
-    //this.draw = new ThreeJS();
 
     this.p = p;
     this.q = q;
@@ -1404,7 +1406,7 @@ var RegularTesselation = function () {
         for (var _iterator2 = pattern[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
           var polygon = _step2.value;
 
-          this.disk.drawPolygon(polygon, 0xffffff, this.texture, this.wireframe);
+          this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -1529,7 +1531,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 5, 2);
+  tesselation = new RegularTesselation(4, 5, 1);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
