@@ -50,6 +50,7 @@ var ThreeJS = function () {
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
       this.initRenderer();
+      this.render();
     }
   }, {
     key: 'reset',
@@ -83,7 +84,6 @@ var ThreeJS = function () {
         this.renderer.setClearColor(0xffffff, 1.0);
         document.body.appendChild(this.renderer.domElement);
       }
-
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
   }, {
@@ -130,7 +130,7 @@ var ThreeJS = function () {
       }
       this.setUvs(geometry, edges);
 
-      var mesh = this.createMesh(geometry, color, texture, wireframe);
+      var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
     }
 
@@ -169,7 +169,7 @@ var ThreeJS = function () {
 
   }, {
     key: 'createMesh',
-    value: function createMesh(geometry, color, textures, wireframe) {
+    value: function createMesh(geometry, color, textures, materialIndex, wireframe) {
       if (wireframe === undefined) wireframe = false;
       if (color === undefined) color = 0xffffff;
 
@@ -177,32 +177,24 @@ var ThreeJS = function () {
         this.createPattern(color, textures, wireframe);
       }
 
-      return new THREE.Mesh(geometry, this.pattern.materials[0]);
+      return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
     }
   }, {
     key: 'createPattern',
     value: function createPattern(color, textures, wireframe) {
-      var _this = this;
-
       this.pattern = new THREE.MultiMaterial();
 
-      var _loop = function _loop(i) {
+      for (var i = 0; i < textures.length; i++) {
         var material = new THREE.MeshBasicMaterial({
           color: color,
           wireframe: wireframe,
           side: THREE.DoubleSide
         });
 
-        var texture = new THREE.TextureLoader().load(textures[i], function () {
-          material.map = texture;
-          _this.render();
-        });
+        var texture = new THREE.TextureLoader().load(textures[i]);
 
-        _this.pattern.materials.push(material);
-      };
-
-      for (var i = 0; i < textures.length; i++) {
-        _loop(i);
+        material.map = texture;
+        this.pattern.materials.push(material);
       }
     }
 
@@ -212,15 +204,15 @@ var ThreeJS = function () {
   }, {
     key: 'render',
     value: function render() {
-      var _this2 = this;
+      var _this = this;
 
       var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
-      if (sceneGetsUpdate) {
-        requestAnimationFrame(function () {
-          _this2.render();
-        });
-      }
+      //if(sceneGetsUpdate){
+      requestAnimationFrame(function () {
+        _this.render();
+      });
+      //}
       this.renderer.render(this.scene, this.camera);
     }
 
@@ -806,14 +798,16 @@ var Polygon = function () {
   }, {
     key: 'transform',
     value: function transform(_transform2) {
+      var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
+
       var newVertices = [];
       for (var i = 0; i < this.vertices.length; i++) {
         newVertices.push(this.vertices[i].transform(_transform2));
       }
-      return new Polygon(newVertices);
+      return new Polygon(newVertices, materialIndex);
     }
 
-    //Find the incentre of triangular polygon
+    //Incentre of triangular polygon
 
   }, {
     key: 'centre',
@@ -843,7 +837,7 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0x000000);
+      this.draw.disk(this.centre, 1, 0x00baff);
     }
   }, {
     key: 'drawPoint',
@@ -1217,9 +1211,7 @@ var RegularTesselation = function () {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q, maxLayers);
-    //this.textures = ['./images/textures/fish3.png'];
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    //this.texture = '';
 
     this.p = p;
     this.q = q;
@@ -1244,7 +1236,6 @@ var RegularTesselation = function () {
   babelHelpers.createClass(RegularTesselation, [{
     key: 'init',
     value: function init(p, q, maxLayers) {
-      this.fr = this.fundamentalRegion();
       this.buildCentralPattern();
 
       if (this.maxLayers > 1) {
@@ -1260,6 +1251,8 @@ var RegularTesselation = function () {
     }
 
     //fundamentalRegion calculation using Dunham's method
+    //this is a right angle triangle above the radius on the line (0,0) -> (0,1)
+    //of the central polygon
 
   }, {
     key: 'fundamentalRegion',
@@ -1280,27 +1273,54 @@ var RegularTesselation = function () {
 
       //create points and move them from the unit disk to our radius
       var p1 = new Point(xqpt, yqpt);
-      //const p2 = new Point(x2pt, 0);
-      var p2 = p1.transform(this.transforms.edgeBisectorReflection);
+      var p2 = new Point(x2pt, 0);
+      var p3 = p1.transform(this.transforms.edgeBisectorReflection);
       var vertices = [this.disk.centre, p1, p2];
 
-      return new Polygon(vertices, true);
+      return new Polygon(vertices, 0);
     }
 
-    //calculate the central polygon which is made up of transformed copies
-    //of the fundamental region
+    //this is a kite shaped region consisting of two copies of the fundamental
+    //region with different textures applied to create the basic pattern
+    //NOTE: for the time being just using edge bisector reflection to recreate Circle
+    //Limit I, other patterns will require different options
+
+  }, {
+    key: 'fundamentalPattern',
+    value: function fundamentalPattern() {
+      var upper = this.fundamentalRegion();
+      var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+      return [upper, lower];
+    }
+
+    //The pattern in the central polygon is made up of transformed copies
+    //of the fundamental pattern
 
   }, {
     key: 'buildCentralPattern',
     value: function buildCentralPattern() {
-      //this.frCopy = this.fr.transform(this.transforms.hypReflection);
-      this.centralPattern = [this.fr];
-      this.centralPattern.push(this.centralPattern[0].transform(this.transforms.hypReflection));
+      //add the first two polygons to the central pattern
+      this.centralPattern = this.fundamentalPattern();
 
-      for (var i = 1; i < this.p / 2; i++) {
-        this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i * 2]));
-        this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i * 2]));
+      //NOTE: could do this more concisely using array indices and multiplying transforms
+      //but naming the regions for clarity
+      var upper = this.centralPattern[0];
+      var lower = this.centralPattern[1];
+
+      //created reflected versions of the two pattern pieces
+      var upperReflected = this.centralPattern[0].transform(this.transforms.edgeBisectorReflection);
+      var lowerReflected = this.centralPattern[1].transform(this.transforms.edgeBisectorReflection);
+
+      for (var i = 1; i < this.p; i++) {
+        if (i % 2 === 1) {
+          this.centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
+          this.centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
+        } else {
+          this.centralPattern.push(upper.transform(this.transforms.rotatePolygonCW[i]));
+          this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
+        }
       }
+
       this.layers[0][0] = this.centralPattern;
     }
 
@@ -1531,13 +1551,13 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 5, 1);
+  tesselation = new RegularTesselation(6, 6, 1);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
 //TODO: resize is not working well, fix it!
 window.onresize = function () {
   tesselation.disk.draw.reset();
-  tesselation.disk.init();
+  tesselation.disk.drawDisk();
   tesselation.init();
 };

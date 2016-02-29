@@ -45,13 +45,13 @@ else maxLayers = 2
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(4, 5, 1);
+  tesselation = new RegularTesselation(6, 6, 1);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 }
 
 //TODO: resize is not working well, fix it!
 window.onresize = () => {
   tesselation.disk.draw.reset();
-  tesselation.disk.init();
+  tesselation.disk.drawDisk();
   tesselation.init();
 }

@@ -18,6 +18,7 @@ export class ThreeJS {
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
+    this.render();
   }
 
   reset() {
@@ -48,7 +49,6 @@ export class ThreeJS {
       this.renderer.setClearColor(0xffffff, 1.0);
       document.body.appendChild(this.renderer.domElement);
     }
-
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -91,7 +91,7 @@ export class ThreeJS {
     }
     this.setUvs(geometry, edges);
 
-    const mesh = this.createMesh(geometry, color, texture, wireframe);
+    const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
   }
 
@@ -140,7 +140,7 @@ export class ThreeJS {
 
   //NOTE: some polygons are inverted due to vertex order,
   //solved this by making material doubles sided but this might cause problems with textures
-  createMesh(geometry, color, textures, wireframe) {
+  createMesh(geometry, color, textures, materialIndex, wireframe) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
@@ -148,7 +148,7 @@ export class ThreeJS {
       this.createPattern(color, textures, wireframe);
     }
 
-    return new THREE.Mesh(geometry, this.pattern.materials[0]);
+    return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
   }
 
   createPattern(color, textures, wireframe){
@@ -161,12 +161,9 @@ export class ThreeJS {
         side: THREE.DoubleSide,
       });
 
-      const texture = new THREE.TextureLoader().load(textures[i],
-        () => {
-          material.map = texture;
-          this.render();
-        });
+      const texture = new THREE.TextureLoader().load(textures[i]);
 
+      material.map = texture;
       this.pattern.materials.push(material);
     }
   }
@@ -174,11 +171,11 @@ export class ThreeJS {
   //Only call render once by default.
   //TODO: currently calling once per texture in this.pattern
   render(sceneGetsUpdate = false) {
-    if(sceneGetsUpdate){
-      requestAnimationFrame(() => {
-        this.render()
-      });
-    }
+    //if(sceneGetsUpdate){
+    requestAnimationFrame(() => {
+      this.render()
+    });
+    //}
     this.renderer.render(this.scene, this.camera);
   }
 

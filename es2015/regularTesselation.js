@@ -25,9 +25,7 @@ export class RegularTesselation {
     this.wireframe = false;
     //this.wireframe = true;
     console.log(p, q, maxLayers);
-    //this.textures = ['./images/textures/fish3.png'];
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    //this.texture = '';
 
     this.p = p;
     this.q = q;
@@ -50,7 +48,6 @@ export class RegularTesselation {
   }
 
   init(p, q, maxLayers) {
-    this.fr = this.fundamentalRegion();
     this.buildCentralPattern();
 
     if (this.maxLayers > 1) {
@@ -66,6 +63,8 @@ export class RegularTesselation {
   }
 
   //fundamentalRegion calculation using Dunham's method
+  //this is a right angle triangle above the radius on the line (0,0) -> (0,1)
+  //of the central polygon
   fundamentalRegion() {
     const cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
 
@@ -83,24 +82,49 @@ export class RegularTesselation {
 
     //create points and move them from the unit disk to our radius
     const p1 = new Point(xqpt, yqpt);
-    //const p2 = new Point(x2pt, 0);
-    const p2 = p1.transform(this.transforms.edgeBisectorReflection);
+    const p2 = new Point(x2pt, 0);
+    const p3 = p1.transform(this.transforms.edgeBisectorReflection);
     const vertices = [this.disk.centre, p1, p2];
 
-    return new Polygon(vertices, true);
+    return new Polygon(vertices, 0);
   }
 
-  //calculate the central polygon which is made up of transformed copies
-  //of the fundamental region
-  buildCentralPattern() {
-    //this.frCopy = this.fr.transform(this.transforms.hypReflection);
-    this.centralPattern = [this.fr];
-    this.centralPattern.push(this.centralPattern[0].transform(this.transforms.hypReflection));
+  //this is a kite shaped region consisting of two copies of the fundamental
+  //region with different textures applied to create the basic pattern
+  //NOTE: for the time being just using edge bisector reflection to recreate Circle
+  //Limit I, other patterns will require different options
+  fundamentalPattern(){
+    const upper = this.fundamentalRegion();
+    const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+    return [upper, lower];
+  }
 
-    for (let i = 1; i < this.p/2; i++) {
-      this.centralPattern.push(this.centralPattern[0].transform(this.transforms.rotatePolygonCW[i*2]));
-      this.centralPattern.push(this.centralPattern[1].transform(this.transforms.rotatePolygonCW[i*2]));
+  //The pattern in the central polygon is made up of transformed copies
+  //of the fundamental pattern
+  buildCentralPattern() {
+    //add the first two polygons to the central pattern
+    this.centralPattern = this.fundamentalPattern();
+
+    //NOTE: could do this more concisely using array indices and multiplying transforms
+    //but naming the regions for clarity
+    const upper = this.centralPattern[0];
+    const lower = this.centralPattern[1]
+
+    //created reflected versions of the two pattern pieces
+    const upperReflected = this.centralPattern[0].transform(this.transforms.edgeBisectorReflection);
+    const lowerReflected = this.centralPattern[1].transform(this.transforms.edgeBisectorReflection);
+
+    for (let i = 1; i < this.p; i++) {
+      if(i % 2 === 1){
+        this.centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
+        this.centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
+      }
+      else{
+        this.centralPattern.push(upper.transform(this.transforms.rotatePolygonCW[i]));
+        this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
+      }
     }
+
     this.layers[0][0] = this.centralPattern;
   }
 

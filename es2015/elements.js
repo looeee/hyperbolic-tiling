@@ -252,15 +252,15 @@ export class Polygon {
   }
 
   //Apply a Transform to the polygon
-  transform(transform) {
+  transform(transform, materialIndex = this.materialIndex) {
     const newVertices = [];
     for (let i = 0; i < this.vertices.length; i++) {
       newVertices.push(this.vertices[i].transform(transform));
     }
-    return new Polygon(newVertices);
+    return new Polygon(newVertices, materialIndex);
   }
 
-  //Find the incentre of triangular polygon
+  //Incentre of triangular polygon
   centre() {
     const a = E.distance(this.vertices[0], this.vertices[1]);
     const b = E.distance(this.vertices[1], this.vertices[2]);
@@ -289,7 +289,7 @@ export class Disk {
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, 1, 0x000000);
+    this.draw.disk(this.centre, 1, 0x00baff);
   }
 
   drawPoint(point, radius, color) {
