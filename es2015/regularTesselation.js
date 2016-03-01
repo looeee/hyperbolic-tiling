@@ -23,9 +23,10 @@ export class RegularTesselation {
   constructor(p, q, maxLayers) {
     //TESTING
     this.wireframe = false;
-    //this.wireframe = true;
+    this.wireframe = true;
     console.log(p, q, maxLayers);
-    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
+    //this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
+    this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
     this.p = p;
     this.q = q;
@@ -57,7 +58,7 @@ export class RegularTesselation {
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
     let t0 = performance.now();
-    this.drawLayers();
+    //this.drawLayers();
     let t1 = performance.now();
     console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.')
   }
@@ -95,6 +96,7 @@ export class RegularTesselation {
   //Limit I, other patterns will require different options
   fundamentalPattern(){
     const upper = this.fundamentalRegion();
+    this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
     return [upper, lower];
   }

@@ -177,7 +177,7 @@ class Edge {
   constructor(startPoint, endPoint) {
     this.arc = new Arc(startPoint, endPoint);
     //This set the spacing between vertices along the arcs of the polygons
-    this.spacing = .05;
+    this.spacing = 0.11;
     this.spacedPoints();
   }
 

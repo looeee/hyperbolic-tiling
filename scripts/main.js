@@ -711,7 +711,7 @@ var Edge = function () {
 
     this.arc = new Arc(startPoint, endPoint);
     //This set the spacing between vertices along the arcs of the polygons
-    this.spacing = .05;
+    this.spacing = 0.11;
     this.spacedPoints();
   }
 
@@ -1209,9 +1209,10 @@ var RegularTesselation = function () {
 
     //TESTING
     this.wireframe = false;
-    //this.wireframe = true;
+    this.wireframe = true;
     console.log(p, q, maxLayers);
-    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
+    //this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
+    this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
     this.p = p;
     this.q = q;
@@ -1245,7 +1246,7 @@ var RegularTesselation = function () {
         console.log('GenerateLayers took ' + (_t2 - _t) + ' milliseconds.');
       }
       var t0 = performance.now();
-      this.drawLayers();
+      //this.drawLayers();
       var t1 = performance.now();
       console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.');
     }
@@ -1289,6 +1290,7 @@ var RegularTesselation = function () {
     key: 'fundamentalPattern',
     value: function fundamentalPattern() {
       var upper = this.fundamentalRegion();
+      this.disk.drawPolygon(upper, 0xffffff, this.textures, this.wireframe);
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
       return [upper, lower];
     }
