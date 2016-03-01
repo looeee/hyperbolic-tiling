@@ -312,6 +312,11 @@ var spacedPointOnArc = function spacedPointOnArc(circle, point, distance) {
   };
 };
 
+//Find the length of the smaller arc between two angles on a given circle
+var arcLength = function arcLength(circle, startAngle, endAngle) {
+  return Math.abs(startAngle - endAngle) > Math.PI ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle)) : circle.radius * Math.abs(startAngle - endAngle);
+};
+
 //find the two points at a distance from point1 along line defined by point1, point2
 var spacedPointOnLine = function spacedPointOnLine(point1, point2, distance) {
   var circle = new Circle(point1.x, point1.y, distance);
@@ -323,23 +328,22 @@ var randomInt = function randomInt(min, max) {
 };
 
 //.toFixed returns a string for some no doubt very good reason.
-//Change it back to a float
-var toFixed = function toFixed(number, places) {
-  //default to twelve as this seems to be the point after which fp errors arise
-  places = places || 10;
+//apply to fixed with default value of 10 and return as a float
+var toFixed = function toFixed(number) {
+  var places = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
   return parseFloat(number.toFixed(places));
 };
 
 //are the angles alpha, beta in clockwise order on unit disk?
 var clockwise = function clockwise(alpha, beta) {
-  var cw = true;
+  //let cw = true;
   var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
   var b = beta - alpha > Math.PI;
   var c = alpha > beta && !(alpha - beta > Math.PI);
-  if (a || b || c) {
-    cw = false;
-  }
-  return cw;
+  //if (a || b || c) {
+  //cw = false;
+  //}
+  return a || b || c ? false : true;
 };
 
 var multiplyMatrices = function multiplyMatrices(m1, m2) {
@@ -368,14 +372,10 @@ var identityMatrix = function identityMatrix(n) {
 
 /*
 //slope of line through p1, p2
-export const slope = (p1, p2) => {
-  return (p2.x - p1.x) / (p2.y - p1.y);
-}
+export const slope = (p1, p2) => (p2.x - p1.x) / (p2.y - p1.y);
 
 //midpoint of the line segment connecting two points
-export const midpoint = (p1, p2) => {
-  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-}
+export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
 //intersection of two circles with equations:
 //(x-a)^2 +(y-a)^2 = r0^2
@@ -479,9 +479,8 @@ export const normalVector = (p1, p2) => {
   return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
 }
 
-export const radians = (degrees) => {
-  return (Math.PI / 180) * degrees;
-}
+export const radians = (degrees) =>  (Math.PI / 180) * degrees;
+
 
 //NOTE: rotations are now done using transforms
 export const rotatePointAboutOrigin = (point2D, angle) => {
@@ -641,8 +640,10 @@ var Arc = function () {
       this.endAngle = 0;
       this.clockwise = false;
       this.straightLine = true;
+      this.arcLength = distance(startPoint, endPoint);
     } else {
       this.calculateArc();
+      this.arcLength = arcLength(this.circle, this.startAngle, this.endAngle);
     }
   }
 

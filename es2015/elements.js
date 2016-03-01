@@ -115,9 +115,11 @@ export class Arc {
       this.endAngle = 0;
       this.clockwise = false;
       this.straightLine = true;
+      this.arcLength = E.distance(startPoint, endPoint);
     }
     else{
       this.calculateArc();
+      this.arcLength = E.arcLength(this.circle, this.startAngle, this.endAngle);
     }
   }
 

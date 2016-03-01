@@ -11,9 +11,9 @@ from './elements';
 // *
 // *************************************************************************
 
-export const distance = (point1, point2) => {
-  return Math.sqrt(Math.pow((point2.x - point1.x), 2) + Math.pow((point2.y - point1.y), 2));
-}
+export const distance = (point1, point2) =>
+  Math.sqrt(Math.pow((point2.x - point1.x), 2) + Math.pow((point2.y - point1.y), 2));
+
 
 //does the line connecting p1, p2 go through the point (0,0)?
 export const throughOrigin = (point1, point2) => {
@@ -83,38 +83,37 @@ export const spacedPointOnArc = (circle, point, distance) => {
   }
 }
 
+//Find the length of the smaller arc between two angles on a given circle
+export const arcLength = (circle, startAngle, endAngle) =>
+  (Math.abs(startAngle - endAngle) > Math.PI)
+    ? circle.radius * (2*Math.PI - Math.abs(startAngle - endAngle))
+    : circle.radius * (Math.abs(startAngle - endAngle));
+
+
 //find the two points at a distance from point1 along line defined by point1, point2
 export const spacedPointOnLine = (point1, point2, distance) => {
   const circle = new Circle(point1.x, point1.y, distance);
   return points = circleLineIntersect(circle, point1, point2);
 }
 
-export const randomFloat = (min, max) => {
-  return Math.random() * (max - min) + min;
-}
+export const randomFloat = (min, max) => Math.random() * (max - min) + min;
 
-export const randomInt = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-}
+export const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
 //.toFixed returns a string for some no doubt very good reason.
-//Change it back to a float
-export const toFixed = (number, places) => {
-  //default to twelve as this seems to be the point after which fp errors arise
-  places = places || 10;
-  return parseFloat(number.toFixed(places));
-}
+//apply to fixed with default value of 10 and return as a float
+export const toFixed = (number, places = 10) => parseFloat(number.toFixed(places));
 
 //are the angles alpha, beta in clockwise order on unit disk?
 export const clockwise = (alpha, beta) => {
-  let cw = true;
+  //let cw = true;
   const a = (beta > 3 * Math.PI / 2 && alpha < Math.PI / 2);
   const b = (beta - alpha > Math.PI);
   const c = ((alpha > beta) && !(alpha - beta > Math.PI));
-  if (a || b || c) {
-    cw = false;
-  }
-  return cw;
+  //if (a || b || c) {
+    //cw = false;
+  //}
+  return (a || b || c) ? false : true;
 }
 
 export const multiplyMatrices = (m1, m2) => {
@@ -133,24 +132,17 @@ export const multiplyMatrices = (m1, m2) => {
 }
 
 //create nxn identityMatrix
-export const identityMatrix = (n) => {
-  return Array.apply(null, new Array(n)).map(function(x, i, a) {
-    return a.map(function(y, k) {
-      return i === k ? 1 : 0;
-    })
-  });
-}
+export const identityMatrix = (n) =>
+  Array.apply(null, new Array(n)).map((x, i, a) =>
+    a.map( (y, k) => i === k ? 1 : 0) );
+
 
 /*
 //slope of line through p1, p2
-export const slope = (p1, p2) => {
-  return (p2.x - p1.x) / (p2.y - p1.y);
-}
+export const slope = (p1, p2) => (p2.x - p1.x) / (p2.y - p1.y);
 
 //midpoint of the line segment connecting two points
-export const midpoint = (p1, p2) => {
-  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-}
+export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
 //intersection of two circles with equations:
 //(x-a)^2 +(y-a)^2 = r0^2
@@ -254,9 +246,8 @@ export const normalVector = (p1, p2) => {
   return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
 }
 
-export const radians = (degrees) => {
-  return (Math.PI / 180) * degrees;
-}
+export const radians = (degrees) =>  (Math.PI / 180) * degrees;
+
 
 //NOTE: rotations are now done using transforms
 export const rotatePointAboutOrigin = (point2D, angle) => {
