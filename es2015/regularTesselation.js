@@ -98,16 +98,14 @@ export class RegularTesselation {
     const upper = this.fundamentalRegion();
 
     //TESTING
-    upper.subdivideEdges();
-    this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
-    upper.subdivideMesh();
+    this.disk.drawPolygonV2(upper,0xffffff, this.textures, this.wireframe);
 
     for(let line of upper.mesh){
       for(let point of line){
         this.disk.drawPoint(point, 0.007, 0xff0000);
       }
     }
-    
+
 
 
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);

@@ -64,6 +64,17 @@ export class ThreeJS {
     this.scene.add(circle);
   }
 
+  polygonV2(polygon, color, texture, wireframe){
+    console.log(polygon);
+    const mesh = polygon.mesh;
+    //const edgeDivisions = mesh[0].length;
+    console.log(mesh);
+    for(let i = 0; i < mesh.length; i++){
+
+    }
+
+  }
+
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
