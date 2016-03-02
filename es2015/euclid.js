@@ -14,7 +14,6 @@ from './elements';
 export const distance = (point1, point2) =>
   Math.sqrt(Math.pow((point2.x - point1.x), 2) + Math.pow((point2.y - point1.y), 2));
 
-
 //does the line connecting p1, p2 go through the point (0,0)?
 export const throughOrigin = (point1, point2) => {
   //vertical line through centre
@@ -136,13 +135,12 @@ export const identityMatrix = (n) =>
   Array.apply(null, new Array(n)).map((x, i, a) =>
     a.map( (y, k) => i === k ? 1 : 0) );
 
+//midpoint of the line segment connecting two points
+export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
 /*
 //slope of line through p1, p2
 export const slope = (p1, p2) => (p2.x - p1.x) / (p2.y - p1.y);
-
-//midpoint of the line segment connecting two points
-export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
 //intersection of two circles with equations:
 //(x-a)^2 +(y-a)^2 = r0^2

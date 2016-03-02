@@ -14,8 +14,11 @@ import { ThreeJS } from './threejs';
 // * ***********************************************************************
 // *
 // *   POINT CLASS
-// *   2D point class
-// *
+// *   Represents a point either in the Poincare Disk (2D)
+// *   or Hyperboloid (Weierstrass) Space (3D)
+// *   Default is in Poincare form with z = 0;
+// *   NOTE: cannot be consrtucted in Hyperbolid form, only transformed using
+// *   built in function
 // *************************************************************************
 
 export class Point {
@@ -25,7 +28,6 @@ export class Point {
 
     this.checkPoint();
 
-    //start with z = 0; this will used to transform to/from hyperboloid form
     this.z = 0;
   }
 
@@ -79,7 +81,7 @@ export class Point {
   //check that the point lies in the unit disk and warn otherwise
   //(don't check points that are in hyperboloid form with z !==0)
   checkPoint(){
-    if (this.z === 0 && E.distance(this, {x: 0, y:0 }) > 1) {
+    if (this.z == 0 && E.distance(this, {x: 0, y:0 }) > 1) {
       console.warn('Error! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
     }
   }
@@ -88,6 +90,7 @@ export class Point {
 // * ***********************************************************************
 // *
 // *   CIRCLE CLASS
+// *   A circle in the Poincare disk is identical to a circle in Euclidean space
 // *
 // *************************************************************************
 
@@ -100,7 +103,9 @@ export class Circle {
 
 // * ***********************************************************************
 // *
-// *   ARC CLASS
+// *  ARC CLASS
+// *  Represents a hyperbolic arc on the Poincare disk, which is a
+// *  Euclidean straight line if it goes through the origin
 // *
 // *************************************************************************
 
@@ -172,18 +177,26 @@ export class Arc {
 // * ***********************************************************************
 // *
 // *   EDGE CLASS
-// *   Represents a polygon edge
+// *   Represents a hyperbolic polygon edge
 // *
 // *************************************************************************
 class Edge {
   constructor(startPoint, endPoint) {
     this.arc = new Arc(startPoint, endPoint);
-    //This set the spacing between vertices along the arcs of the polygons
-    this.spacing = 0.11;
+    this.calculateSpacing();
     this.spacedPoints();
   }
 
-  spacedPoints() {
+  calculateSpacing(){
+    this.spacing = 0.1;
+    //calculate the number of subdivisions required break the arc into an
+    //even number of pieces with each <= this.spacing
+    this.numPoints = 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );
+    //recalculate spacing based on number of points
+    this.spacing = this.arc.arcLength / this.numPoints;
+  }
+
+  spacedPoints( n = this.spacing) {
     this.points = [];
     //push the first vertex
     this.points.push(this.arc.startPoint);
@@ -225,6 +238,25 @@ class Edge {
     }
   }
 
+  subdivideEdge(numPoints){
+    this.subPoints = [];
+    //push the first vertex
+    this.subPoints.push(this.arc.startPoint);
+
+     //tiny pgons near the edges of the disk don't need to be subdivided
+    if(E.distance(this.arc.startPoint, this.arc.endPoint) > this.spacing){
+      if (this.arc.straightLine) {
+        let p = E.midpoint(this.arc.startPoint, this.arc.endPoint);
+      }
+      else {
+
+      }
+    }
+
+    //push the final vertex
+    this.subPoints.push(this.arc.endPoint);
+  }
+
 }
 
 // * ***********************************************************************
@@ -236,21 +268,40 @@ class Edge {
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
 //@param vertices: array of Points
-//@param upper: Bool, use upper or lower texture
 //@param materialIndex: which material from THREE.Multimaterial to use
 export class Polygon {
   constructor(vertices, materialIndex = 0) {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
-    this.centre = this.centre();
-    this.edges = [];
+
+    this.findCentre();
     this.addEdges();
+    this.findLongestEdge();
+
+    this.subdivideMesh();
   }
 
   addEdges(){
+    this.edges = [];
     for (let i = 0; i < this.vertices.length; i++) {
       this.edges.push(new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length]))
     }
+  }
+
+  findLongestEdge(){
+    const a = E.distance(this.vertices[0], this.vertices[1]);
+    const b = E.distance(this.vertices[1], this.vertices[2]);
+    const c = E.distance(this.vertices[2], this.vertices[0]);
+
+    if( a > b && a > c) this.longestEdge = [0, 1];
+    else if( b > c) this.longestEdge = [1, 2];
+    else this.longestEdge = [0, 2];
+  }
+
+  subdivideMesh(){
+    const spacing = 0.3;
+    this.mesh = [];
+    this.mesh[0] = [this.vertices[this.longestEdge[0]]]
   }
 
   //Apply a Transform to the polygon
@@ -263,14 +314,13 @@ export class Polygon {
   }
 
   //Incentre of triangular polygon
-  centre() {
+  findCentre() {
     const a = E.distance(this.vertices[0], this.vertices[1]);
     const b = E.distance(this.vertices[1], this.vertices[2]);
     const c = E.distance(this.vertices[0], this.vertices[2]);
     const x = (a*this.vertices[2].x + b*this.vertices[0].x + c*this.vertices[1].x)/(a+b+c);
     const y = (a*this.vertices[2].y + b*this.vertices[0].y + c*this.vertices[1].y)/(a+b+c);
-    return new Point(x, y);
-
+    this.centre = new Point(x, y);
   }
 }
 

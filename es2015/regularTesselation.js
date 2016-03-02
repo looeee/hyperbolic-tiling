@@ -98,6 +98,7 @@ export class RegularTesselation {
     const upper = this.fundamentalRegion();
     this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+    console.log(upper, upper.vertices, upper.mesh);
     return [upper, lower];
   }
 

@@ -370,12 +370,14 @@ var identityMatrix = function identityMatrix(n) {
   });
 };
 
+//midpoint of the line segment connecting two points
+var midpoint = function midpoint(p1, p2) {
+  return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+};
+
 /*
 //slope of line through p1, p2
 export const slope = (p1, p2) => (p2.x - p1.x) / (p2.y - p1.y);
-
-//midpoint of the line segment connecting two points
-export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
 //intersection of two circles with equations:
 //(x-a)^2 +(y-a)^2 = r0^2
@@ -528,8 +530,11 @@ export const perpendicularSlope = (p1, p2) => {
 // * ***********************************************************************
 // *
 // *   POINT CLASS
-// *   2D point class
-// *
+// *   Represents a point either in the Poincare Disk (2D)
+// *   or Hyperboloid (Weierstrass) Space (3D)
+// *   Default is in Poincare form with z = 0;
+// *   NOTE: cannot be consrtucted in Hyperbolid form, only transformed using
+// *   built in function
 // *************************************************************************
 
 var Point = function () {
@@ -541,7 +546,6 @@ var Point = function () {
 
     this.checkPoint();
 
-    //start with z = 0; this will used to transform to/from hyperboloid form
     this.z = 0;
   }
 
@@ -606,7 +610,7 @@ var Point = function () {
   }, {
     key: 'checkPoint',
     value: function checkPoint() {
-      if (this.z === 0 && distance(this, { x: 0, y: 0 }) > 1) {
+      if (this.z == 0 && distance(this, { x: 0, y: 0 }) > 1) {
         console.warn('Error! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
       }
     }
@@ -623,7 +627,9 @@ var Circle = function Circle(centreX, centreY, radius) {
 
 // * ***********************************************************************
 // *
-// *   ARC CLASS
+// *  ARC CLASS
+// *  Represents a hyperbolic arc on the Poincare disk, which is a
+// *  Euclidean straight line if it goes through the origin
 // *
 // *************************************************************************
 
@@ -702,7 +708,7 @@ var Arc = function () {
 // * ***********************************************************************
 // *
 // *   EDGE CLASS
-// *   Represents a polygon edge
+// *   Represents a hyperbolic polygon edge
 // *
 // *************************************************************************
 
@@ -711,14 +717,25 @@ var Edge = function () {
     babelHelpers.classCallCheck(this, Edge);
 
     this.arc = new Arc(startPoint, endPoint);
-    //This set the spacing between vertices along the arcs of the polygons
-    this.spacing = 0.11;
+    this.calculateSpacing();
     this.spacedPoints();
   }
 
   babelHelpers.createClass(Edge, [{
+    key: 'calculateSpacing',
+    value: function calculateSpacing() {
+      this.spacing = 0.1;
+      //calculate the number of subdivisions required break the arc into an
+      //even number of pieces with each <= this.spacing
+      this.numPoints = 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
+      //recalculate spacing based on number of points
+      this.spacing = this.arc.arcLength / this.numPoints;
+    }
+  }, {
     key: 'spacedPoints',
     value: function spacedPoints() {
+      var n = arguments.length <= 0 || arguments[0] === undefined ? this.spacing : arguments[0];
+
       this.points = [];
       //push the first vertex
       this.points.push(this.arc.startPoint);
@@ -758,6 +775,23 @@ var Edge = function () {
         this.points.push(p);
       }
     }
+  }, {
+    key: 'subdivideEdge',
+    value: function subdivideEdge(numPoints) {
+      this.subPoints = [];
+      //push the first vertex
+      this.subPoints.push(this.arc.startPoint);
+
+      //tiny pgons near the edges of the disk don't need to be subdivided
+      if (distance(this.arc.startPoint, this.arc.endPoint) > this.spacing) {
+        if (this.arc.straightLine) {
+          var p = midpoint(this.arc.startPoint, this.arc.endPoint);
+        } else {}
+      }
+
+      //push the final vertex
+      this.subPoints.push(this.arc.endPoint);
+    }
   }]);
   return Edge;
 }();
@@ -771,7 +805,6 @@ var Edge = function () {
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
 //@param vertices: array of Points
-//@param upper: Bool, use upper or lower texture
 //@param materialIndex: which material from THREE.Multimaterial to use
 
 var Polygon = function () {
@@ -781,17 +814,37 @@ var Polygon = function () {
 
     this.materialIndex = materialIndex;
     this.vertices = vertices;
-    this.centre = this.centre();
-    this.edges = [];
+
+    this.findCentre();
     this.addEdges();
+    this.findLongestEdge();
+
+    this.subdivideMesh();
   }
 
   babelHelpers.createClass(Polygon, [{
     key: 'addEdges',
     value: function addEdges() {
+      this.edges = [];
       for (var i = 0; i < this.vertices.length; i++) {
         this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
       }
+    }
+  }, {
+    key: 'findLongestEdge',
+    value: function findLongestEdge() {
+      var a = distance(this.vertices[0], this.vertices[1]);
+      var b = distance(this.vertices[1], this.vertices[2]);
+      var c = distance(this.vertices[2], this.vertices[0]);
+
+      if (a > b && a > c) this.longestEdge = [0, 1];else if (b > c) this.longestEdge = [1, 2];else this.longestEdge = [0, 2];
+    }
+  }, {
+    key: 'subdivideMesh',
+    value: function subdivideMesh() {
+      var spacing = 0.3;
+      this.mesh = [];
+      this.mesh[0] = [this.vertices[this.longestEdge[0]]];
     }
 
     //Apply a Transform to the polygon
@@ -811,14 +864,14 @@ var Polygon = function () {
     //Incentre of triangular polygon
 
   }, {
-    key: 'centre',
-    value: function centre() {
+    key: 'findCentre',
+    value: function findCentre() {
       var a = distance(this.vertices[0], this.vertices[1]);
       var b = distance(this.vertices[1], this.vertices[2]);
       var c = distance(this.vertices[0], this.vertices[2]);
       var x = (a * this.vertices[2].x + b * this.vertices[0].x + c * this.vertices[1].x) / (a + b + c);
       var y = (a * this.vertices[2].y + b * this.vertices[0].y + c * this.vertices[1].y) / (a + b + c);
-      return new Point(x, y);
+      this.centre = new Point(x, y);
     }
   }]);
   return Polygon;
@@ -1293,6 +1346,7 @@ var RegularTesselation = function () {
       var upper = this.fundamentalRegion();
       this.disk.drawPolygon(upper, 0xffffff, this.textures, this.wireframe);
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+      console.log(upper, upper.vertices, upper.mesh);
       return [upper, lower];
     }
 
