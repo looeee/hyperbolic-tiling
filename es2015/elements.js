@@ -201,7 +201,9 @@ class Edge {
   }
 
 
-  spacedPoints() {
+  spacedPoints( numDivisions ) {
+    this.calculateSpacing( numDivisions );
+
     this.points = [];
     //push the first vertex
     this.points.push(this.arc.startPoint);
@@ -221,47 +223,22 @@ class Edge {
   }
 
   pointsOnStraightLine(){
-    let p = E.spacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing).p2;
+    let p = E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
     this.points.push(p);
     while (E.distance(p, this.arc.endPoint) > this.spacing) {
-      p = E.spacedPointOnLine(p, this.arc.startPoint, this.spacing).p1;
+      p = E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
       this.points.push(p);
     }
   }
 
   pointsOnArc(){
-    let p;
-    if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, this.spacing).p1;
-    else p = E.spacedPointOnArc(this.arc.circle, this.arc.startPoint, this.spacing).p2;
-
+    let p = E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing);
     this.points.push(p);
-
     while (E.distance(p, this.arc.endPoint) > this.spacing) {
-      if (this.arc.clockwise) p = E.spacedPointOnArc(this.arc.circle, p, this.spacing).p1;
-      else p = E.spacedPointOnArc(this.arc.circle, p, this.spacing).p2;
+      p = E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing);
       this.points.push(p);
     }
   }
-
-  subdivideEdge(numPoints){
-    this.subPoints = [];
-    //push the first vertex
-    this.subPoints.push(this.arc.startPoint);
-
-     //tiny pgons near the edges of the disk don't need to be subdivided
-    if(E.distance(this.arc.startPoint, this.arc.endPoint) > this.spacing){
-      if (this.arc.straightLine) {
-        let p = E.midpoint(this.arc.startPoint, this.arc.endPoint);
-      }
-      else {
-
-      }
-    }
-
-    //push the final vertex
-    this.subPoints.push(this.arc.endPoint);
-  }
-
 }
 
 // * ***********************************************************************
@@ -282,8 +259,8 @@ export class Polygon {
     this.findCentre();
     this.addEdges();
 
-    this.subdivideEdges();
-    this.subdivideMesh();
+    //this.subdivideEdges();
+    //this.subdivideMesh();
   }
 
   addEdges(){
@@ -307,23 +284,46 @@ export class Polygon {
   //same number of points as the longest
   subdivideEdges(){
     this.findLongestEdge();
-    this.edges[this.longestEdge].calculateSpacing();
     this.edges[this.longestEdge].spacedPoints();
 
     const numDivisions = this.edges[this.longestEdge].points.length -1;
 
-    this.edges[(this.longestEdge + 1) % 3].calculateSpacing(numDivisions);
-    this.edges[(this.longestEdge + 1) % 3].spacedPoints();
-
-    this.edges[(this.longestEdge + 2) % 3].calculateSpacing(numDivisions);
-    this.edges[(this.longestEdge + 2) % 3].spacedPoints();
-
+    this.edges[(this.longestEdge + 1) % 3].spacedPoints(numDivisions);
+    this.edges[(this.longestEdge + 2) % 3].spacedPoints(numDivisions);
   }
 
   subdivideMesh(){
-    const spacing = 0.3;
     this.mesh = [];
-    this.mesh[0] = [this.vertices[this.longestEdge[0]]]
+    this.mesh[0] = this.edges[this.longestEdge].points;
+
+    const numPoints = this.edges[this.longestEdge].points.length - 1;
+
+    const edge2 = this.edges[(this.longestEdge + 1) % 3];
+    const edge3 = this.edges[(this.longestEdge + 2) % 3];
+
+    for(let i = 1; i <= numPoints; i++){
+      this.mesh[i] = [];
+      const p1 = edge2.points[i];
+      const p2 = edge3.points[(numPoints - i)];
+      console.log(p1, p2);
+      this.mesh[i].push(p1);
+
+      //subdivide line between points on opposite edges and add points to mesh
+      const d = E.distance(p1, p2);
+      const spacing = d / (numPoints - i );
+
+      let nextPoint = E.directedSpacedPointOnLine(p1, p2, spacing);
+      for(let j = 0; j < numPoints -i; j++){
+
+        this.mesh[i].push(nextPoint);
+        nextPoint = E.directedSpacedPointOnLine(p2, nextPoint, spacing);
+      }
+
+      //push final point of line
+      //NOTE: the very final loop is a single vertex with p1 = p2 so this
+      //overwrites this.mesh[i].push(p1) above
+      this.mesh[i].push(p2);
+    }
   }
 
   //Apply a Transform to the polygon

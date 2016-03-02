@@ -65,9 +65,17 @@ export const circleLineIntersect = (circle, point1, point2) => {
   }
 }
 
+//Find the length of the smaller arc between two angles on a given circle
+export const arcLength = (circle, startAngle, endAngle) =>
+  (Math.abs(startAngle - endAngle) > Math.PI)
+    ? circle.radius * (2*Math.PI - Math.abs(startAngle - endAngle))
+    : circle.radius * (Math.abs(startAngle - endAngle));
+
+
+
 //find the two points a distance from a point on the circumference of a circle
-export const spacedPointOnArc = (circle, point, distance) => {
-  const cosTheta = -((distance * distance) / (2 * circle.radius * circle.radius) - 1);
+export const spacedPointOnArc = (circle, point, spacing) => {
+  const cosTheta = -((spacing * spacing) / (2 * circle.radius * circle.radius) - 1);
   const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   const sinThetaNeg = -sinThetaPos;
 
@@ -82,18 +90,42 @@ export const spacedPointOnArc = (circle, point, distance) => {
   }
 }
 
-//Find the length of the smaller arc between two angles on a given circle
-export const arcLength = (circle, startAngle, endAngle) =>
-  (Math.abs(startAngle - endAngle) > Math.PI)
-    ? circle.radius * (2*Math.PI - Math.abs(startAngle - endAngle))
-    : circle.radius * (Math.abs(startAngle - endAngle));
+//find the two points a distance from a point on the circumference of a circle
+//in the direction of point2
+export const directedSpacedPointOnArc = (circle, point1, point2, spacing) => {
+  const cosTheta = -((spacing * spacing) / (2 * circle.radius * circle.radius) - 1);
+  const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
+  const sinThetaNeg = -sinThetaPos;
 
+  const xPos = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaPos * (point1.y - circle.centre.y);
+  const xNeg = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaNeg * (point1.y - circle.centre.y);
+  const yPos = circle.centre.y + sinThetaPos * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
+  const yNeg = circle.centre.y + sinThetaNeg * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
 
-//find the two points at a distance from point1 along line defined by point1, point2
-export const spacedPointOnLine = (point1, point2, distance) => {
-  const circle = new Circle(point1.x, point1.y, distance);
+  const p1 = new Point(xPos, yPos);
+  const p2 = new Point(xNeg, yNeg);
+
+  const a = distance(p1, point2);
+  const b = distance(p2, point2);
+  return (a < b) ? p1 : p2;
+}
+
+//find the two points at a spacing from point1 along line defined by point1, point2
+export const spacedPointOnLine = (point1, point2, spacing) => {
+  const circle = new Circle(point1.x, point1.y, spacing);
   return points = circleLineIntersect(circle, point1, point2);
 }
+
+//find the point at a distance from point1 along line defined by point1, point2,
+//in the direction of point2
+export const directedSpacedPointOnLine = (point1, point2, spacing) => {
+  const circle = new Circle(point1.x, point1.y, spacing);
+  const points = circleLineIntersect(circle, point1, point2);
+  const a = distance(points.p1, point2);
+  const b = distance(points.p2, point2);
+  return (a < b) ? points.p1 : points.p2;
+}
+
 
 export const randomFloat = (min, max) => Math.random() * (max - min) + min;
 
