@@ -717,25 +717,28 @@ var Edge = function () {
     babelHelpers.classCallCheck(this, Edge);
 
     this.arc = new Arc(startPoint, endPoint);
-    this.calculateSpacing();
-    this.spacedPoints();
   }
+
+  //calculate the spacing for subdividing the edge into even number of pieces.
+  //For the first ( longest ) edge this will be calculated based on spacing
+  //then for the rest of the edges it will be calculated based on the number of
+  //subdivisions of the first edge ( so that all edges are divided into equal
+  // number of pieces)
 
   babelHelpers.createClass(Edge, [{
     key: 'calculateSpacing',
-    value: function calculateSpacing() {
+    value: function calculateSpacing(numDivisions) {
       this.spacing = 0.1;
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
-      this.numPoints = 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
+      numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
+
       //recalculate spacing based on number of points
-      this.spacing = this.arc.arcLength / this.numPoints;
+      this.spacing = this.arc.arcLength / numDivisions;
     }
   }, {
     key: 'spacedPoints',
     value: function spacedPoints() {
-      var n = arguments.length <= 0 || arguments[0] === undefined ? this.spacing : arguments[0];
-
       this.points = [];
       //push the first vertex
       this.points.push(this.arc.startPoint);
@@ -817,8 +820,8 @@ var Polygon = function () {
 
     this.findCentre();
     this.addEdges();
-    this.findLongestEdge();
 
+    this.subdivideEdges();
     this.subdivideMesh();
   }
 
@@ -833,11 +836,30 @@ var Polygon = function () {
   }, {
     key: 'findLongestEdge',
     value: function findLongestEdge() {
-      var a = distance(this.vertices[0], this.vertices[1]);
-      var b = distance(this.vertices[1], this.vertices[2]);
-      var c = distance(this.vertices[2], this.vertices[0]);
+      var a = this.edges[0].arc.arcLength;
+      var b = this.edges[1].arc.arcLength;
+      var c = this.edges[2].arc.arcLength;
 
-      if (a > b && a > c) this.longestEdge = [0, 1];else if (b > c) this.longestEdge = [1, 2];else this.longestEdge = [0, 2];
+      if (a > b && a > c) this.longestEdge = 0;else if (b > c) this.longestEdge = 1;else this.longestEdge = 2;
+    }
+
+    //subdivide the longest edge, then subdivide the other two edges with the
+    //same number of points as the longest
+
+  }, {
+    key: 'subdivideEdges',
+    value: function subdivideEdges() {
+      this.findLongestEdge();
+      this.edges[this.longestEdge].calculateSpacing();
+      this.edges[this.longestEdge].spacedPoints();
+
+      var numDivisions = this.edges[this.longestEdge].points.length - 1;
+
+      this.edges[(this.longestEdge + 1) % 3].calculateSpacing(numDivisions);
+      this.edges[(this.longestEdge + 1) % 3].spacedPoints();
+
+      this.edges[(this.longestEdge + 2) % 3].calculateSpacing(numDivisions);
+      this.edges[(this.longestEdge + 2) % 3].spacedPoints();
     }
   }, {
     key: 'subdivideMesh',

@@ -183,20 +183,25 @@ export class Arc {
 class Edge {
   constructor(startPoint, endPoint) {
     this.arc = new Arc(startPoint, endPoint);
-    this.calculateSpacing();
-    this.spacedPoints();
   }
 
-  calculateSpacing(){
+  //calculate the spacing for subdividing the edge into even number of pieces.
+  //For the first ( longest ) edge this will be calculated based on spacing
+  //then for the rest of the edges it will be calculated based on the number of
+  //subdivisions of the first edge ( so that all edges are divided into equal
+  // number of pieces)
+  calculateSpacing( numDivisions ){
     this.spacing = 0.1;
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
-    this.numPoints = 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );
+    numDivisions = numDivisions || 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );
+
     //recalculate spacing based on number of points
-    this.spacing = this.arc.arcLength / this.numPoints;
+    this.spacing = this.arc.arcLength / numDivisions;
   }
 
-  spacedPoints( n = this.spacing) {
+
+  spacedPoints() {
     this.points = [];
     //push the first vertex
     this.points.push(this.arc.startPoint);
@@ -276,8 +281,8 @@ export class Polygon {
 
     this.findCentre();
     this.addEdges();
-    this.findLongestEdge();
 
+    this.subdivideEdges();
     this.subdivideMesh();
   }
 
@@ -289,13 +294,30 @@ export class Polygon {
   }
 
   findLongestEdge(){
-    const a = E.distance(this.vertices[0], this.vertices[1]);
-    const b = E.distance(this.vertices[1], this.vertices[2]);
-    const c = E.distance(this.vertices[2], this.vertices[0]);
+    const a = this.edges[0].arc.arcLength;
+    const b = this.edges[1].arc.arcLength;
+    const c = this.edges[2].arc.arcLength;
 
-    if( a > b && a > c) this.longestEdge = [0, 1];
-    else if( b > c) this.longestEdge = [1, 2];
-    else this.longestEdge = [0, 2];
+    if( a > b && a > c) this.longestEdge = 0;
+    else if( b > c) this.longestEdge = 1;
+    else this.longestEdge = 2;
+  }
+
+  //subdivide the longest edge, then subdivide the other two edges with the
+  //same number of points as the longest
+  subdivideEdges(){
+    this.findLongestEdge();
+    this.edges[this.longestEdge].calculateSpacing();
+    this.edges[this.longestEdge].spacedPoints();
+
+    const numDivisions = this.edges[this.longestEdge].points.length -1;
+
+    this.edges[(this.longestEdge + 1) % 3].calculateSpacing(numDivisions);
+    this.edges[(this.longestEdge + 1) % 3].spacedPoints();
+
+    this.edges[(this.longestEdge + 2) % 3].calculateSpacing(numDivisions);
+    this.edges[(this.longestEdge + 2) % 3].spacedPoints();
+
   }
 
   subdivideMesh(){
