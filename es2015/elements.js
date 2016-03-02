@@ -201,7 +201,7 @@ class Edge {
   }
 
 
-  spacedPoints( numDivisions ) {
+  subdivideEdge( numDivisions ) {
     this.calculateSpacing( numDivisions );
 
     this.points = [];
@@ -284,12 +284,12 @@ export class Polygon {
   //same number of points as the longest
   subdivideEdges(){
     this.findLongestEdge();
-    this.edges[this.longestEdge].spacedPoints();
+    this.edges[this.longestEdge].subdivideEdge();
 
     const numDivisions = this.edges[this.longestEdge].points.length -1;
 
-    this.edges[(this.longestEdge + 1) % 3].spacedPoints(numDivisions);
-    this.edges[(this.longestEdge + 2) % 3].spacedPoints(numDivisions);
+    this.edges[(this.longestEdge + 1) % 3].subdivideEdge(numDivisions);
+    this.edges[(this.longestEdge + 2) % 3].subdivideEdge(numDivisions);
   }
 
   subdivideMesh(){
@@ -301,29 +301,32 @@ export class Polygon {
     const edge2 = this.edges[(this.longestEdge + 1) % 3];
     const edge3 = this.edges[(this.longestEdge + 2) % 3];
 
-    for(let i = 1; i <= numPoints; i++){
-      this.mesh[i] = [];
-      const p1 = edge2.points[i];
-      const p2 = edge3.points[(numPoints - i)];
-      console.log(p1, p2);
-      this.mesh[i].push(p1);
-
-      //subdivide line between points on opposite edges and add points to mesh
-      const d = E.distance(p1, p2);
-      const spacing = d / (numPoints - i );
-
-      let nextPoint = E.directedSpacedPointOnLine(p1, p2, spacing);
-      for(let j = 0; j < numPoints -i; j++){
-
-        this.mesh[i].push(nextPoint);
-        nextPoint = E.directedSpacedPointOnLine(p2, nextPoint, spacing);
-      }
-
-      //push final point of line
-      //NOTE: the very final loop is a single vertex with p1 = p2 so this
-      //overwrites this.mesh[i].push(p1) above
-      this.mesh[i].push(p2);
+    for(let i = 1; i < numPoints; i++){
+      const startPoint = edge2.points[i];
+      const endPoint = edge3.points[(numPoints - i)];
+      this.subdivideInteriorLine(startPoint, endPoint, i, numPoints)
     }
+
+    //push the final vertex
+    this.mesh[numPoints] = [edge2.points[numPoints]];
+  }
+
+  subdivideInteriorLine(startPoint, endPoint, lineIndex, numPoints){
+    this.mesh[lineIndex] = [];
+    this.mesh[lineIndex].push(startPoint);
+
+    //subdivide line between points on opposite edges and add points to mesh
+    const d = E.distance(startPoint, endPoint);
+    const spacing = d / (numPoints - lineIndex + 1);
+
+    let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
+    for(let j = 0; j <= numPoints - lineIndex -1; j++){
+      console.log(nextPoint);
+      this.mesh[lineIndex].push(nextPoint);
+      nextPoint = E.directedSpacedPointOnLine(nextPoint, endPoint, spacing);
+    }
+
+    this.mesh[lineIndex].push(endPoint);
   }
 
   //Apply a Transform to the polygon

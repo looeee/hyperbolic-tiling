@@ -100,8 +100,6 @@ export class RegularTesselation {
     //TESTING
     upper.subdivideEdges();
     this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
-    /*
-
     upper.subdivideMesh();
 
     for(let line of upper.mesh){
@@ -109,7 +107,7 @@ export class RegularTesselation {
         this.disk.drawPoint(point, 0.007, 0xff0000);
       }
     }
-    */
+    
 
 
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);

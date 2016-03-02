@@ -597,8 +597,8 @@ var Edge = function () {
       this.spacing = this.arc.arcLength / numDivisions;
     }
   }, {
-    key: 'spacedPoints',
-    value: function spacedPoints(numDivisions) {
+    key: 'subdivideEdge',
+    value: function subdivideEdge(numDivisions) {
       this.calculateSpacing(numDivisions);
 
       this.points = [];
@@ -692,12 +692,12 @@ var Polygon = function () {
     key: 'subdivideEdges',
     value: function subdivideEdges() {
       this.findLongestEdge();
-      this.edges[this.longestEdge].spacedPoints();
+      this.edges[this.longestEdge].subdivideEdge();
 
       var numDivisions = this.edges[this.longestEdge].points.length - 1;
 
-      this.edges[(this.longestEdge + 1) % 3].spacedPoints(numDivisions);
-      this.edges[(this.longestEdge + 2) % 3].spacedPoints(numDivisions);
+      this.edges[(this.longestEdge + 1) % 3].subdivideEdge(numDivisions);
+      this.edges[(this.longestEdge + 2) % 3].subdivideEdge(numDivisions);
     }
   }, {
     key: 'subdivideMesh',
@@ -710,29 +710,33 @@ var Polygon = function () {
       var edge2 = this.edges[(this.longestEdge + 1) % 3];
       var edge3 = this.edges[(this.longestEdge + 2) % 3];
 
-      for (var i = 1; i <= numPoints; i++) {
-        this.mesh[i] = [];
-        var p1 = edge2.points[i];
-        var p2 = edge3.points[numPoints - i];
-        console.log(p1, p2);
-        this.mesh[i].push(p1);
-
-        //subdivide line between points on opposite edges and add points to mesh
-        var d = distance(p1, p2);
-        var spacing = d / (numPoints - i);
-
-        var nextPoint = directedSpacedPointOnLine(p1, p2, spacing);
-        for (var j = 0; j < numPoints - i; j++) {
-
-          this.mesh[i].push(nextPoint);
-          nextPoint = directedSpacedPointOnLine(p2, nextPoint, spacing);
-        }
-
-        //push final point of line
-        //NOTE: the very final loop is a single vertex with p1 = p2 so this
-        //overwrites this.mesh[i].push(p1) above
-        this.mesh[i].push(p2);
+      for (var i = 1; i < numPoints; i++) {
+        var startPoint = edge2.points[i];
+        var endPoint = edge3.points[numPoints - i];
+        this.subdivideInteriorLine(startPoint, endPoint, i, numPoints);
       }
+
+      //push the final vertex
+      this.mesh[numPoints] = [edge2.points[numPoints]];
+    }
+  }, {
+    key: 'subdivideInteriorLine',
+    value: function subdivideInteriorLine(startPoint, endPoint, lineIndex, numPoints) {
+      this.mesh[lineIndex] = [];
+      this.mesh[lineIndex].push(startPoint);
+
+      //subdivide line between points on opposite edges and add points to mesh
+      var d = distance(startPoint, endPoint);
+      var spacing = d / (numPoints - lineIndex + 1);
+
+      var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
+      for (var j = 0; j <= numPoints - lineIndex - 1; j++) {
+        console.log(nextPoint);
+        this.mesh[lineIndex].push(nextPoint);
+        nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
+      }
+
+      this.mesh[lineIndex].push(endPoint);
     }
 
     //Apply a Transform to the polygon
@@ -1236,14 +1240,54 @@ var RegularTesselation = function () {
       //TESTING
       upper.subdivideEdges();
       this.disk.drawPolygon(upper, 0xffffff, this.textures, this.wireframe);
-      /*
-       upper.subdivideMesh();
-       for(let line of upper.mesh){
-        for(let point of line){
-          this.disk.drawPoint(point, 0.007, 0xff0000);
+      upper.subdivideMesh();
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = upper.mesh[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var line = _step.value;
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
+
+          try {
+            for (var _iterator2 = line[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var point = _step2.value;
+
+              this.disk.drawPoint(point, 0.007, 0xff0000);
+            }
+          } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+          } finally {
+            try {
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
+              }
+            } finally {
+              if (_didIteratorError2) {
+                throw _iteratorError2;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
         }
       }
-      */
 
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
       //console.log(upper, upper.vertices, upper.mesh);
@@ -1345,27 +1389,27 @@ var RegularTesselation = function () {
     key: 'transformPattern',
     value: function transformPattern(pattern, transform) {
       var newPattern = [];
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator = pattern[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var polygon = _step.value;
+        for (var _iterator3 = pattern[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var polygon = _step3.value;
 
           newPattern.push(polygon.transform(transform));
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
           }
         } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
+          if (_didIteratorError3) {
+            throw _iteratorError3;
           }
         }
       }
@@ -1375,27 +1419,27 @@ var RegularTesselation = function () {
   }, {
     key: 'drawPattern',
     value: function drawPattern(pattern) {
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
 
       try {
-        for (var _iterator2 = pattern[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var polygon = _step2.value;
+        for (var _iterator4 = pattern[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var polygon = _step4.value;
 
           this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
       } finally {
         try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
           }
         } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
+          if (_didIteratorError4) {
+            throw _iteratorError4;
           }
         }
       }
