@@ -65,14 +65,34 @@ export class ThreeJS {
   }
 
   polygonV2(polygon, color, texture, wireframe){
+    const l = polygon.mesh.length;
+    const vertices = polygon.mesh.reduce( (a, b) => a.concat(b), []);
+    const divisions = polygon.numDivisions;
+
+    this.disk(vertices[1], 0.02, 0)
+
     console.log(polygon);
-    const mesh = polygon.mesh;
-    //const edgeDivisions = mesh[0].length;
-    console.log(mesh);
-    for(let i = 0; i < mesh.length; i++){
+
+    const geometry = new THREE.Geometry();
+
+    for(let i = 0; i < vertices.length; i++){
+      geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+    }
+
+    for(let i = 0; i < 3 ; i++){
+      let a = [(l)*i, l*(i+1) - i, l*i + 1];
+      //console.log(...a);
+      geometry.faces.push(new THREE.Face3(...a));
+      for(let j = 1; j < l - i -1; j++){
+        console.log(j + (l*i));
+      }
 
     }
 
+
+    console.log(geometry);
+    const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
+    this.scene.add(mesh);
   }
 
   //Note: polygons assumed to be triangular!

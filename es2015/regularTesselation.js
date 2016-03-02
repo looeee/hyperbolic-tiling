@@ -96,10 +96,10 @@ export class RegularTesselation {
   //Limit I, other patterns will require different options
   fundamentalPattern(){
     const upper = this.fundamentalRegion();
+    const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
     //TESTING
     this.disk.drawPolygonV2(upper,0xffffff, this.textures, this.wireframe);
-
     for(let line of upper.mesh){
       for(let point of line){
         this.disk.drawPoint(point, 0.007, 0xff0000);
@@ -108,8 +108,6 @@ export class RegularTesselation {
 
 
 
-    const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-    //console.log(upper, upper.vertices, upper.mesh);
     return [upper, lower];
   }
 

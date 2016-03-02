@@ -102,11 +102,34 @@ var ThreeJS = function () {
   }, {
     key: 'polygonV2',
     value: function polygonV2(polygon, color, texture, wireframe) {
+      var l = polygon.mesh.length;
+      var vertices = polygon.mesh.reduce(function (a, b) {
+        return a.concat(b);
+      }, []);
+      var divisions = polygon.numDivisions;
+
+      this.disk(vertices[1], 0.02, 0);
+
       console.log(polygon);
-      var mesh = polygon.mesh;
-      //const edgeDivisions = mesh[0].length;
-      console.log(mesh);
-      for (var i = 0; i < mesh.length; i++) {}
+
+      var geometry = new THREE.Geometry();
+
+      for (var i = 0; i < vertices.length; i++) {
+        geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+      }
+
+      for (var i = 0; i < 3; i++) {
+        var a = [l * i, l * (i + 1) - i, l * i + 1];
+        //console.log(...a);
+        geometry.faces.push(new (Function.prototype.bind.apply(THREE.Face3, [null].concat(a)))());
+        for (var j = 1; j < l - i - 1; j++) {
+          console.log(j + l * i);
+        }
+      }
+
+      console.log(geometry);
+      var mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
+      this.scene.add(mesh);
     }
 
     //Note: polygons assumed to be triangular!
@@ -424,13 +447,12 @@ var Point = function () {
     key: 'compare',
     value: function compare(otherPoint) {
       if (typeof otherPoint === 'undefined') {
-        console.warn('Warning: point not defined.');
+        console.warn('Compare Points: point not defined.');
         return false;
       }
-      var t1 = this.toFixed(12);
-      var t2 = otherPoint.toFixed(12);
-
-      if (this.p1.x === otherPoint.x && this.p1.y === otherPoint.y) return true;else return false;
+      var a = toFixed(this.x) === toFixed(otherPoint.x);
+      var b = toFixed(this.y) === toFixed(otherPoint.y);
+      if (a && b) return true;else return false;
     }
 
     //move the point to hyperboloid (Weierstrass) space, apply the transform,
@@ -480,7 +502,7 @@ var Point = function () {
     key: 'checkPoint',
     value: function checkPoint() {
       if (this.z == 0 && distance(this, { x: 0, y: 0 }) > 1) {
-        console.warn('Error! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
+        console.warn('Warning! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
       }
     }
   }]);
@@ -719,40 +741,42 @@ var Polygon = function () {
 
       //how many equal points the edges are divided into
       //const numDivisions = this.edges[this.longestEdge].points.length - 1;
-
-      var edge2 = this.edges[(this.longestEdge + 1) % 3];
-      var edge3 = this.edges[(this.longestEdge + 2) % 3];
+      var edge1 = undefined,
+          edge2 = undefined;
+      if (this.edges[(this.longestEdge + 1) % 3].points[0].compare(this.mesh[0][0])) {
+        edge2 = this.edges[(this.longestEdge + 1) % 3];
+        edge3 = this.edges[(this.longestEdge + 2) % 3];
+      } else {
+        edge3 = this.edges[(this.longestEdge + 1) % 3];
+        edge2 = this.edges[(this.longestEdge + 2) % 3];
+      }
 
       for (var i = 1; i < this.numDivisions; i++) {
-        var startPoint = edge2.points[i];
-        var endPoint = edge3.points[this.numDivisions - i];
+        var startPoint = edge2.points[this.numDivisions - i];
+        var endPoint = edge3.points[i];
         this.subdivideInteriorLine(startPoint, endPoint, i);
       }
 
       //push the final vertex
-      this.mesh[this.numDivisions] = [edge2.points[this.numDivisions]];
+      this.mesh[this.numDivisions] = [edge2.points[0]];
     }
   }, {
     key: 'subdivideInteriorLine',
     value: function subdivideInteriorLine(startPoint, endPoint, lineIndex) {
       this.mesh[lineIndex] = [];
       this.mesh[lineIndex].push(startPoint);
-      console.log(this.numDivisions - lineIndex);
       var thisLineDivisions = this.numDivisions - lineIndex;
 
+      //if the line get divided add points along line to mesh
       if (thisLineDivisions > 1) {
-
-        //subdivide line between points on opposite edges and add points to mesh
         var d = distance(startPoint, endPoint);
         var spacing = d / thisLineDivisions;
-        console.log(d, spacing);
         var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
         for (var j = 0; j < thisLineDivisions - 1; j++) {
           this.mesh[lineIndex].push(nextPoint);
           nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
         }
       }
-
       this.mesh[lineIndex].push(endPoint);
     }
 
@@ -1258,10 +1282,10 @@ var RegularTesselation = function () {
     key: 'fundamentalPattern',
     value: function fundamentalPattern() {
       var upper = this.fundamentalRegion();
+      var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
       //TESTING
       this.disk.drawPolygonV2(upper, 0xffffff, this.textures, this.wireframe);
-
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -1309,8 +1333,6 @@ var RegularTesselation = function () {
         }
       }
 
-      var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-      //console.log(upper, upper.vertices, upper.mesh);
       return [upper, lower];
     }
 

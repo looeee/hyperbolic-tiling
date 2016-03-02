@@ -2,7 +2,3 @@ body {
   background: white;
   margin: 0;
   overflow: hidden; }
-
-canvas {
-  width: 100%;
-  height: 100%; }
