@@ -58,7 +58,7 @@ export class RegularTesselation {
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
     let t0 = performance.now();
-    this.drawLayers();
+    //this.drawLayers();
     let t1 = performance.now();
     console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.')
   }

@@ -192,7 +192,7 @@ class Edge {
   calculateSpacing( numDivisions ){
     //NOTE: this is the overall subdivision spacing for polygons.
     //Not the best, but the simplest place to define it
-    this.spacing = 0.5;
+    this.spacing = 0.2;
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
     numDivisions = numDivisions || 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );

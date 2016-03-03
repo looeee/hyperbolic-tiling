@@ -110,37 +110,59 @@ var ThreeJS = function () {
       var vertices = _polygon.mesh;
       var divisions = _polygon.numDivisions;
       var geometry = new THREE.Geometry();
+      geometry.faceVertexUvs[0] = [];
 
       for (var _i2 = 0; _i2 < vertices.length; _i2++) {
         geometry.vertices.push(new THREE.Vector3(vertices[_i2].x * this.radius, vertices[_i2].y * this.radius, 0));
       }
 
       var edgeStartingVertex = 0;
+      var p = 1 / d;
       //loop over each interior edge of the polygon's subdivion mesh
       for (var _i3 = 0; _i3 < l - 1; _i3++) {
         //edge divisions reduce by one for each interior edge
         var m = l - _i3;
         geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
 
+        //console.log(i*p, 0, (i+1)*p, 0, (i+1)*p, p);
+
+        geometry.faceVertexUvs[0].push([new THREE.Vector2(_i3 * p, 0), new THREE.Vector2((_i3 + 1) * p, 0), new THREE.Vector2((_i3 + 1) * p, p)]);
+
         //range m-2 because we are ignoring the edges first vertex which was used in the faces.push above
         for (var j = 0; j < m - 2; j++) {
           geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
+          console.log('i=', _i3, 'j=', j, ' {', (_i3 + 1 + j) * p, (1 + j) * p, '}, {', 2, 2, '}, {', 3, 3, '}');
+          geometry.faceVertexUvs[0].push([new THREE.Vector2((_i3 + 1 + j) * p, (1 + j) * p), new THREE.Vector2((_i3 + 1) * p, 0), new THREE.Vector2((_i3 + 1) * p, 0)]);
           geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
+          console.log('i=', _i3, 'j=', j, ' {', (_i3 + 1 + j) * p, (1 + j) * p, '}, {', 2, 2, '}, {', 3, 3, '}');
+          geometry.faceVertexUvs[0].push([new THREE.Vector2((_i3 + 1 + j) * p, (1 + j) * p), new THREE.Vector2((_i3 + 1) * p, 0), new THREE.Vector2((_i3 + 1) * p, 0)]);
         }
         edgeStartingVertex += m;
       }
 
-      geometry.faceVertexUvs[0] = [];
-
-      var p = 1 / d;
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(0, 0), new THREE.Vector2(p, 0), new THREE.Vector2(p, p)]);
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(p, p), new THREE.Vector2(p, 0), new THREE.Vector2(1, p)]);
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(p, p), new THREE.Vector2(1, p), new THREE.Vector2(1, 1)]);
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(p, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, p)]);
+      /*
+          geometry.faceVertexUvs[0].push(
+            [
+              new THREE.Vector2(p, p),
+              new THREE.Vector2(p, 0),
+              new THREE.Vector2(1, p),
+            ]);
+      
+          geometry.faceVertexUvs[0].push(
+            [
+              new THREE.Vector2(p, p),
+              new THREE.Vector2(1, p),
+              new THREE.Vector2(1, 1),
+            ]);
+      
+          geometry.faceVertexUvs[0].push(
+            [
+              new THREE.Vector2(p, 0),
+              new THREE.Vector2(1, 0),
+              new THREE.Vector2(1, p),
+            ]);
+      
+      */
 
       var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
@@ -584,7 +606,7 @@ var Edge = function () {
     value: function calculateSpacing(numDivisions) {
       //NOTE: this is the overall subdivision spacing for polygons.
       //Not the best, but the simplest place to define it
-      this.spacing = 0.5;
+      this.spacing = 0.2;
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
       numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
@@ -1191,7 +1213,7 @@ var RegularTesselation = function () {
         console.log('GenerateLayers took ' + (_t2 - _t) + ' milliseconds.');
       }
       var t0 = performance.now();
-      this.drawLayers();
+      //this.drawLayers();
       var t1 = performance.now();
       console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.');
     }
