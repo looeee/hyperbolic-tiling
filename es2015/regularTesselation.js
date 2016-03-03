@@ -25,8 +25,8 @@ export class RegularTesselation {
     this.wireframe = false;
     this.wireframe = true;
     console.log(p, q, maxLayers);
-    //this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    this.textures = ['./images/textures/black.png', './images/textures/white.png'];
+    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
+    //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
     this.p = p;
     this.q = q;
@@ -100,11 +100,11 @@ export class RegularTesselation {
 
     //TESTING
     this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
-    for(let line of upper.mesh){
-      for(let point of line){
+    //for(let line of upper.mesh){
+      //for(let point of line){
         //this.disk.drawPoint(point, 0.007, 0xff0000);
-      }
-    }
+    //  }
+    //}
 
 
 

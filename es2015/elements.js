@@ -190,7 +190,7 @@ class Edge {
   //subdivisions of the first edge ( so that all edges are divided into equal
   // number of pieces)
   calculateSpacing( numDivisions ){
-    this.spacing = 0.02;
+    this.spacing = 0.2;
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
     numDivisions = numDivisions || 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );
@@ -254,8 +254,6 @@ export class Polygon {
   constructor(vertices, materialIndex = 0) {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
-
-    this.findCentre();
     this.addEdges();
     this.subdivideMesh();
   }
@@ -294,12 +292,13 @@ export class Polygon {
   subdivideMesh(){
     this.subdivideEdges();
     this.mesh = [];
-    this.mesh[0] = this.edges[this.longestEdge].points;
+    this.mesh = [].concat(this.edges[this.longestEdge].points);
+    //this.mesh[0] = this.edges[this.longestEdge].points;
 
     //how many equal points the edges are divided into
     //const numDivisions = this.edges[this.longestEdge].points.length - 1;
     let edge1, edge2;
-    if(this.edges[(this.longestEdge + 1) % 3].points[0].compare(this.mesh[0][0])){
+    if(this.edges[(this.longestEdge + 1) % 3].points[0].compare(this.mesh[0])){
       edge2 = this.edges[(this.longestEdge + 1) % 3];
       edge3 = this.edges[(this.longestEdge + 2) % 3];
     }
@@ -315,12 +314,14 @@ export class Polygon {
     }
 
     //push the final vertex
-    this.mesh[this.numDivisions] = [edge2.points[0]];
+    this.mesh.push(edge2.points[0]);
+    //this.mesh[this.numDivisions] = [edge2.points[0]];
   }
 
   subdivideInteriorLine(startPoint, endPoint, lineIndex){
-    this.mesh[lineIndex] = [];
-    this.mesh[lineIndex].push(startPoint);
+    //this.mesh[lineIndex] = [];
+    //this.mesh[lineIndex].push(startPoint);
+    this.mesh.push(startPoint);
     const thisLineDivisions = this.numDivisions - lineIndex;
 
     //if the line get divided add points along line to mesh
@@ -329,11 +330,13 @@ export class Polygon {
       const spacing = d / (thisLineDivisions);
       let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
       for(let j = 0; j < thisLineDivisions -1 ; j++){
-        this.mesh[lineIndex].push(nextPoint);
+        this.mesh.push(nextPoint);
+        //this.mesh[lineIndex].push(nextPoint);
         nextPoint = E.directedSpacedPointOnLine(nextPoint, endPoint, spacing);
       }
     }
-    this.mesh[lineIndex].push(endPoint);
+    //this.mesh[lineIndex].push(endPoint);
+    this.mesh.push(endPoint);
   }
 
   //Apply a Transform to the polygon
@@ -343,16 +346,6 @@ export class Polygon {
       newVertices.push(this.vertices[i].transform(transform));
     }
     return new Polygon(newVertices, materialIndex);
-  }
-
-  //Incentre of triangular polygon
-  findCentre() {
-    const a = E.distance(this.vertices[0], this.vertices[1]);
-    const b = E.distance(this.vertices[1], this.vertices[2]);
-    const c = E.distance(this.vertices[0], this.vertices[2]);
-    const x = (a*this.vertices[2].x + b*this.vertices[0].x + c*this.vertices[1].x)/(a+b+c);
-    const y = (a*this.vertices[2].y + b*this.vertices[0].y + c*this.vertices[1].y)/(a+b+c);
-    this.centre = new Point(x, y);
   }
 }
 
@@ -409,6 +402,16 @@ export class Disk {
 
 
 /*
+
+//Incentre of triangular polygon
+findCentre() {
+  const a = E.distance(this.vertices[0], this.vertices[1]);
+  const b = E.distance(this.vertices[1], this.vertices[2]);
+  const c = E.distance(this.vertices[0], this.vertices[2]);
+  const x = (a*this.vertices[2].x + b*this.vertices[0].x + c*this.vertices[1].x)/(a+b+c);
+  const y = (a*this.vertices[2].y + b*this.vertices[0].y + c*this.vertices[1].y)/(a+b+c);
+  this.centre = new Point(x, y);
+}
 barycentre() {
   const l = this.vertices.length;
   const first = this.vertices[0];

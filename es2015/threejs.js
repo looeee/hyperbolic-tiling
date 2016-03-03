@@ -66,70 +66,43 @@ export class ThreeJS {
 
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe){
-    const l = polygon.mesh.length;
-    const vertices = polygon.mesh.reduce( (a, b) => a.concat(b), []);
+    const l = polygon.numDivisions + 1
+    const vertices = polygon.mesh;
     const divisions = polygon.numDivisions;
-
-    //this.disk(vertices[1], 0.02, 0)
-
-    console.log(polygon);
-
     const geometry = new THREE.Geometry();
-
     for(let i = 0; i < vertices.length; i++){
       geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
     }
 
     let edgeStartingVertex = 0;
+    //loop over each interior edge of the polygon's subdivion mesh
     for(let i = 0; i < l -1; i++){
+      //edge divisions reduce by one for each interior edge
+      const m = l-i;
+      geometry.faces.push(
+        new THREE.Face3(
+          edgeStartingVertex,
+          edgeStartingVertex + m,
+          edgeStartingVertex + 1
+        ));
 
-      const m = polygon.mesh[i].length;
-      let a = [edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1];
-      geometry.faces.push(new THREE.Face3(...a));
-
+      //range m-2 because we are ignoring the edges first vertex which was used in the faces.push above
       for(let j = 0; j < m - 2; j++){
-
-        let b = [edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j];
-        let c = [edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2];
-        geometry.faces.push(new THREE.Face3(...b));
-        geometry.faces.push(new THREE.Face3(...c));
-
+        geometry.faces.push(
+          new THREE.Face3(
+            edgeStartingVertex + j + 1,
+            edgeStartingVertex + m + j,
+            edgeStartingVertex + m + 1 + j
+          ));
+        geometry.faces.push(
+          new THREE.Face3(
+            edgeStartingVertex + j + 1,
+            edgeStartingVertex + m + 1 + j,
+            edgeStartingVertex + j + 2
+          ));
       }
       edgeStartingVertex += m;
     }
-
-
-    console.log(geometry);
-    const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
-    this.scene.add(mesh);
-  }
-
-  //Note: polygons assumed to be triangular!
-  polygonOLD(polygon, color, texture, wireframe) {
-    if (color === undefined) color = 0xffffff;
-    const geometry = new THREE.Geometry();
-
-    //assign polygon barycentre to vertex 0
-    geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
-
-    const edges = polygon.edges;
-    //push first vertex of polygon to vertices array
-    //This means that when the next vertex is pushed in the loop
-    //we can also create the first face triangle
-    geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
-
-    //vertices pushed so far counting from 0
-    let count = 1;
-
-    for (let i = 0; i < edges.length; i++) {
-      const points = edges[i].points;
-      for (let j = 1; j < points.length; j++) {
-        geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
-        geometry.faces.push(new THREE.Face3(0, count, count + 1));
-        count++;
-      }
-    }
-    this.setUvs(geometry, edges);
 
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
@@ -232,6 +205,39 @@ export class ThreeJS {
 }
 
 /* OLD/UNUSED FUNCTIONS
+
+//Divided polygon radially from centre, not good for texture mapping but more efficient
+polygonOLD(polygon, color, texture, wireframe) {
+  if (color === undefined) color = 0xffffff;
+  const geometry = new THREE.Geometry();
+
+  //assign polygon barycentre to vertex 0
+  geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
+
+  const edges = polygon.edges;
+  //push first vertex of polygon to vertices array
+  //This means that when the next vertex is pushed in the loop
+  //we can also create the first face triangle
+  geometry.vertices.push(new THREE.Vector3(edges[0].points[0].x * this.radius, edges[0].points[0].y * this.radius, 0));
+
+  //vertices pushed so far counting from 0
+  let count = 1;
+
+  for (let i = 0; i < edges.length; i++) {
+    const points = edges[i].points;
+    for (let j = 1; j < points.length; j++) {
+      geometry.vertices.push(new THREE.Vector3(points[j].x * this.radius, points[j].y * this.radius, 0));
+      geometry.faces.push(new THREE.Face3(0, count, count + 1));
+      count++;
+    }
+  }
+  this.setUvs(geometry, edges);
+
+  const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
+  this.scene.add(mesh);
+}
+
+
 addBoundingBoxHelper(mesh) {
   const box = new THREE.BoxHelper(mesh);
   //box.update();
