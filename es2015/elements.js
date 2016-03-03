@@ -190,7 +190,9 @@ class Edge {
   //subdivisions of the first edge ( so that all edges are divided into equal
   // number of pieces)
   calculateSpacing( numDivisions ){
-    this.spacing = 0.2;
+    //NOTE: this is the overall subdivision spacing for polygons.
+    //Not the best, but the simplest place to define it
+    this.spacing = 0.5;
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
     numDivisions = numDivisions || 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );
@@ -199,13 +201,10 @@ class Edge {
     this.spacing = this.arc.arcLength / numDivisions;
   }
 
-
   subdivideEdge( numDivisions ) {
     this.calculateSpacing( numDivisions );
 
-    this.points = [];
-    //push the first vertex
-    this.points.push(this.arc.startPoint);
+    this.points = [this.arc.startPoint];
 
      //tiny pgons near the edges of the disk don't need to be subdivided
     if(E.distance(this.arc.startPoint, this.arc.endPoint) > this.spacing){
@@ -287,13 +286,10 @@ export class Polygon {
     this.edges[(this.longestEdge + 2) % 3].subdivideEdge(this.numDivisions);
   }
 
-  //TODO creating mesh as a multi dimensional array. Would be more effective
-  //to do it as a single big array
   subdivideMesh(){
     this.subdivideEdges();
     this.mesh = [];
     this.mesh = [].concat(this.edges[this.longestEdge].points);
-    //this.mesh[0] = this.edges[this.longestEdge].points;
 
     //how many equal points the edges are divided into
     //const numDivisions = this.edges[this.longestEdge].points.length - 1;
@@ -310,17 +306,14 @@ export class Polygon {
     for(let i = 1; i < this.numDivisions; i++){
       const startPoint = edge2.points[(this.numDivisions - i)];
       const endPoint = edge3.points[i];
-      this.subdivideInteriorLine(startPoint, endPoint, i)
+      this.subdivideInteriorLine(startPoint, endPoint, i);
     }
 
     //push the final vertex
     this.mesh.push(edge2.points[0]);
-    //this.mesh[this.numDivisions] = [edge2.points[0]];
   }
 
   subdivideInteriorLine(startPoint, endPoint, lineIndex){
-    //this.mesh[lineIndex] = [];
-    //this.mesh[lineIndex].push(startPoint);
     this.mesh.push(startPoint);
     const thisLineDivisions = this.numDivisions - lineIndex;
 
@@ -331,11 +324,9 @@ export class Polygon {
       let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
       for(let j = 0; j < thisLineDivisions -1 ; j++){
         this.mesh.push(nextPoint);
-        //this.mesh[lineIndex].push(nextPoint);
         nextPoint = E.directedSpacedPointOnLine(nextPoint, endPoint, spacing);
       }
     }
-    //this.mesh[lineIndex].push(endPoint);
     this.mesh.push(endPoint);
   }
 

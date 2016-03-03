@@ -64,8 +64,8 @@ var ThreeJS = function () {
   }, {
     key: 'clearScene',
     value: function clearScene() {
-      for (var i = this.scene.children.length - 1; i >= 0; i--) {
-        this.scene.remove(this.scene.children[i]);
+      for (var _i = this.scene.children.length - 1; _i >= 0; _i--) {
+        this.scene.remove(this.scene.children[_i]);
       }
     }
   }, {
@@ -106,18 +106,20 @@ var ThreeJS = function () {
     key: 'polygon',
     value: function polygon(_polygon, color, texture, wireframe) {
       var l = _polygon.numDivisions + 1;
+      var d = _polygon.numDivisions;
       var vertices = _polygon.mesh;
       var divisions = _polygon.numDivisions;
       var geometry = new THREE.Geometry();
-      for (var i = 0; i < vertices.length; i++) {
-        geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+
+      for (var _i2 = 0; _i2 < vertices.length; _i2++) {
+        geometry.vertices.push(new THREE.Vector3(vertices[_i2].x * this.radius, vertices[_i2].y * this.radius, 0));
       }
 
       var edgeStartingVertex = 0;
       //loop over each interior edge of the polygon's subdivion mesh
-      for (var i = 0; i < l - 1; i++) {
+      for (var _i3 = 0; _i3 < l - 1; _i3++) {
         //edge divisions reduce by one for each interior edge
-        var m = l - i;
+        var m = l - _i3;
         geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
 
         //range m-2 because we are ignoring the edges first vertex which was used in the faces.push above
@@ -128,6 +130,18 @@ var ThreeJS = function () {
         edgeStartingVertex += m;
       }
 
+      geometry.faceVertexUvs[0] = [];
+
+      var p = 1 / d;
+
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(0, 0), new THREE.Vector2(p, 0), new THREE.Vector2(p, p)]);
+
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(p, p), new THREE.Vector2(p, 0), new THREE.Vector2(1, p)]);
+
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(p, p), new THREE.Vector2(1, p), new THREE.Vector2(1, 1)]);
+
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(p, 0), new THREE.Vector2(1, 0), new THREE.Vector2(1, p)]);
+
       var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
     }
@@ -137,27 +151,10 @@ var ThreeJS = function () {
 
   }, {
     key: 'setUvs',
-    value: function setUvs(geometry, edges) {
-      //the incentre of the triangle is mapped to the polygon barycentre
-      var incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
-
+    value: function setUvs(geometry, polygon) {
       geometry.faceVertexUvs[0] = [];
 
-      //EDGE 0
-      var e = edges[0].points.length - 1;
-      for (var i = 0; i < e; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(i * (1 / e), i * (1 / e)), new THREE.Vector2((i + 1) * (1 / e), (i + 1) * (1 / e))]);
-      }
-      //EDGE 1
-      e = edges[1].points.length - 1;
-      for (var i = 0; i < e; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1, 1 - i * (1 / e)), new THREE.Vector2(1, 1 - (i + 1) * (1 / e))]);
-      }
-      //EDGE 2
-      e = edges[2].points.length - 1;
-      for (var i = 0; i < e; i++) {
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(1 - i * (1 / e), 0), new THREE.Vector2(1 - (i + 1) * (1 / e), 0)]);
-      }
+      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(i * (1 / e), i * (1 / e)), new THREE.Vector2((i + 1) * (1 / e), (i + 1) * (1 / e))]);
 
       geometry.uvsNeedUpdate = true;
     }
@@ -182,14 +179,14 @@ var ThreeJS = function () {
     value: function createPattern(color, textures, wireframe) {
       this.pattern = new THREE.MultiMaterial();
 
-      for (var i = 0; i < textures.length; i++) {
+      for (var _i4 = 0; _i4 < textures.length; _i4++) {
         var material = new THREE.MeshBasicMaterial({
           color: color,
           wireframe: wireframe,
           side: THREE.DoubleSide
         });
 
-        var texture = new THREE.TextureLoader().load(textures[i]);
+        var texture = new THREE.TextureLoader().load(textures[_i4]);
 
         material.map = texture;
         this.pattern.materials.push(material);
@@ -585,7 +582,9 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'calculateSpacing',
     value: function calculateSpacing(numDivisions) {
-      this.spacing = 0.2;
+      //NOTE: this is the overall subdivision spacing for polygons.
+      //Not the best, but the simplest place to define it
+      this.spacing = 0.5;
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
       numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
@@ -598,9 +597,7 @@ var Edge = function () {
     value: function subdivideEdge(numDivisions) {
       this.calculateSpacing(numDivisions);
 
-      this.points = [];
-      //push the first vertex
-      this.points.push(this.arc.startPoint);
+      this.points = [this.arc.startPoint];
 
       //tiny pgons near the edges of the disk don't need to be subdivided
       if (distance(this.arc.startPoint, this.arc.endPoint) > this.spacing) {
@@ -692,17 +689,12 @@ var Polygon = function () {
       this.edges[(this.longestEdge + 1) % 3].subdivideEdge(this.numDivisions);
       this.edges[(this.longestEdge + 2) % 3].subdivideEdge(this.numDivisions);
     }
-
-    //TODO creating mesh as a multi dimensional array. Would be more effective
-    //to do it as a single big array
-
   }, {
     key: 'subdivideMesh',
     value: function subdivideMesh() {
       this.subdivideEdges();
       this.mesh = [];
       this.mesh = [].concat(this.edges[this.longestEdge].points);
-      //this.mesh[0] = this.edges[this.longestEdge].points;
 
       //how many equal points the edges are divided into
       //const numDivisions = this.edges[this.longestEdge].points.length - 1;
@@ -724,13 +716,10 @@ var Polygon = function () {
 
       //push the final vertex
       this.mesh.push(edge2.points[0]);
-      //this.mesh[this.numDivisions] = [edge2.points[0]];
     }
   }, {
     key: 'subdivideInteriorLine',
     value: function subdivideInteriorLine(startPoint, endPoint, lineIndex) {
-      //this.mesh[lineIndex] = [];
-      //this.mesh[lineIndex].push(startPoint);
       this.mesh.push(startPoint);
       var thisLineDivisions = this.numDivisions - lineIndex;
 
@@ -741,11 +730,9 @@ var Polygon = function () {
         var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
         for (var j = 0; j < thisLineDivisions - 1; j++) {
           this.mesh.push(nextPoint);
-          //this.mesh[lineIndex].push(nextPoint);
           nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
         }
       }
-      //this.mesh[lineIndex].push(endPoint);
       this.mesh.push(endPoint);
     }
 
@@ -1167,8 +1154,8 @@ var RegularTesselation = function () {
 
     //TESTING
     this.wireframe = false;
-    this.wireframe = true;
-    console.log(p, q, maxLayers);
+    //this.wireframe = true;
+    console.log('{', p, ', ', q, '} tiling, drawing', maxLayers, ' layers');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
@@ -1204,7 +1191,7 @@ var RegularTesselation = function () {
         console.log('GenerateLayers took ' + (_t2 - _t) + ' milliseconds.');
       }
       var t0 = performance.now();
-      //this.drawLayers();
+      this.drawLayers();
       var t1 = performance.now();
       console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.');
     }
@@ -1519,7 +1506,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(6, 6, 1);
+  tesselation = new RegularTesselation(6, 6, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 

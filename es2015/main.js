@@ -45,7 +45,7 @@ else maxLayers = 2
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(6, 6, 1);
+  tesselation = new RegularTesselation(6, 6, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 }
 

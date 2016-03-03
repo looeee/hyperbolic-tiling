@@ -66,13 +66,16 @@ export class ThreeJS {
 
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe){
-    const l = polygon.numDivisions + 1
+    const l = polygon.numDivisions + 1;
+    const d = polygon.numDivisions;
     const vertices = polygon.mesh;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
+
     for(let i = 0; i < vertices.length; i++){
       geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
     }
+
 
     let edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh
@@ -85,6 +88,8 @@ export class ThreeJS {
           edgeStartingVertex + m,
           edgeStartingVertex + 1
         ));
+
+
 
       //range m-2 because we are ignoring the edges first vertex which was used in the faces.push above
       for(let j = 0; j < m - 2; j++){
@@ -104,49 +109,56 @@ export class ThreeJS {
       edgeStartingVertex += m;
     }
 
+    geometry.faceVertexUvs[0] = [];
+
+    const p = 1/d;
+
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(0, 0),
+        new THREE.Vector2(p, 0),
+        new THREE.Vector2(p, p),
+      ]);
+
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(p, p),
+        new THREE.Vector2(p, 0),
+        new THREE.Vector2(1, p),
+      ]);
+
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(p, p),
+        new THREE.Vector2(1, p),
+        new THREE.Vector2(1, 1),
+      ]);
+
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(p, 0),
+        new THREE.Vector2(1, 0),
+        new THREE.Vector2(1, p),
+      ]);
+
+
+
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
   }
 
   //The texture is assumed to be a square power of transparent png with the image
   //in the lower right triange triangle (0,0), (1,0), (1,1)
-  setUvs(geometry, edges) {
-    //the incentre of the triangle is mapped to the polygon barycentre
-    const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
-
+  setUvs(geometry, polygon) {
     geometry.faceVertexUvs[0] = [];
 
-    //EDGE 0
-    let e = edges[0].points.length - 1;
-    for(let i = 0; i < e; i++){
-      geometry.faceVertexUvs[0].push(
-        [
-          new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2(i*(1/e), i*(1/e)),
-          new THREE.Vector2((i+1)*(1/e), (i+1)*(1/e))
-        ]);
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(i*(1/e), i*(1/e)),
+        new THREE.Vector2((i+1)*(1/e), (i+1)*(1/e))
+      ]);
 
-    }
-    //EDGE 1
-    e = edges[1].points.length -1;
-    for(let i = 0; i < e; i++){
-      geometry.faceVertexUvs[0].push(
-        [
-          new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2(1, 1-i*(1/e)),
-          new THREE.Vector2(1, 1-(i+1)*(1/e))
-        ]);
-    }
-    //EDGE 2
-    e = edges[2].points.length -1;
-    for(let i = 0; i < e; i++){
-      geometry.faceVertexUvs[0].push(
-        [
-          new THREE.Vector2(incentre.x, incentre.y),
-          new THREE.Vector2(1-i*(1/e), 0),
-          new THREE.Vector2(1-(i+1)*(1/e), 0)
-        ]);
-    }
 
     geometry.uvsNeedUpdate = true;
   }
@@ -205,6 +217,50 @@ export class ThreeJS {
 }
 
 /* OLD/UNUSED FUNCTIONS
+
+//NOTE: UV mapping for old polygon subdivision method
+//The texture is assumed to be a square power of transparent png with the image
+//in the lower right triange triangle (0,0), (1,0), (1,1)
+setUvs(geometry, edges) {
+  //the incentre of the triangle is mapped to the polygon barycentre
+  const incentre = new THREE.Vector2(1 / Math.sqrt(2), 1 - 1 / Math.sqrt(2));
+
+  geometry.faceVertexUvs[0] = [];
+
+  //EDGE 0
+  let e = edges[0].points.length - 1;
+  for(let i = 0; i < e; i++){
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(i*(1/e), i*(1/e)),
+        new THREE.Vector2((i+1)*(1/e), (i+1)*(1/e))
+      ]);
+
+  }
+  //EDGE 1
+  e = edges[1].points.length -1;
+  for(let i = 0; i < e; i++){
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(1, 1-i*(1/e)),
+        new THREE.Vector2(1, 1-(i+1)*(1/e))
+      ]);
+  }
+  //EDGE 2
+  e = edges[2].points.length -1;
+  for(let i = 0; i < e; i++){
+    geometry.faceVertexUvs[0].push(
+      [
+        new THREE.Vector2(incentre.x, incentre.y),
+        new THREE.Vector2(1-i*(1/e), 0),
+        new THREE.Vector2(1-(i+1)*(1/e), 0)
+      ]);
+  }
+
+  geometry.uvsNeedUpdate = true;
+}
 
 //Divided polygon radially from centre, not good for texture mapping but more efficient
 polygonOLD(polygon, color, texture, wireframe) {

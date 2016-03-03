@@ -23,8 +23,8 @@ export class RegularTesselation {
   constructor(p, q, maxLayers) {
     //TESTING
     this.wireframe = false;
-    this.wireframe = true;
-    console.log(p, q, maxLayers);
+    //this.wireframe = true;
+    console.log('{', p, ', ' , q, '} tiling, drawing', maxLayers, ' layers');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
@@ -58,7 +58,7 @@ export class RegularTesselation {
       console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
     }
     let t0 = performance.now();
-    //this.drawLayers();
+    this.drawLayers();
     let t1 = performance.now();
     console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.')
   }
