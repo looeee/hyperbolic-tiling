@@ -190,7 +190,7 @@ class Edge {
   //subdivisions of the first edge ( so that all edges are divided into equal
   // number of pieces)
   calculateSpacing( numDivisions ){
-    this.spacing = 0.2;
+    this.spacing = 0.02;
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
     numDivisions = numDivisions || 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );

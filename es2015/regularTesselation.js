@@ -99,10 +99,10 @@ export class RegularTesselation {
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
     //TESTING
-    this.disk.drawPolygonV2(upper,0xffffff, this.textures, this.wireframe);
+    this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
     for(let line of upper.mesh){
       for(let point of line){
-        this.disk.drawPoint(point, 0.007, 0xff0000);
+        //this.disk.drawPoint(point, 0.007, 0xff0000);
       }
     }
 

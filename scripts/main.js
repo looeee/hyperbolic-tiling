@@ -99,18 +99,21 @@ var ThreeJS = function () {
 
       this.scene.add(circle);
     }
+
+    //Note: polygons assumed to be triangular!
+
   }, {
-    key: 'polygonV2',
-    value: function polygonV2(polygon, color, texture, wireframe) {
-      var l = polygon.mesh.length;
-      var vertices = polygon.mesh.reduce(function (a, b) {
+    key: 'polygon',
+    value: function polygon(_polygon, color, texture, wireframe) {
+      var l = _polygon.mesh.length;
+      var vertices = _polygon.mesh.reduce(function (a, b) {
         return a.concat(b);
       }, []);
-      var divisions = polygon.numDivisions;
+      var divisions = _polygon.numDivisions;
 
-      this.disk(vertices[1], 0.02, 0);
+      //this.disk(vertices[1], 0.02, 0)
 
-      console.log(polygon);
+      console.log(_polygon);
 
       var geometry = new THREE.Geometry();
 
@@ -118,32 +121,40 @@ var ThreeJS = function () {
         geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
       }
 
-      for (var i = 0; i < 3; i++) {
-        var a = [l * i, l * (i + 1) - i, l * i + 1];
-        //console.log(...a);
+      var edgeStartingVertex = 0;
+      for (var i = 0; i < l - 1; i++) {
+
+        var m = _polygon.mesh[i].length;
+        var a = [edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1];
         geometry.faces.push(new (Function.prototype.bind.apply(THREE.Face3, [null].concat(a)))());
-        for (var j = 1; j < l - i - 1; j++) {
-          console.log(j + l * i);
+
+        for (var j = 0; j < m - 2; j++) {
+
+          var b = [edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j];
+          var c = [edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2];
+          geometry.faces.push(new (Function.prototype.bind.apply(THREE.Face3, [null].concat(b)))());
+          geometry.faces.push(new (Function.prototype.bind.apply(THREE.Face3, [null].concat(c)))());
         }
+        edgeStartingVertex += m;
       }
 
       console.log(geometry);
-      var mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
+      var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
     }
 
     //Note: polygons assumed to be triangular!
 
   }, {
-    key: 'polygon',
-    value: function polygon(_polygon, color, texture, wireframe) {
+    key: 'polygonOLD',
+    value: function polygonOLD(polygon, color, texture, wireframe) {
       if (color === undefined) color = 0xffffff;
       var geometry = new THREE.Geometry();
 
       //assign polygon barycentre to vertex 0
-      geometry.vertices.push(new THREE.Vector3(_polygon.centre.x * this.radius, _polygon.centre.y * this.radius, 0));
+      geometry.vertices.push(new THREE.Vector3(polygon.centre.x * this.radius, polygon.centre.y * this.radius, 0));
 
-      var edges = _polygon.edges;
+      var edges = polygon.edges;
       //push first vertex of polygon to vertices array
       //This means that when the next vertex is pushed in the loop
       //we can also create the first face triangle
@@ -162,7 +173,7 @@ var ThreeJS = function () {
       }
       this.setUvs(geometry, edges);
 
-      var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
+      var mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
       this.scene.add(mesh);
     }
 
@@ -619,7 +630,7 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'calculateSpacing',
     value: function calculateSpacing(numDivisions) {
-      this.spacing = 0.2;
+      this.spacing = 0.02;
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
       numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
@@ -1285,7 +1296,7 @@ var RegularTesselation = function () {
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
       //TESTING
-      this.disk.drawPolygonV2(upper, 0xffffff, this.textures, this.wireframe);
+      this.disk.drawPolygon(upper, 0xffffff, this.textures, this.wireframe);
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -1299,9 +1310,9 @@ var RegularTesselation = function () {
 
           try {
             for (var _iterator2 = line[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-              var point = _step2.value;
+              //this.disk.drawPoint(point, 0.007, 0xff0000);
 
-              this.disk.drawPoint(point, 0.007, 0xff0000);
+              var point = _step2.value;
             }
           } catch (err) {
             _didIteratorError2 = true;

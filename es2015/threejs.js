@@ -64,12 +64,13 @@ export class ThreeJS {
     this.scene.add(circle);
   }
 
-  polygonV2(polygon, color, texture, wireframe){
+  //Note: polygons assumed to be triangular!
+  polygon(polygon, color, texture, wireframe){
     const l = polygon.mesh.length;
     const vertices = polygon.mesh.reduce( (a, b) => a.concat(b), []);
     const divisions = polygon.numDivisions;
 
-    this.disk(vertices[1], 0.02, 0)
+    //this.disk(vertices[1], 0.02, 0)
 
     console.log(polygon);
 
@@ -79,14 +80,22 @@ export class ThreeJS {
       geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
     }
 
-    for(let i = 0; i < 3 ; i++){
-      let a = [(l)*i, l*(i+1) - i, l*i + 1];
-      //console.log(...a);
-      geometry.faces.push(new THREE.Face3(...a));
-      for(let j = 1; j < l - i -1; j++){
-        console.log(j + (l*i));
-      }
+    let edgeStartingVertex = 0;
+    for(let i = 0; i < l -1; i++){
 
+      const m = polygon.mesh[i].length;
+      let a = [edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1];
+      geometry.faces.push(new THREE.Face3(...a));
+
+      for(let j = 0; j < m - 2; j++){
+
+        let b = [edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j];
+        let c = [edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2];
+        geometry.faces.push(new THREE.Face3(...b));
+        geometry.faces.push(new THREE.Face3(...c));
+
+      }
+      edgeStartingVertex += m;
     }
 
 
@@ -96,7 +105,7 @@ export class ThreeJS {
   }
 
   //Note: polygons assumed to be triangular!
-  polygon(polygon, color, texture, wireframe) {
+  polygonOLD(polygon, color, texture, wireframe) {
     if (color === undefined) color = 0xffffff;
     const geometry = new THREE.Geometry();
 
