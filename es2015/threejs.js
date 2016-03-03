@@ -91,8 +91,6 @@ export class ThreeJS {
           edgeStartingVertex + 1
         ));
 
-      //console.log(i*p, 0, (i+1)*p, 0, (i+1)*p, p);
-
       geometry.faceVertexUvs[0].push(
         [
           new THREE.Vector2(i*p, 0),
@@ -101,7 +99,7 @@ export class ThreeJS {
         ]);
 
 
-      //range m-2 because we are ignoring the edges first vertex which was used in the faces.push above
+      //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
       for(let j = 0; j < m - 2; j++){
         geometry.faces.push(
           new THREE.Face3(
@@ -109,12 +107,12 @@ export class ThreeJS {
             edgeStartingVertex + m + j,
             edgeStartingVertex + m + 1 + j
           ));
-        console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',2, 2,'}, {',3,3, '}');
+        //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+1+j)*p, j*p,'}, {',(i+j+2)*p, (j+1)*p, '}');
         geometry.faceVertexUvs[0].push(
           [
             new THREE.Vector2((i+1+j)*p, (1+j)*p),
-            new THREE.Vector2((i+1)*p, 0),
-            new THREE.Vector2((i+1)*p, 0),
+            new THREE.Vector2((i+1+j)*p, j*p),
+            new THREE.Vector2((i+j+2)*p, (j+1)*p),
           ]);
         geometry.faces.push(
           new THREE.Face3(
@@ -122,40 +120,16 @@ export class ThreeJS {
             edgeStartingVertex + m + 1 + j,
             edgeStartingVertex + j + 2
           ));
-        console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',2, 2,'}, {',3,3, '}');
+        //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+2+j)*p, (j+1)*p,'}, {',(i+j+2)*p, (j+2)*p, '}');
         geometry.faceVertexUvs[0].push(
           [
             new THREE.Vector2((i+1+j)*p, (1+j)*p),
-            new THREE.Vector2((i+1)*p, 0),
-            new THREE.Vector2((i+1)*p, 0),
+            new THREE.Vector2((i+2+j)*p, (j+1)*p),
+            new THREE.Vector2((i+j+2)*p, (j+2)*p),
           ]);
       }
       edgeStartingVertex += m;
     }
-
-/*
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(p, p),
-        new THREE.Vector2(p, 0),
-        new THREE.Vector2(1, p),
-      ]);
-
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(p, p),
-        new THREE.Vector2(1, p),
-        new THREE.Vector2(1, 1),
-      ]);
-
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(p, 0),
-        new THREE.Vector2(1, 0),
-        new THREE.Vector2(1, p),
-      ]);
-
-*/
 
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
