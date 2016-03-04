@@ -32,7 +32,7 @@ babelHelpers;
 // *
 // *  All operations involved in drawing to the screen occur here.
 // *  All objects are assumed to be on the unit Disk when passed here and
-// *  are converted to screen space (which will generally invole multiplying
+// *  are converted to screen space (which involves multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
 
@@ -64,8 +64,8 @@ var ThreeJS = function () {
   }, {
     key: 'clearScene',
     value: function clearScene() {
-      for (var _i = this.scene.children.length - 1; _i >= 0; _i--) {
-        this.scene.remove(this.scene.children[_i]);
+      for (var i = this.scene.children.length - 1; i >= 0; i--) {
+        this.scene.remove(this.scene.children[i]);
       }
     }
   }, {
@@ -105,6 +105,11 @@ var ThreeJS = function () {
   }, {
     key: 'polygon',
     value: function polygon(_polygon, color, texture, wireframe) {
+      //TESTING
+      //console.log(polygon.numDivisions, polygon.edges[polygon.longestEdge].points);
+      //this.disk(polygon.mesh[4], .02, 0xff0000);
+      //this.disk(polygon.mesh[5], .02, 0xff0000);
+      //this.disk(polygon.mesh[polygon.numDivisions*2], .02, 0xff0000);
       var l = _polygon.numDivisions + 1;
       var d = _polygon.numDivisions;
       var vertices = _polygon.mesh;
@@ -112,47 +117,34 @@ var ThreeJS = function () {
       var geometry = new THREE.Geometry();
       geometry.faceVertexUvs[0] = [];
 
-      for (var _i2 = 0; _i2 < vertices.length; _i2++) {
-        geometry.vertices.push(new THREE.Vector3(vertices[_i2].x * this.radius, vertices[_i2].y * this.radius, 0));
+      for (var i = 0; i < vertices.length; i++) {
+        geometry.vertices.push(new Point(vertices[i].x * this.radius, vertices[i].y * this.radius));
       }
 
       var edgeStartingVertex = 0;
       var p = 1 / d;
       //loop over each interior edge of the polygon's subdivion mesh
-      for (var _i3 = 0; _i3 < l - 1; _i3++) {
+      for (var i = 0; i < l - 1; i++) {
         //edge divisions reduce by one for each interior edge
-        var m = l - _i3;
+        var m = l - i;
         geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
 
-        geometry.faceVertexUvs[0].push([new THREE.Vector2(_i3 * p, 0), new THREE.Vector2((_i3 + 1) * p, 0), new THREE.Vector2((_i3 + 1) * p, p)]);
+        geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
 
         //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
         for (var j = 0; j < m - 2; j++) {
           geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
           //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+1+j)*p, j*p,'}, {',(i+j+2)*p, (j+1)*p, '}');
-          geometry.faceVertexUvs[0].push([new THREE.Vector2((_i3 + 1 + j) * p, (1 + j) * p), new THREE.Vector2((_i3 + 1 + j) * p, j * p), new THREE.Vector2((_i3 + j + 2) * p, (j + 1) * p)]);
+          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
           geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
           //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+2+j)*p, (j+1)*p,'}, {',(i+j+2)*p, (j+2)*p, '}');
-          geometry.faceVertexUvs[0].push([new THREE.Vector2((_i3 + 1 + j) * p, (1 + j) * p), new THREE.Vector2((_i3 + 2 + j) * p, (j + 1) * p), new THREE.Vector2((_i3 + j + 2) * p, (j + 2) * p)]);
+          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
         }
         edgeStartingVertex += m;
       }
 
       var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
-    }
-
-    //The texture is assumed to be a square power of transparent png with the image
-    //in the lower right triange triangle (0,0), (1,0), (1,1)
-
-  }, {
-    key: 'setUvs',
-    value: function setUvs(geometry, polygon) {
-      geometry.faceVertexUvs[0] = [];
-
-      geometry.faceVertexUvs[0].push([new THREE.Vector2(incentre.x, incentre.y), new THREE.Vector2(i * (1 / e), i * (1 / e)), new THREE.Vector2((i + 1) * (1 / e), (i + 1) * (1 / e))]);
-
-      geometry.uvsNeedUpdate = true;
     }
 
     //NOTE: some polygons are inverted due to vertex order,
@@ -175,14 +167,14 @@ var ThreeJS = function () {
     value: function createPattern(color, textures, wireframe) {
       this.pattern = new THREE.MultiMaterial();
 
-      for (var _i4 = 0; _i4 < textures.length; _i4++) {
+      for (var i = 0; i < textures.length; i++) {
         var material = new THREE.MeshBasicMaterial({
           color: color,
           wireframe: wireframe,
           side: THREE.DoubleSide
         });
 
-        var texture = new THREE.TextureLoader().load(textures[_i4]);
+        var texture = new THREE.TextureLoader().load(textures[i]);
 
         material.map = texture;
         this.pattern.materials.push(material);
@@ -569,10 +561,10 @@ var Edge = function () {
     this.arc = new Arc(startPoint, endPoint);
   }
 
-  //calculate the spacing for subdividing the edge into even number of pieces.
+  //calculate the spacing for subdividing the edge into an even number of pieces.
   //For the first ( longest ) edge this will be calculated based on spacing
   //then for the rest of the edges it will be calculated based on the number of
-  //subdivisions of the first edge ( so that all edges are divided into equal
+  //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
 
   babelHelpers.createClass(Edge, [{
@@ -580,13 +572,15 @@ var Edge = function () {
     value: function calculateSpacing(numDivisions) {
       //NOTE: this is the overall subdivision spacing for polygons.
       //Not the best, but the simplest place to define it
+      //NOTE: a value of > ~0.01 is required to hide all gaps
       this.spacing = 0.01;
+
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
-      numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
+      this.numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
 
       //recalculate spacing based on number of points
-      this.spacing = this.arc.arcLength / numDivisions;
+      this.spacing = this.arc.arcLength / this.numDivisions;
     }
   }, {
     key: 'subdivideEdge',
@@ -596,36 +590,20 @@ var Edge = function () {
       this.points = [this.arc.startPoint];
 
       //tiny pgons near the edges of the disk don't need to be subdivided
-      if (distance(this.arc.startPoint, this.arc.endPoint) > this.spacing) {
-        if (!this.arc.straightLine) {
-          this.pointsOnArc();
-        } else {
-          this.pointsOnStraightLine();
+      if (this.arc.arcLength > this.spacing) {
+
+        var p = this.arc.straightLine ? directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing) : directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing);
+
+        this.points.push(p);
+
+        for (var i = 0; i < this.numDivisions - 2; i++) {
+          p = this.arc.straightLine ? directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing) : directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing);
+          this.points.push(p);
         }
       }
 
       //push the final vertex
       this.points.push(this.arc.endPoint);
-    }
-  }, {
-    key: 'pointsOnStraightLine',
-    value: function pointsOnStraightLine() {
-      var p = directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
-      this.points.push(p);
-      while (distance(p, this.arc.endPoint) > this.spacing) {
-        p = directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
-        this.points.push(p);
-      }
-    }
-  }, {
-    key: 'pointsOnArc',
-    value: function pointsOnArc() {
-      var p = directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing);
-      this.points.push(p);
-      while (distance(p, this.arc.endPoint) > this.spacing) {
-        p = directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing);
-        this.points.push(p);
-      }
     }
   }]);
   return Edge;
@@ -692,8 +670,6 @@ var Polygon = function () {
       this.mesh = [];
       this.mesh = [].concat(this.edges[this.longestEdge].points);
 
-      //how many equal points the edges are divided into
-      //const numDivisions = this.edges[this.longestEdge].points.length - 1;
       var edge1 = undefined,
           edge2 = undefined;
       if (this.edges[(this.longestEdge + 1) % 3].points[0].compare(this.mesh[0])) {
@@ -716,6 +692,7 @@ var Polygon = function () {
   }, {
     key: 'subdivideInteriorLine',
     value: function subdivideInteriorLine(startPoint, endPoint, lineIndex) {
+      var circle = new Arc(startPoint, endPoint).circle;
       this.mesh.push(startPoint);
       var thisLineDivisions = this.numDivisions - lineIndex;
 
@@ -723,10 +700,11 @@ var Polygon = function () {
       if (thisLineDivisions > 1) {
         var d = distance(startPoint, endPoint);
         var spacing = d / thisLineDivisions;
-        var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
+        //let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
+        var nextPoint = directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
         for (var j = 0; j < thisLineDivisions - 1; j++) {
           this.mesh.push(nextPoint);
-          nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
+          nextPoint = directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
         }
       }
       this.mesh.push(endPoint);
@@ -795,11 +773,6 @@ var Disk = function () {
     key: 'drawPolygon',
     value: function drawPolygon(polygon, color, texture, wireframe) {
       this.draw.polygon(polygon, color, texture, wireframe);
-    }
-  }, {
-    key: 'drawPolygonV2',
-    value: function drawPolygonV2(polygon, color, texture, wireframe) {
-      this.draw.polygonV2(polygon, color, texture, wireframe);
     }
   }]);
   return Disk;
@@ -1234,7 +1207,7 @@ var RegularTesselation = function () {
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
       //TESTING
-      this.disk.drawPolygon(upper, 0xffffff, this.textures, this.wireframe);
+      //this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
       //for(let line of upper.mesh){
       //for(let point of line){
       //this.disk.drawPoint(point, 0.007, 0xff0000);
@@ -1271,6 +1244,12 @@ var RegularTesselation = function () {
           this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
         }
       }
+
+      //TESTING
+      //this.disk.drawPolygon(this.centralPattern[5] ,0xffffff, this.textures, this.wireframe);
+      //this.disk.drawPolygon(this.centralPattern[3] ,0xffffff, this.textures, this.wireframe);
+      //this.disk.drawPolygon(this.centralPattern[4] ,0xffffff, this.textures, this.wireframe);
+      //this.disk.drawPolygon(this.centralPattern[6] ,0xffffff, this.textures, this.wireframe);
 
       this.layers[0][0] = this.centralPattern;
     }
@@ -1502,7 +1481,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 6, 3);
+  tesselation = new RegularTesselation(4, 6, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 

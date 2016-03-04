@@ -1,11 +1,12 @@
 import * as E from './euclid';
+import { Point } from './elements';
 // * ***********************************************************************
 // *
 // *  THREE JS CLASS
 // *
 // *  All operations involved in drawing to the screen occur here.
 // *  All objects are assumed to be on the unit Disk when passed here and
-// *  are converted to screen space (which will generally invole multiplying
+// *  are converted to screen space (which involves multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
 export class ThreeJS {
@@ -66,6 +67,11 @@ export class ThreeJS {
 
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe){
+    //TESTING
+    //console.log(polygon.numDivisions, polygon.edges[polygon.longestEdge].points);
+    //this.disk(polygon.mesh[4], .02, 0xff0000);
+    //this.disk(polygon.mesh[5], .02, 0xff0000);
+    //this.disk(polygon.mesh[polygon.numDivisions*2], .02, 0xff0000);
     const l = polygon.numDivisions + 1;
     const d = polygon.numDivisions;
     const vertices = polygon.mesh;
@@ -74,9 +80,8 @@ export class ThreeJS {
     geometry.faceVertexUvs[0] = [];
 
     for(let i = 0; i < vertices.length; i++){
-      geometry.vertices.push(new THREE.Vector3(vertices[i].x * this.radius, vertices[i].y * this.radius, 0));
+      geometry.vertices.push(new Point(vertices[i].x * this.radius, vertices[i].y * this.radius));
     }
-
 
     let edgeStartingVertex = 0;
     const p = 1/d;
@@ -93,9 +98,9 @@ export class ThreeJS {
 
       geometry.faceVertexUvs[0].push(
         [
-          new THREE.Vector2(i*p, 0),
-          new THREE.Vector2((i+1)*p, 0),
-          new THREE.Vector2((i+1)*p, p),
+          new Point(i*p, 0),
+          new Point((i+1)*p, 0),
+          new Point((i+1)*p, p),
         ]);
 
 
@@ -110,9 +115,9 @@ export class ThreeJS {
         //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+1+j)*p, j*p,'}, {',(i+j+2)*p, (j+1)*p, '}');
         geometry.faceVertexUvs[0].push(
           [
-            new THREE.Vector2((i+1+j)*p, (1+j)*p),
-            new THREE.Vector2((i+1+j)*p, j*p),
-            new THREE.Vector2((i+j+2)*p, (j+1)*p),
+            new Point((i+1+j)*p, (1+j)*p),
+            new Point((i+1+j)*p, j*p),
+            new Point((i+j+2)*p, (j+1)*p),
           ]);
         geometry.faces.push(
           new THREE.Face3(
@@ -123,9 +128,9 @@ export class ThreeJS {
         //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+2+j)*p, (j+1)*p,'}, {',(i+j+2)*p, (j+2)*p, '}');
         geometry.faceVertexUvs[0].push(
           [
-            new THREE.Vector2((i+1+j)*p, (1+j)*p),
-            new THREE.Vector2((i+2+j)*p, (j+1)*p),
-            new THREE.Vector2((i+j+2)*p, (j+2)*p),
+            new Point((i+1+j)*p, (1+j)*p),
+            new Point((i+2+j)*p, (j+1)*p),
+            new Point((i+j+2)*p, (j+2)*p),
           ]);
       }
       edgeStartingVertex += m;
@@ -133,22 +138,6 @@ export class ThreeJS {
 
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
-  }
-
-  //The texture is assumed to be a square power of transparent png with the image
-  //in the lower right triange triangle (0,0), (1,0), (1,1)
-  setUvs(geometry, polygon) {
-    geometry.faceVertexUvs[0] = [];
-
-    geometry.faceVertexUvs[0].push(
-      [
-        new THREE.Vector2(incentre.x, incentre.y),
-        new THREE.Vector2(i*(1/e), i*(1/e)),
-        new THREE.Vector2((i+1)*(1/e), (i+1)*(1/e))
-      ]);
-
-
-    geometry.uvsNeedUpdate = true;
   }
 
   //NOTE: some polygons are inverted due to vertex order,
