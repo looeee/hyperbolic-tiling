@@ -29,6 +29,10 @@ Math.cot = Math.cot || function(x) {
 // *   SETUP
 // *
 // *************************************************************************
+
+//Global radius
+window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+
 let tesselation;
 let p = E.randomInt(3, 7);
 let q = E.randomInt(3, 7);
@@ -45,7 +49,7 @@ else maxLayers = 2
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(4, 6, 2);
+  tesselation = new RegularTesselation(6, 4, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 }
 

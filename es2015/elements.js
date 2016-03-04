@@ -119,7 +119,6 @@ export class Arc {
       this.circle = new Circle(0, 0, 1);
       this.startAngle = 0;
       this.endAngle = 0;
-      this.clockwise = false;
       this.straightLine = true;
       this.arcLength = E.distance(startPoint, endPoint);
     }
@@ -148,30 +147,19 @@ export class Arc {
     alpha = (alpha < 0) ? 2 * Math.PI + alpha : alpha;
     beta = (beta < 0) ? 2 * Math.PI + beta : beta;
 
-    //check whether points are in clockwise order and assign angles accordingly
-    const cw = E.clockwise(alpha, beta);
-
-    //TODO test if angles need to be set by cw here
-    //if (cw) {
     this.startAngle = alpha;
     this.endAngle = beta;
-    //} else {
-    //  this.startAngle = beta;
-    //  this.endAngle = alpha;
-    //}
 
     this.circle = arcCircle;
-    this.clockwise = cw;
     this.straightLine = false;
   }
 
   hyperboloidCrossProduct(point3D_1, point3D_2){
-    let h = {
+    return {
       x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
       y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
       z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
     };
-    return h;
   }
 }
 
@@ -194,7 +182,7 @@ class Edge {
   calculateSpacing( numDivisions ){
     //NOTE: this is the overall subdivision spacing for polygons.
     //Not the best, but the simplest place to define it
-    //NOTE: a value of > ~0.01 is required to hide all gaps 
+    //NOTE: a value of > ~0.01 is required to hide all gaps
     this.spacing = 0.01;
 
     //calculate the number of subdivisions required break the arc into an
@@ -231,19 +219,20 @@ class Edge {
     //push the final vertex
     this.points.push(this.arc.endPoint);
   }
-
 }
 
 // * ***********************************************************************
 // *
-// *  POLYGON CLASS
+// *  (TRIANGULAR) POLYGON CLASS
 // *
-// *  NOTE: all polygons are assumed to be triangular
 // *************************************************************************
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
 //@param vertices: array of Points
 //@param materialIndex: which material from THREE.Multimaterial to use
+//TODO: the subdivion mesh is calculated in the unit disk then mapped to screen coords
+//by ThreeJS class. This is very inefficient. Better to do the multiplication as the mesh is
+//being generated
 export class Polygon {
   constructor(vertices, materialIndex = 0) {
     this.materialIndex = materialIndex;

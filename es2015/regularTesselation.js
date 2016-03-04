@@ -98,16 +98,6 @@ export class RegularTesselation {
     const upper = this.fundamentalRegion();
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
-    //TESTING
-    //this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
-    //for(let line of upper.mesh){
-      //for(let point of line){
-        //this.disk.drawPoint(point, 0.007, 0xff0000);
-    //  }
-    //}
-
-
-
     return [upper, lower];
   }
 
@@ -136,12 +126,6 @@ export class RegularTesselation {
         this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
       }
     }
-
-    //TESTING
-    //this.disk.drawPolygon(this.centralPattern[5] ,0xffffff, this.textures, this.wireframe);
-    //this.disk.drawPolygon(this.centralPattern[3] ,0xffffff, this.textures, this.wireframe);
-    //this.disk.drawPolygon(this.centralPattern[4] ,0xffffff, this.textures, this.wireframe);
-    //this.disk.drawPolygon(this.centralPattern[6] ,0xffffff, this.textures, this.wireframe);
 
     this.layers[0][0] = this.centralPattern;
   }

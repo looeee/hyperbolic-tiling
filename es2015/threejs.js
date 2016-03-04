@@ -67,11 +67,6 @@ export class ThreeJS {
 
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe){
-    //TESTING
-    //console.log(polygon.numDivisions, polygon.edges[polygon.longestEdge].points);
-    //this.disk(polygon.mesh[4], .02, 0xff0000);
-    //this.disk(polygon.mesh[5], .02, 0xff0000);
-    //this.disk(polygon.mesh[polygon.numDivisions*2], .02, 0xff0000);
     const l = polygon.numDivisions + 1;
     const d = polygon.numDivisions;
     const vertices = polygon.mesh;

@@ -105,11 +105,6 @@ var ThreeJS = function () {
   }, {
     key: 'polygon',
     value: function polygon(_polygon, color, texture, wireframe) {
-      //TESTING
-      //console.log(polygon.numDivisions, polygon.edges[polygon.longestEdge].points);
-      //this.disk(polygon.mesh[4], .02, 0xff0000);
-      //this.disk(polygon.mesh[5], .02, 0xff0000);
-      //this.disk(polygon.mesh[polygon.numDivisions*2], .02, 0xff0000);
       var l = _polygon.numDivisions + 1;
       var d = _polygon.numDivisions;
       var vertices = _polygon.mesh;
@@ -324,18 +319,6 @@ var toFixed = function toFixed(number) {
   return parseFloat(number.toFixed(places));
 };
 
-//are the angles alpha, beta in clockwise order on unit disk?
-var clockwise = function clockwise(alpha, beta) {
-  //let cw = true;
-  var a = beta > 3 * Math.PI / 2 && alpha < Math.PI / 2;
-  var b = beta - alpha > Math.PI;
-  var c = alpha > beta && !(alpha - beta > Math.PI);
-  //if (a || b || c) {
-  //cw = false;
-  //}
-  return a || b || c ? false : true;
-};
-
 var multiplyMatrices = function multiplyMatrices(m1, m2) {
   var result = [];
   for (var i = 0; i < m1.length; i++) {
@@ -486,7 +469,6 @@ var Arc = function () {
       this.circle = new Circle(0, 0, 1);
       this.startAngle = 0;
       this.endAngle = 0;
-      this.clockwise = false;
       this.straightLine = true;
       this.arcLength = distance(startPoint, endPoint);
     } else {
@@ -517,31 +499,20 @@ var Arc = function () {
       alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
       beta = beta < 0 ? 2 * Math.PI + beta : beta;
 
-      //check whether points are in clockwise order and assign angles accordingly
-      var cw = clockwise(alpha, beta);
-
-      //TODO test if angles need to be set by cw here
-      //if (cw) {
       this.startAngle = alpha;
       this.endAngle = beta;
-      //} else {
-      //  this.startAngle = beta;
-      //  this.endAngle = alpha;
-      //}
 
       this.circle = arcCircle;
-      this.clockwise = cw;
       this.straightLine = false;
     }
   }, {
     key: 'hyperboloidCrossProduct',
     value: function hyperboloidCrossProduct(point3D_1, point3D_2) {
-      var h = {
+      return {
         x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
         y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
         z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
       };
-      return h;
     }
   }]);
   return Arc;
@@ -611,14 +582,16 @@ var Edge = function () {
 
 // * ***********************************************************************
 // *
-// *  POLYGON CLASS
+// *  (TRIANGULAR) POLYGON CLASS
 // *
-// *  NOTE: all polygons are assumed to be triangular
 // *************************************************************************
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
 //@param vertices: array of Points
 //@param materialIndex: which material from THREE.Multimaterial to use
+//TODO: the subdivion mesh is calculated in the unit disk then mapped to screen coords
+//by ThreeJS class. This is very inefficient. Better to do the multiplication as the mesh is
+//being generated
 
 var Polygon = function () {
   function Polygon(vertices) {
@@ -1206,14 +1179,6 @@ var RegularTesselation = function () {
       var upper = this.fundamentalRegion();
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
-      //TESTING
-      //this.disk.drawPolygon(upper,0xffffff, this.textures, this.wireframe);
-      //for(let line of upper.mesh){
-      //for(let point of line){
-      //this.disk.drawPoint(point, 0.007, 0xff0000);
-      //  }
-      //}
-
       return [upper, lower];
     }
 
@@ -1244,12 +1209,6 @@ var RegularTesselation = function () {
           this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
         }
       }
-
-      //TESTING
-      //this.disk.drawPolygon(this.centralPattern[5] ,0xffffff, this.textures, this.wireframe);
-      //this.disk.drawPolygon(this.centralPattern[3] ,0xffffff, this.textures, this.wireframe);
-      //this.disk.drawPolygon(this.centralPattern[4] ,0xffffff, this.textures, this.wireframe);
-      //this.disk.drawPolygon(this.centralPattern[6] ,0xffffff, this.textures, this.wireframe);
 
       this.layers[0][0] = this.centralPattern;
     }
@@ -1471,6 +1430,10 @@ Math.cot = Math.cot || function (x) {
 // *   SETUP
 // *
 // *************************************************************************
+
+//Global radius
+window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+
 var tesselation = undefined;
 var p = randomInt(3, 7);
 var q = randomInt(3, 7);
@@ -1481,7 +1444,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 6, 2);
+  tesselation = new RegularTesselation(6, 4, 2);
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 

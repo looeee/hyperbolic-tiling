@@ -71,25 +71,6 @@ export const arcLength = (circle, startAngle, endAngle) =>
     ? circle.radius * (2*Math.PI - Math.abs(startAngle - endAngle))
     : circle.radius * (Math.abs(startAngle - endAngle));
 
-
-
-//find the two points a distance from a point on the circumference of a circle
-export const spacedPointOnArc = (circle, point, spacing) => {
-  const cosTheta = -((spacing * spacing) / (2 * circle.radius * circle.radius) - 1);
-  const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
-  const sinThetaNeg = -sinThetaPos;
-
-  const xPos = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaPos * (point.y - circle.centre.y);
-  const xNeg = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaNeg * (point.y - circle.centre.y);
-  const yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
-  const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
-
-  return {
-    p1: new Point(xPos, yPos),
-    p2: new Point(xNeg, yNeg)
-  }
-}
-
 //find the two points a distance from a point on the circumference of a circle
 //in the direction of point2
 export const directedSpacedPointOnArc = (circle, point1, point2, spacing) => {
@@ -110,12 +91,6 @@ export const directedSpacedPointOnArc = (circle, point1, point2, spacing) => {
   return (a < b) ? p1 : p2;
 }
 
-//find the two points at a spacing from point1 along line defined by point1, point2
-export const spacedPointOnLine = (point1, point2, spacing) => {
-  const circle = new Circle(point1.x, point1.y, spacing);
-  return points = circleLineIntersect(circle, point1, point2);
-}
-
 //find the point at a distance from point1 along line defined by point1, point2,
 //in the direction of point2
 export const directedSpacedPointOnLine = (point1, point2, spacing) => {
@@ -125,7 +100,6 @@ export const directedSpacedPointOnLine = (point1, point2, spacing) => {
   const b = distance(points.p2, point2);
   return (a < b) ? points.p1 : points.p2;
 }
-
 
 export const randomFloat = (min, max) => Math.random() * (max - min) + min;
 
@@ -170,7 +144,36 @@ export const identityMatrix = (n) =>
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
-/*
+
+
+
+/* OLD/UNUSED FUNCTIONS
+
+
+//find the two points a distance from a point on the circumference of a circle
+export const spacedPointOnArc = (circle, point, spacing) => {
+  const cosTheta = -((spacing * spacing) / (2 * circle.radius * circle.radius) - 1);
+  const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
+  const sinThetaNeg = -sinThetaPos;
+
+  const xPos = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaPos * (point.y - circle.centre.y);
+  const xNeg = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaNeg * (point.y - circle.centre.y);
+  const yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
+  const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
+
+  return {
+    p1: new Point(xPos, yPos),
+    p2: new Point(xNeg, yNeg)
+  }
+}
+
+//find the two points at a spacing from point1 along line defined by point1, point2
+export const spacedPointOnLine = (point1, point2, spacing) => {
+  const circle = new Circle(point1.x, point1.y, spacing);
+  return points = circleLineIntersect(circle, point1, point2);
+}
+
+
 //slope of line through p1, p2
 export const slope = (p1, p2) => (p2.x - p1.x) / (p2.y - p1.y);
 
