@@ -11,7 +11,6 @@ export class Transform {
     this.matrix = matrix || E.identityMatrix(3);
     this.orientation = orientation;
     this.position = position || false; //position not always required
-
   }
 
   multiply(transform) {
@@ -52,7 +51,6 @@ export class Transformations {
     this.initEdgeTransforms();
 
     this.identity = new Transform(E.identityMatrix(3));
-
   }
 
   //reflect across the hypotenuse of the fundamental region of a tesselation
@@ -73,18 +71,18 @@ export class Transformations {
     const cos2p = Math.cos(2 * Math.PI / this.p);
     const sin2p = Math.sin(2 * Math.PI / this.p);
 
-    const coshq = Math.cos(Math.PI / this.q) / sinp //Math.cosh(Math.PI / this.q);
-    const sinhq = Math.sqrt(coshq * coshq - 1); //Math.sinh(Math.PI / this.q);
+    const coshq = Math.cos(Math.PI / this.q) / sinp;
+    const sinhq = Math.sqrt(coshq * coshq - 1);
 
     const cosh2q = 2 * coshq * coshq - 1;
     const sinh2q = 2 * sinhq * coshq;
     const num = 2;
     const den = 6;
     this.edgeReflection = new Transform(E.identityMatrix(3), -1);
-    this.edgeReflection.matrix[0][0] = -cosh2q //Math.cosh(num * Math.PI / (den));
-    this.edgeReflection.matrix[0][2] = sinh2q //Math.sinh(num * Math.PI / (den));
-    this.edgeReflection.matrix[2][0] = -sinh2q //Math.sinh(num * Math.PI / (den));
-    this.edgeReflection.matrix[2][2] = cosh2q //Math.cosh(num * Math.PI / (den));
+    this.edgeReflection.matrix[0][0] = -cosh2q;
+    this.edgeReflection.matrix[0][2] = sinh2q;
+    this.edgeReflection.matrix[2][0] = -sinh2q;
+    this.edgeReflection.matrix[2][2] = cosh2q;
   }
 
   initEdgeBisectorReflection() {
@@ -185,6 +183,7 @@ export class Transformations {
 // *
 // *  PARAMETERS CLASS
 // *
+// *  These are largely taken from the table on pg 19 of Ajit Dajar's thesis
 // *************************************************************************
 
 export class Parameters {

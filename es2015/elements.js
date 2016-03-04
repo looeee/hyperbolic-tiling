@@ -1,8 +1,6 @@
 import * as E from './euclid';
 import { ThreeJS } from './threejs';
 
-const radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-
 // * ***********************************************************************
 // * ***********************************************************************
 // * ***********************************************************************
@@ -27,9 +25,6 @@ export class Point {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-
-    this.checkPoint();
-
     this.z = 0;
   }
 
@@ -78,14 +73,6 @@ export class Point {
   clone(){
     return new Point(this.x, this.y);
   }
-
-  //check that the point lies in the unit disk and warn otherwise
-  //(don't check points that are in hyperboloid form with z !==0)
-  checkPoint(){
-    if (this.z == 0 && E.distance(this, {x: 0, y:0 }) > 1) {
-      console.warn('Warning! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
-    }
-  }
 }
 
 // * ***********************************************************************
@@ -117,8 +104,6 @@ export class Arc {
 
     if (E.throughOrigin(startPoint, endPoint)) {
       this.circle = new Circle(0, 0, 1);
-      this.startAngle = 0;
-      this.endAngle = 0;
       this.straightLine = true;
       this.arcLength = E.distance(startPoint, endPoint);
     }
@@ -149,9 +134,7 @@ export class Arc {
 
     this.startAngle = alpha;
     this.endAngle = beta;
-
     this.circle = arcCircle;
-    this.straightLine = false;
   }
 
   hyperboloidCrossProduct(point3D_1, point3D_2){

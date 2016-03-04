@@ -369,9 +369,6 @@ var Point = function () {
 
     this.x = x;
     this.y = y;
-
-    this.checkPoint();
-
     this.z = 0;
   }
 
@@ -428,17 +425,6 @@ var Point = function () {
     value: function clone() {
       return new Point(this.x, this.y);
     }
-
-    //check that the point lies in the unit disk and warn otherwise
-    //(don't check points that are in hyperboloid form with z !==0)
-
-  }, {
-    key: 'checkPoint',
-    value: function checkPoint() {
-      if (this.z == 0 && distance(this, { x: 0, y: 0 }) > 1) {
-        console.warn('Warning! Point (' + this.x + ', ' + this.y + ') lies outside the unit disk!');
-      }
-    }
   }]);
   return Point;
 }();
@@ -467,8 +453,6 @@ var Arc = function () {
 
     if (throughOrigin(startPoint, endPoint)) {
       this.circle = new Circle(0, 0, 1);
-      this.startAngle = 0;
-      this.endAngle = 0;
       this.straightLine = true;
       this.arcLength = distance(startPoint, endPoint);
     } else {
@@ -501,9 +485,7 @@ var Arc = function () {
 
       this.startAngle = alpha;
       this.endAngle = beta;
-
       this.circle = arcCircle;
-      this.straightLine = false;
     }
   }, {
     key: 'hyperboloidCrossProduct',
@@ -869,18 +851,18 @@ var Transformations = function () {
       var cos2p = Math.cos(2 * Math.PI / this.p);
       var sin2p = Math.sin(2 * Math.PI / this.p);
 
-      var coshq = Math.cos(Math.PI / this.q) / sinp; //Math.cosh(Math.PI / this.q);
-      var sinhq = Math.sqrt(coshq * coshq - 1); //Math.sinh(Math.PI / this.q);
+      var coshq = Math.cos(Math.PI / this.q) / sinp;
+      var sinhq = Math.sqrt(coshq * coshq - 1);
 
       var cosh2q = 2 * coshq * coshq - 1;
       var sinh2q = 2 * sinhq * coshq;
       var num = 2;
       var den = 6;
       this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -cosh2q; //Math.cosh(num * Math.PI / (den));
-      this.edgeReflection.matrix[0][2] = sinh2q; //Math.sinh(num * Math.PI / (den));
-      this.edgeReflection.matrix[2][0] = -sinh2q; //Math.sinh(num * Math.PI / (den));
-      this.edgeReflection.matrix[2][2] = cosh2q; //Math.cosh(num * Math.PI / (den));
+      this.edgeReflection.matrix[0][0] = -cosh2q;
+      this.edgeReflection.matrix[0][2] = sinh2q;
+      this.edgeReflection.matrix[2][0] = -sinh2q;
+      this.edgeReflection.matrix[2][2] = cosh2q;
     }
   }, {
     key: 'initEdgeBisectorReflection',
@@ -992,6 +974,7 @@ var Transformations = function () {
 // *
 // *  PARAMETERS CLASS
 // *
+// *  These are largely taken from the table on pg 19 of Ajit Dajar's thesis
 // *************************************************************************
 
 var Parameters = function () {
