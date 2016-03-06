@@ -1,4 +1,106 @@
 body {
-  background: white;
+  height: 100%;
+  width: 100%;
+  font-family: 'Roboto', sans-serif;
   margin: 0;
-  overflow: hidden; }
+  top: 0;
+  left: 0;
+  background-color: black; }
+
+h1 {
+  font-weight: 900;
+  color: darkgrey; }
+
+h2, h3 {
+  font-weight: 700;
+  color: darkgrey;
+  text-align: center; }
+
+p {
+  color: darkgrey;
+  text-align: center; }
+
+li {
+  text-align: left;
+  color: darkgrey; }
+
+input, option, select, button {
+  background-color: Transparent;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  overflow: hidden;
+  outline: none;
+  color: #7F7F7F;
+  border: solid #7F7F7F 1px;
+  border-radius: 2px; }
+
+button:hover {
+  background-image: linear-gradient(to bottom, #252525, #000000); }
+
+#title {
+  position: absolute;
+  top: 3%;
+  left: 5%;
+  width: 90%;
+  height: auto;
+  background-color: black;
+  text-align: center; }
+
+#container {
+  position: absolute;
+  top: 20%;
+  left: 3%;
+  width: 94%;
+  height: auto;
+  min-height: 77%;
+  background-color: black;
+  border: solid #7F7F7F 1px;
+  border-radius: 4px;
+  background-color: Transparent; }
+
+#content {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: inherit;
+  height: inherit; }
+
+#controlsLeft {
+  position: absolute;
+  margin-top: 2%;
+  margin-right: 0;
+  left: 2%;
+  width: 45%;
+  color: #7F7F7F;
+  text-align: right; }
+
+#controlsRight {
+  position: absolute;
+  margin-top: 2%;
+  margin-right: 0;
+  right: 2%;
+  width: 45%;
+  color: #7F7F7F;
+  text-align: right; }
+
+#buttonLeft {
+  position: absolute;
+  left: 2%; }
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 3px; }
+
+::-webkit-scrollbar-track-piece {
+  background-color: #fff;
+  -webkit-border-radius: 6px; }
+
+::-webkit-scrollbar-thumb:vertical {
+  height: 6px;
+  background-color: #666;
+  -webkit-border-radius: 6px; }
+
+::-webkit-scrollbar-thumb:horizontal {
+  width: 6px;
+  background-color: #666;
+  -webkit-border-radius: 6px; }

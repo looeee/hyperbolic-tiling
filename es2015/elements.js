@@ -271,29 +271,32 @@ export class Polygon {
     for(let i = 1; i < this.numDivisions; i++){
       const startPoint = edge2.points[(this.numDivisions - i)];
       const endPoint = edge3.points[i];
-      this.subdivideInteriorLine(startPoint, endPoint, i);
+      this.subdivideInteriorArc(startPoint, endPoint, i);
     }
 
     //push the final vertex
     this.mesh.push(edge2.points[0]);
   }
 
-  subdivideInteriorLine(startPoint, endPoint, lineIndex){
+  //find the points along the arc between opposite subdivions of the second two
+  //edges of the polygon
+  subdivideInteriorArc(startPoint, endPoint, arcIndex){
     const circle = new Arc(startPoint, endPoint).circle;
     this.mesh.push(startPoint);
-    const thisLineDivisions = this.numDivisions - lineIndex;
+
+    //for each arc, the number of divisions will be reduced by one
+    const divisions = this.numDivisions - arcIndex;
 
     //if the line get divided add points along line to mesh
-    if(thisLineDivisions > 1){
-      const d = E.distance(startPoint, endPoint);
-      const spacing = d / (thisLineDivisions);
-      //let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
+    if(divisions > 1){
+      const spacing = E.distance(startPoint, endPoint) / (divisions);
       let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
-      for(let j = 0; j < thisLineDivisions -1 ; j++){
+      for(let j = 0; j < divisions -1 ; j++){
         this.mesh.push(nextPoint);
         nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
       }
     }
+
     this.mesh.push(endPoint);
   }
 

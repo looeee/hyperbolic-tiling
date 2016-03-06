@@ -20,6 +20,9 @@ export class ThreeJS {
     this.initCamera();
     this.initRenderer();
     this.render();
+
+    document.querySelector('#save-image').onclick = () => this.saveImage();
+    document.querySelector('#download-image').onclick = () => this.downloadImage();
   }
 
   reset() {
@@ -46,6 +49,7 @@ export class ThreeJS {
     if (this.renderer === undefined) {
       this.renderer = new THREE.WebGLRenderer({
         antialias: true,
+        preserveDrawingBuffer: true,
       });
       this.renderer.setClearColor(0xffffff, 1.0);
       document.body.appendChild(this.renderer.domElement);
@@ -98,7 +102,6 @@ export class ThreeJS {
           new Point((i+1)*p, p),
         ]);
 
-
       //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
       for(let j = 0; j < m - 2; j++){
         geometry.faces.push(
@@ -107,7 +110,6 @@ export class ThreeJS {
             edgeStartingVertex + m + j,
             edgeStartingVertex + m + 1 + j
           ));
-        //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+1+j)*p, j*p,'}, {',(i+j+2)*p, (j+1)*p, '}');
         geometry.faceVertexUvs[0].push(
           [
             new Point((i+1+j)*p, (1+j)*p),
@@ -120,7 +122,6 @@ export class ThreeJS {
             edgeStartingVertex + m + 1 + j,
             edgeStartingVertex + j + 2
           ));
-        //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+2+j)*p, (j+1)*p,'}, {',(i+j+2)*p, (j+2)*p, '}');
         geometry.faceVertexUvs[0].push(
           [
             new Point((i+1+j)*p, (1+j)*p),
@@ -176,11 +177,17 @@ export class ThreeJS {
     this.renderer.render(this.scene, this.camera);
   }
 
+  //Download the canvas as a png image
+  downloadImage(){
+    link = document.querySelector('#download-image');
+    link.href = this.renderer.domElement.toDataURL();
+    console.log(link);
+    link.download = 'hyperbolic-tiling.png';
+  }
+
   //convert the canvas to a base64URL and send to saveImage.php
-  //TODO: make work!
   saveImage() {
-    const data = this.renderer.domElement.toDataURL('image/png');
-    //console.log(data);
+    const data = this.renderer.domElement.toDataURL();
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', 'saveImage.php', true);
     xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -188,7 +195,7 @@ export class ThreeJS {
   }
 }
 
-/* OLD/UNUSED FUNCTIONS
+/* DEPRECATED FUNCTIONS
 
 //NOTE: UV mapping for old polygon subdivision method
 //The texture is assumed to be a square power of transparent png with the image

@@ -15,7 +15,7 @@
 
 
 
-	define('UPLOAD_DIR', 'images/canvas_saved/');
+	define('UPLOAD_DIR', 'images/saved/');
 	$img = $_POST['img'];
 	echo $img;
 	$img = str_replace('data:image/png;base64,', '', $img);

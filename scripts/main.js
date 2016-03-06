@@ -46,11 +46,20 @@ var ThreeJS = function () {
   babelHelpers.createClass(ThreeJS, [{
     key: 'init',
     value: function init() {
+      var _this = this;
+
       this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
       this.initRenderer();
       this.render();
+
+      document.querySelector('#save-image').onclick = function () {
+        return _this.saveImage();
+      };
+      document.querySelector('#download-image').onclick = function () {
+        return _this.downloadImage();
+      };
     }
   }, {
     key: 'reset',
@@ -79,7 +88,8 @@ var ThreeJS = function () {
     value: function initRenderer() {
       if (this.renderer === undefined) {
         this.renderer = new THREE.WebGLRenderer({
-          antialias: true
+          antialias: true,
+          preserveDrawingBuffer: true
         });
         this.renderer.setClearColor(0xffffff, 1.0);
         document.body.appendChild(this.renderer.domElement);
@@ -129,10 +139,8 @@ var ThreeJS = function () {
         //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
         for (var j = 0; j < m - 2; j++) {
           geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
-          //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+1+j)*p, j*p,'}, {',(i+j+2)*p, (j+1)*p, '}');
           geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
           geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
-          //console.log('i=', i, 'j=', j,' {',(i+1+j)*p, (1+j)*p,'}, {',(i+2+j)*p, (j+1)*p,'}, {',(i+j+2)*p, (j+2)*p, '}');
           geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
         }
         edgeStartingVertex += m;
@@ -182,26 +190,35 @@ var ThreeJS = function () {
   }, {
     key: 'render',
     value: function render() {
-      var _this = this;
+      var _this2 = this;
 
       var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
       //if(sceneGetsUpdate){
       requestAnimationFrame(function () {
-        _this.render();
+        _this2.render();
       });
       //}
       this.renderer.render(this.scene, this.camera);
     }
 
+    //Download the canvas as a png image
+
+  }, {
+    key: 'downloadImage',
+    value: function downloadImage() {
+      link = document.querySelector('#download-image');
+      link.href = this.renderer.domElement.toDataURL();
+      console.log(link);
+      link.download = 'hyperbolic-tiling.png';
+    }
+
     //convert the canvas to a base64URL and send to saveImage.php
-    //TODO: make work!
 
   }, {
     key: 'saveImage',
     value: function saveImage() {
-      var data = this.renderer.domElement.toDataURL('image/png');
-      //console.log(data);
+      var data = this.renderer.domElement.toDataURL();
       var xhttp = new XMLHttpRequest();
       xhttp.open('POST', 'saveImage.php', true);
       xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
@@ -638,30 +655,35 @@ var Polygon = function () {
       for (var i = 1; i < this.numDivisions; i++) {
         var startPoint = edge2.points[this.numDivisions - i];
         var endPoint = edge3.points[i];
-        this.subdivideInteriorLine(startPoint, endPoint, i);
+        this.subdivideInteriorArc(startPoint, endPoint, i);
       }
 
       //push the final vertex
       this.mesh.push(edge2.points[0]);
     }
+
+    //find the points along the arc between opposite subdivions of the second two
+    //edges of the polygon
+
   }, {
-    key: 'subdivideInteriorLine',
-    value: function subdivideInteriorLine(startPoint, endPoint, lineIndex) {
+    key: 'subdivideInteriorArc',
+    value: function subdivideInteriorArc(startPoint, endPoint, arcIndex) {
       var circle = new Arc(startPoint, endPoint).circle;
       this.mesh.push(startPoint);
-      var thisLineDivisions = this.numDivisions - lineIndex;
+
+      //for each arc, the number of divisions will be reduced by one
+      var divisions = this.numDivisions - arcIndex;
 
       //if the line get divided add points along line to mesh
-      if (thisLineDivisions > 1) {
-        var d = distance(startPoint, endPoint);
-        var spacing = d / thisLineDivisions;
-        //let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
+      if (divisions > 1) {
+        var spacing = distance(startPoint, endPoint) / divisions;
         var nextPoint = directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
-        for (var j = 0; j < thisLineDivisions - 1; j++) {
+        for (var j = 0; j < divisions - 1; j++) {
           this.mesh.push(nextPoint);
           nextPoint = directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
         }
       }
+
       this.mesh.push(endPoint);
     }
 
