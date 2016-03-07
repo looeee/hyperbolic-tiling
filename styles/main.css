@@ -5,7 +5,14 @@ body {
   margin: 0;
   top: 0;
   left: 0;
-  background-color: black; }
+  background-color: white; }
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: auto;
+  z-index: -1; }
 
 h1 {
   font-weight: 900;

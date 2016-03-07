@@ -53,9 +53,6 @@ window.onload = () => {
   //tesselation = new RegularTesselation(p, q, maxLayers);
 }
 
-//TODO: resize is not working well, fix it!
 window.onresize = () => {
-  tesselation.disk.draw.reset();
-  tesselation.disk.drawDisk();
-  tesselation.init();
+  tesselation.disk.draw.resize();
 }

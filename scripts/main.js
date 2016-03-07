@@ -49,6 +49,7 @@ var ThreeJS = function () {
       var _this = this;
 
       this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+      this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
       this.initRenderer();
@@ -69,6 +70,31 @@ var ThreeJS = function () {
       this.projector = null;
       this.camera = null;
       this.init();
+    }
+
+    //TODO: sometimes messes up ratio
+
+  }, {
+    key: 'resize',
+    value: function resize() {
+      var w = window.innerWidth / 2 - 5;
+      var h = window.innerHeight / 2 - 5;
+      if (this.radiusSetByWidth && w < h) {
+        this.radius = w;
+      } else if (!w < h) {
+        this.radius = h;
+      }
+
+      /*
+      this.camera.aspect = this.radius * -1,
+                      this.radius ,
+                      this.radius ,
+                      this.radius * -1,
+                      -2,
+                      1;
+      */
+      //this.camera.updateProjectionMatrix();
+      this.renderer.setSize((this.radius + 5) * 2, (this.radius + 5) * 2);
     }
   }, {
     key: 'clearScene',
@@ -1453,9 +1479,6 @@ window.onload = function () {
   //tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
-//TODO: resize is not working well, fix it!
 window.onresize = function () {
-  tesselation.disk.draw.reset();
-  tesselation.disk.drawDisk();
-  tesselation.init();
+  tesselation.disk.draw.resize();
 };
