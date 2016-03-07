@@ -495,12 +495,13 @@ var Arc = function () {
     this.endPoint = endPoint;
 
     if (throughOrigin(startPoint, endPoint)) {
-      this.circle = new Circle(0, 0, 1);
       this.straightLine = true;
       this.arcLength = distance(startPoint, endPoint);
+      this.curvature = 0;
     } else {
       this.calculateArc();
       this.arcLength = arcLength(this.circle, this.startAngle, this.endAngle);
+      this.curvature = this.arcLength / this.circle.radius;
     }
   }
 
@@ -510,25 +511,20 @@ var Arc = function () {
     key: 'calculateArc',
     value: function calculateArc() {
       //calculate centre of arcCircle relative to unit disk
-      var wq1 = this.startPoint.poincareToHyperboloid();
-      var wq2 = this.endPoint.poincareToHyperboloid();
-      var wcp = this.hyperboloidCrossProduct(wq1, wq2);
+      var hp = this.hyperboloidCrossProduct(this.startPoint.poincareToHyperboloid(), this.endPoint.poincareToHyperboloid());
 
-      var arcCentre = new Point(wcp.x / wcp.z, wcp.y / wcp.z, true);
+      var arcCentre = new Point(hp.x / hp.z, hp.y / hp.z);
       var arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
-      var arcCircle = new Circle(arcCentre.x, arcCentre.y, arcRadius, true);
 
       //translate points to origin and calculate arctan
-      var alpha = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);
-      var beta = Math.atan2(this.endPoint.y - arcCentre.y, this.endPoint.x - arcCentre.x);
+      this.startAngle = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);
+      this.endAngle = Math.atan2(this.endPoint.y - arcCentre.y, this.endPoint.x - arcCentre.x);
 
       //angles are in (-pi, pi), transform to (0,2pi)
-      alpha = alpha < 0 ? 2 * Math.PI + alpha : alpha;
-      beta = beta < 0 ? 2 * Math.PI + beta : beta;
+      this.startAngle = this.startAngle < 0 ? 2 * Math.PI + this.startAngle : this.startAngle;
+      this.endAngle = this.endAngle < 0 ? 2 * Math.PI + this.endAngle : this.endAngle;
 
-      this.startAngle = alpha;
-      this.endAngle = beta;
-      this.circle = arcCircle;
+      this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
     }
   }, {
     key: 'hyperboloidCrossProduct',
@@ -569,7 +565,7 @@ var Edge = function () {
       //NOTE: this is the overall subdivision spacing for polygons.
       //Not the best, but the simplest place to define it
       //NOTE: a value of > ~0.01 is required to hide all gaps
-      this.spacing = 0.01;
+      this.spacing = 0.1;
 
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
