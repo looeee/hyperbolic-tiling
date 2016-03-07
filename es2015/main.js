@@ -39,8 +39,8 @@ let q = E.randomInt(2, 4)*2;
 let maxLayers;
 
 if ((p-2)*(q-2) < 5){
-  q = 5;
-  p = 4
+  q = 4;
+  p = 6
 }
 
 if(p * q < 22) maxLayers = 4;
@@ -49,8 +49,8 @@ else maxLayers = 2
 
 //Run after load to get window width and height
 window.onload = () => {
-  //tesselation = new RegularTesselation(6, 4, 3);
-  tesselation = new RegularTesselation(p, q, maxLayers);
+  tesselation = new RegularTesselation(4, 8, 15);
+  //tesselation = new RegularTesselation(p, q, 2);
 }
 
 window.onresize = () => {

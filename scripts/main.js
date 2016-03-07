@@ -171,7 +171,9 @@ var ThreeJS = function () {
         }
         edgeStartingVertex += m;
       }
-
+      if (_polygon.edges[_polygon.longestEdge].arc.arcLength < 0.02) {
+        _polygon.materialIndex += 2;
+      }
       var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
     }
@@ -188,7 +190,6 @@ var ThreeJS = function () {
       if (!this.pattern) {
         this.createPattern(color, textures, wireframe);
       }
-
       return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
     }
   }, {
@@ -208,6 +209,19 @@ var ThreeJS = function () {
         material.map = texture;
         this.pattern.materials.push(material);
       }
+
+      var black = new THREE.MeshBasicMaterial({
+        color: 0,
+        wireframe: wireframe,
+        side: THREE.DoubleSide
+      });
+      var white = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        wireframe: wireframe,
+        side: THREE.DoubleSide
+      });
+      this.pattern.materials.push(black);
+      this.pattern.materials.push(white);
     }
 
     //Only call render once by default.
@@ -757,7 +771,12 @@ var Polygon = function () {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
+    this.findLongestEdge();
+
+    //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
+    //}
+    //else this.mesh = this.vertices;
   }
 
   babelHelpers.createClass(Polygon, [{
@@ -793,7 +812,6 @@ var Polygon = function () {
   }, {
     key: 'subdivideEdges',
     value: function subdivideEdges() {
-      this.findLongestEdge();
       this.edges[this.longestEdge].subdivideEdge();
 
       this.numDivisions = this.edges[this.longestEdge].points.length - 1;
@@ -884,7 +902,7 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0x00baff);
+      this.draw.disk(this.centre, 1, 0);
     }
   }, {
     key: 'drawPoint',
@@ -1262,26 +1280,27 @@ var Parameters = function () {
 // *
 // *************************************************************************
 var RegularTesselation = function () {
-  function RegularTesselation(p, q, maxLayers) {
+  function RegularTesselation(p, q) {
     babelHelpers.classCallCheck(this, RegularTesselation);
 
     //TESTING
     this.wireframe = false;
     //this.wireframe = true;
-    console.log('{', p, ', ', q, '} tiling, drawing', maxLayers, ' layers');
+    console.log('{', p, ', ', q, '} tiling.');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
     this.p = p;
     this.q = q;
-    this.maxLayers = maxLayers || 5;
+    //a value of about 0.015 seems to be the minimum that webgl can handle.
+    this.minPolygonSize = 0.1;
 
     this.disk = new Disk();
     this.params = new Parameters(p, q);
     this.transforms = new Transformations(p, q);
 
     this.layers = [];
-    for (var i = 0; i <= maxLayers; i++) {
+    for (var i = 0; i <= 10; i++) {
       this.layers[i] = [];
     }
 
@@ -1307,18 +1326,17 @@ var RegularTesselation = function () {
     }
   }, {
     key: 'init',
-    value: function init(p, q, maxLayers) {
+    value: function init(p, q) {
       this.buildCentralPattern();
 
-      if (this.maxLayers > 1) {
-        var _t = performance.now();
-        this.generateLayers();
-        var _t2 = performance.now();
-        console.log('GenerateLayers took ' + (_t2 - _t) + ' milliseconds.');
-      }
       var t0 = performance.now();
-      this.drawLayers();
+      this.generateLayers();
       var t1 = performance.now();
+      console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
+
+      t0 = performance.now();
+      this.drawLayers();
+      t1 = performance.now();
       console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.');
     }
 
@@ -1426,9 +1444,12 @@ var RegularTesselation = function () {
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
-      this.layers[layer].push(this.transformPattern(this.centralPattern, transform));
+      var clone = this.transformPattern(this.centralPattern, transform);
+      this.layers[layer].push(clone);
 
-      if (layer >= this.maxLayers) return;
+      if (clone[0].edges[clone[0].longestEdge].arc.arcLength < this.minPolygonSize) {
+        return;
+      }
 
       var pSkip = this.params.pSkip(exposure);
       var verticesToDo = this.params.verticesToDo(exposure);
@@ -1450,6 +1471,7 @@ var RegularTesselation = function () {
           if (this.p === 3 && j === pgonsToDo - 1) {
             this.layers[layer].push(this.transformPattern(this.centralPattern, qTransform));
           } else {
+
             this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
           }
           if (-1 % this.p !== 0) {
@@ -1535,10 +1557,7 @@ var RegularTesselation = function () {
   }, {
     key: 'checkParams',
     value: function checkParams() {
-      if (this.maxLayers < 0 || isNaN(this.maxLayers)) {
-        console.error('maxLayers must be greater than 0');
-        return true;
-      } else if ((this.p - 2) * (this.q - 2) <= 4) {
+      if ((this.p - 2) * (this.q - 2) <= 4) {
         console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
         return true;
       } else if (this.q < 3 || isNaN(this.q)) {
@@ -1623,19 +1642,15 @@ window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 -
 var tesselation = undefined;
 var p = randomInt(2, 3) * 2;
 var q = randomInt(2, 4) * 2;
-var maxLayers = undefined;
-
 if ((p - 2) * (q - 2) < 5) {
-  q = 5;
-  p = 4;
+  q = 4;
+  p = 6;
 }
-
-if (p * q < 22) maxLayers = 4;else if (p * q < 29) maxLayers = 3;else maxLayers = 2;
 
 //Run after load to get window width and height
 window.onload = function () {
-  //tesselation = new RegularTesselation(6, 4, 3);
-  tesselation = new RegularTesselation(p, q, maxLayers);
+  tesselation = new RegularTesselation(4, 8, 15);
+  //tesselation = new RegularTesselation(p, q, 2);
 };
 
 window.onresize = function () {

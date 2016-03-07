@@ -20,24 +20,25 @@ from './helpers';
 // *
 // *************************************************************************
 export class RegularTesselation {
-  constructor(p, q, maxLayers) {
+  constructor(p, q) {
     //TESTING
     this.wireframe = false;
     //this.wireframe = true;
-    console.log('{', p, ', ' , q, '} tiling, drawing', maxLayers, ' layers');
+    console.log('{', p, ', ' , q, '} tiling.');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
 
     this.p = p;
     this.q = q;
-    this.maxLayers = maxLayers || 5;
+    //a value of about 0.015 seems to be the minimum that webgl can handle.
+    this.minPolygonSize = 0.1;
 
     this.disk = new Disk();
     this.params = new Parameters(p, q);
     this.transforms = new Transformations(p, q);
 
     this.layers = [];
-    for (let i = 0; i <= maxLayers; i++) {
+    for (let i = 0; i <= 10; i++) {
       this.layers[i] = []
     }
 
@@ -60,18 +61,17 @@ export class RegularTesselation {
     this.disk.drawPoint(p3,0.01, 0);
   }
 
-  init(p, q, maxLayers) {
+  init(p, q) {
     this.buildCentralPattern();
 
-    if (this.maxLayers > 1) {
-      let t0 = performance.now();
-      this.generateLayers();
-      let t1 = performance.now();
-      console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
-    }
     let t0 = performance.now();
-    this.drawLayers();
+    this.generateLayers();
     let t1 = performance.now();
+    console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
+
+    t0 = performance.now();
+    this.drawLayers();
+    t1 = performance.now();
     console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.')
   }
 
@@ -166,9 +166,12 @@ export class RegularTesselation {
   //but don't draw them yet
   //TODO document this function
   layerRecursion(exposure, layer, transform) {
-    this.layers[layer].push(this.transformPattern(this.centralPattern, transform));
+    const clone = this.transformPattern(this.centralPattern, transform);
+    this.layers[layer].push(clone);
 
-    if (layer >= this.maxLayers) return;
+    if(clone[0].edges[clone[0].longestEdge].arc.arcLength < this.minPolygonSize){
+      return;
+    }
 
     let pSkip = this.params.pSkip(exposure);
     let verticesToDo = this.params.verticesToDo(exposure);
@@ -192,6 +195,7 @@ export class RegularTesselation {
           this.layers[layer].push( this.transformPattern(this.centralPattern, qTransform) );
         }
         else {
+
           this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
         }
         if ((-1 % this.p) !== 0) {
@@ -228,11 +232,7 @@ export class RegularTesselation {
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
   checkParams() {
-    if (this.maxLayers < 0 || isNaN(this.maxLayers)) {
-      console.error('maxLayers must be greater than 0');
-      return true;
-    }
-    else if ((this.p - 2) * (this.q - 2) <= 4) {
+    if ((this.p - 2) * (this.q - 2) <= 4) {
       console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
       return true;
     }

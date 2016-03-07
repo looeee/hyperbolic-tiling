@@ -162,7 +162,9 @@ export class ThreeJS {
       }
       edgeStartingVertex += m;
     }
-
+    if(polygon.edges[polygon.longestEdge].arc.arcLength < 0.02){
+      polygon.materialIndex += 2;
+    }
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
   }
@@ -176,7 +178,6 @@ export class ThreeJS {
     if(!this.pattern){
       this.createPattern(color, textures, wireframe);
     }
-
     return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
   }
 
@@ -195,6 +196,19 @@ export class ThreeJS {
       material.map = texture;
       this.pattern.materials.push(material);
     }
+
+    const black = new THREE.MeshBasicMaterial({
+      color: 0,
+      wireframe: wireframe,
+      side: THREE.DoubleSide,
+    });
+    const white = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      wireframe: wireframe,
+      side: THREE.DoubleSide,
+    });
+    this.pattern.materials.push(black);
+    this.pattern.materials.push(white);
   }
 
   //Only call render once by default.

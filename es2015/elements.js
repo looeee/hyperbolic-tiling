@@ -233,13 +233,20 @@ export class Polygon {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
+    this.findLongestEdge();
+    
+    //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
+    //}
+    //else this.mesh = this.vertices;
   }
 
   addEdges(){
     this.edges = [];
     for (let i = 0; i < this.vertices.length; i++) {
-      this.edges.push(new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length]))
+      this.edges.push(
+        new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length])
+      )
     }
   }
 
@@ -266,7 +273,6 @@ export class Polygon {
   //subdivide the longest edge, then subdivide the other two edges with the
   //same number of points as the longest
   subdivideEdges(){
-    this.findLongestEdge();
     this.edges[this.longestEdge].subdivideEdge();
 
     this.numDivisions = this.edges[this.longestEdge].points.length -1;
@@ -349,7 +355,7 @@ export class Disk {
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, 1, 0x00baff);
+    this.draw.disk(this.centre, 1, 0);
   }
 
   drawPoint(point, radius, color) {
