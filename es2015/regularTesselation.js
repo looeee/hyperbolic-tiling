@@ -23,7 +23,7 @@ export class RegularTesselation {
   constructor(p, q, maxLayers) {
     //TESTING
     this.wireframe = false;
-    this.wireframe = true;
+    //this.wireframe = true;
     console.log('{', p, ', ' , q, '} tiling, drawing', maxLayers, ' layers');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
@@ -109,6 +109,8 @@ export class RegularTesselation {
   fundamentalPattern(){
     const upper = this.fundamentalRegion();
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+    //console.log(upper.edges);
+    //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
 
     return [upper, lower];
   }

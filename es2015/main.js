@@ -34,8 +34,8 @@ Math.cot = Math.cot || function(x) {
 window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
 let tesselation;
-let p = E.randomInt(3, 7);
-let q = E.randomInt(3, 7);
+let p = E.randomInt(2, 3)*2;
+let q = E.randomInt(2, 4)*2;
 let maxLayers;
 
 if ((p-2)*(q-2) < 5){
@@ -49,8 +49,8 @@ else maxLayers = 2
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(6, 4, 2);
-  //tesselation = new RegularTesselation(p, q, maxLayers);
+  //tesselation = new RegularTesselation(6, 4, 3);
+  tesselation = new RegularTesselation(p, q, maxLayers);
 }
 
 window.onresize = () => {

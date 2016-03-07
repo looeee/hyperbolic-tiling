@@ -700,7 +700,7 @@ var Edge = function () {
       //NOTE: this is the overall subdivision spacing for polygons.
       //Not the best, but the simplest place to define it
       //NOTE: a value of > ~0.01 is required to hide all gaps
-      this.spacing = 0.2;
+      this.spacing = 0.01;
 
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
@@ -767,6 +767,15 @@ var Polygon = function () {
       for (var i = 0; i < this.vertices.length; i++) {
         this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
       }
+    }
+  }, {
+    key: 'findCurviestEdge',
+    value: function findCurviestEdge() {
+      var a = this.edges[0].arc.curvature;
+      var b = this.edges[1].arc.curvature;
+      var c = this.edges[2].arc.curvature;
+
+      if (a > b && a > c) this.curviestEdge = 0;else if (b > c) this.curviestEdge = 1;else this.curviestEdge = 2;
     }
   }, {
     key: 'findLongestEdge',
@@ -1258,7 +1267,7 @@ var RegularTesselation = function () {
 
     //TESTING
     this.wireframe = false;
-    this.wireframe = true;
+    //this.wireframe = true;
     console.log('{', p, ', ', q, '} tiling, drawing', maxLayers, ' layers');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
@@ -1353,6 +1362,8 @@ var RegularTesselation = function () {
     value: function fundamentalPattern() {
       var upper = this.fundamentalRegion();
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+      //console.log(upper.edges);
+      //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
 
       return [upper, lower];
     }
@@ -1610,17 +1621,21 @@ Math.cot = Math.cot || function (x) {
 window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
 var tesselation = undefined;
-var p = randomInt(3, 7);
-var q = randomInt(3, 7);
+var p = randomInt(2, 3) * 2;
+var q = randomInt(2, 4) * 2;
+var maxLayers = undefined;
+
 if ((p - 2) * (q - 2) < 5) {
   q = 5;
   p = 4;
 }
 
+if (p * q < 22) maxLayers = 4;else if (p * q < 29) maxLayers = 3;else maxLayers = 2;
+
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(6, 4, 2);
-  //tesselation = new RegularTesselation(p, q, maxLayers);
+  //tesselation = new RegularTesselation(6, 4, 3);
+  tesselation = new RegularTesselation(p, q, maxLayers);
 };
 
 window.onresize = function () {

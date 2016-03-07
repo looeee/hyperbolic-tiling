@@ -178,7 +178,7 @@ class Edge {
     //NOTE: this is the overall subdivision spacing for polygons.
     //Not the best, but the simplest place to define it
     //NOTE: a value of > ~0.01 is required to hide all gaps
-    this.spacing = 0.2;
+    this.spacing = 0.01;
 
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
@@ -241,6 +241,16 @@ export class Polygon {
     for (let i = 0; i < this.vertices.length; i++) {
       this.edges.push(new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length]))
     }
+  }
+
+  findCurviestEdge(){
+    const a = this.edges[0].arc.curvature;
+    const b = this.edges[1].arc.curvature;
+    const c = this.edges[2].arc.curvature;
+
+    if( a > b && a > c) this.curviestEdge = 0;
+    else if( b > c) this.curviestEdge = 1;
+    else this.curviestEdge = 2;
   }
 
   findLongestEdge(){
