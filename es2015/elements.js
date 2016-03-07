@@ -178,7 +178,7 @@ class Edge {
     //NOTE: this is the overall subdivision spacing for polygons.
     //Not the best, but the simplest place to define it
     //NOTE: a value of > ~0.01 is required to hide all gaps
-    this.spacing = 0.1;
+    this.spacing = 0.2;
 
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
@@ -196,16 +196,16 @@ class Edge {
     //tiny pgons near the edges of the disk don't need to be subdivided
     if(this.arc.arcLength > this.spacing){
 
-      let p = (this.arc.straightLine)
-              ? E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing)
-              : E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing);
+      let p = (!this.arc.straightLine)
+              ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing)
+              : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
 
       this.points.push(p);
 
       for(let i = 0; i < this.numDivisions -2; i++){
-        p = (this.arc.straightLine)
-            ? E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing)
-            : E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing);
+        p = (!this.arc.straightLine)
+            ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing)
+            : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
         this.points.push(p);
       }
 

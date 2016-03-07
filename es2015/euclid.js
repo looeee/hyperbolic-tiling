@@ -94,11 +94,8 @@ export const directedSpacedPointOnArc = (circle, point1, point2, spacing) => {
 //find the point at a distance from point1 along line defined by point1, point2,
 //in the direction of point2
 export const directedSpacedPointOnLine = (point1, point2, spacing) => {
-  const circle = new Circle(point1.x, point1.y, spacing);
-  const points = circleLineIntersect(circle, point1, point2);
-  const a = distance(points.p1, point2);
-  const b = distance(points.p2, point2);
-  return (a < b) ? points.p1 : points.p2;
+  const dv = normalVector(point1, point2);
+  return new Point(point1.x + spacing*dv.x, point1.y + spacing*dv.y);
 }
 
 export const randomFloat = (min, max) => Math.random() * (max - min) + min;
@@ -144,11 +141,23 @@ export const identityMatrix = (n) =>
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
 
-
+//calculate the normal vector given 2 points
+export const normalVector = (p1, p2) => {
+  const d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
+}
 
 
 /* OLD/UNUSED FUNCTIONS
-
+//find the point at a distance from point1 along line defined by point1, point2,
+//in the direction of point2
+export const directedSpacedPointOnLineOLD = (point1, point2, spacing) => {
+  const circle = new Circle(point1.x, point1.y, spacing);
+  const points = circleLineIntersect(circle, point1, point2);
+  const a = distance(points.p1, point2);
+  const b = distance(points.p2, point2);
+  return (a < b) ? points.p1 : points.p2;
+}
 
 //find the two points a distance from a point on the circumference of a circle
 export const spacedPointOnArc = (circle, point, spacing) => {
@@ -271,12 +280,6 @@ export const centralAngle = (p1, p2, r) => {
   let res = 2 * Math.asin(temp);
   if(isNaN(res)) res = 0;
   return res;
-}
-
-//calculate the normal vector given 2 points
-export const normalVector = (p1, p2) => {
-  let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
 }
 
 export const radians = (degrees) =>  (Math.PI / 180) * degrees;

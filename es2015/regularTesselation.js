@@ -23,7 +23,7 @@ export class RegularTesselation {
   constructor(p, q, maxLayers) {
     //TESTING
     this.wireframe = false;
-    //this.wireframe = true;
+    this.wireframe = true;
     console.log('{', p, ', ' , q, '} tiling, drawing', maxLayers, ' layers');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
     //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
@@ -46,6 +46,18 @@ export class RegularTesselation {
     }
 
     this.init();
+    //this.testing();
+  }
+
+  testing(){
+    const p1 = new Point(0.1, 0.1);
+    const p2 = new Point(-0.1, 0.3);
+    this.disk.drawPoint(p1,0.01, 0xff0000);
+    this.disk.drawPoint(p2,0.01, 0xff0000);
+
+    const p3 = E.directedSpacedPointOnLine(p2,p1,.1);
+    console.log(p3);
+    this.disk.drawPoint(p3,0.01, 0);
   }
 
   init(p, q, maxLayers) {
