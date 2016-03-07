@@ -36,21 +36,17 @@ window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 
 let tesselation;
 let p = E.randomInt(2, 3)*2;
 let q = E.randomInt(2, 4)*2;
-let maxLayers;
 
 if ((p-2)*(q-2) < 5){
   q = 4;
   p = 6
 }
 
-if(p * q < 22) maxLayers = 4;
-else if(p * q < 29) maxLayers = 3;
-else maxLayers = 2
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(4, 8, 15);
-  //tesselation = new RegularTesselation(p, q, 2);
+  tesselation = new RegularTesselation(4, 6);
+  //tesselation = new RegularTesselation(p, q);
 }
 
 window.onresize = () => {

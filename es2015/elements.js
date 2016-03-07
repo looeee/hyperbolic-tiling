@@ -234,7 +234,6 @@ export class Polygon {
     this.vertices = vertices;
     this.addEdges();
     this.findLongestEdge();
-    
     //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
     //}
@@ -274,7 +273,6 @@ export class Polygon {
   //same number of points as the longest
   subdivideEdges(){
     this.edges[this.longestEdge].subdivideEdge();
-
     this.numDivisions = this.edges[this.longestEdge].points.length -1;
 
     this.edges[(this.longestEdge + 1) % 3].subdivideEdge(this.numDivisions);
@@ -284,26 +282,16 @@ export class Polygon {
   subdivideMesh(){
     this.subdivideEdges();
     this.mesh = [];
-    this.mesh = [].concat(this.edges[this.longestEdge].points);
-
-    let edge1, edge2;
-    if(this.edges[(this.longestEdge + 1) % 3].points[0].compare(this.mesh[0])){
-      edge2 = this.edges[(this.longestEdge + 1) % 3];
-      edge3 = this.edges[(this.longestEdge + 2) % 3];
-    }
-    else{
-      edge3 = this.edges[(this.longestEdge + 1) % 3];
-      edge2 = this.edges[(this.longestEdge + 2) % 3];
-    }
+    this.mesh = [].concat(this.edges[0].points);
 
     for(let i = 1; i < this.numDivisions; i++){
-      const startPoint = edge2.points[(this.numDivisions - i)];
-      const endPoint = edge3.points[i];
+      const startPoint = this.edges[2].points[(this.numDivisions - i)];
+      const endPoint = this.edges[1].points[i];
       this.subdivideInteriorArc(startPoint, endPoint, i);
     }
 
     //push the final vertex
-    this.mesh.push(edge2.points[0]);
+    this.mesh.push(this.edges[2].points[0]);
   }
 
   //find the points along the arc between opposite subdivions of the second two

@@ -37,10 +37,7 @@ export class RegularTesselation {
     this.params = new Parameters(p, q);
     this.transforms = new Transformations(p, q);
 
-    this.layers = [];
-    for (let i = 0; i <= 10; i++) {
-      this.layers[i] = []
-    }
+    this.tiling = [];
 
     if (this.checkParams()) {
       return false;
@@ -65,14 +62,14 @@ export class RegularTesselation {
     this.buildCentralPattern();
 
     let t0 = performance.now();
-    this.generateLayers();
+    this.generateTiling();
     let t1 = performance.now();
-    console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.')
+    console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.')
 
     t0 = performance.now();
-    this.drawLayers();
+    this.drawTiling();
     t1 = performance.now();
-    console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.')
+    console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.')
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -141,16 +138,16 @@ export class RegularTesselation {
       }
     }
 
-    this.layers[0][0] = this.centralPattern;
+    this.tiling[0] = this.centralPattern;
   }
 
   //TODO document this function
-  generateLayers() {
+  generateTiling() {
     for (let i = 0; i < this.p; i++) {
       let qTransform = this.transforms.edgeTransforms[i];
       for (let j = 0; j < this.q - 2; j++) {
         if ((this.p === 3) && (this.q - 3 === j)) {
-          this.layers[i].push( this.transformPattern(this.centralPattern, qTransform) );
+          this.tiling.push( this.transformPattern(this.centralPattern, qTransform) );
         }
         else {
           this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
@@ -162,14 +159,13 @@ export class RegularTesselation {
     }
   }
 
-  //calculate the polygons in each layer and add them to this.layers[layer] array
-  //but don't draw them yet
+  //calculate the polygons in each layer and add them to this.tiling[]
   //TODO document this function
   layerRecursion(exposure, layer, transform) {
-    const clone = this.transformPattern(this.centralPattern, transform);
-    this.layers[layer].push(clone);
+    this.tiling.push(this.transformPattern(this.centralPattern, transform));
 
-    if(clone[0].edges[clone[0].longestEdge].arc.arcLength < this.minPolygonSize){
+    //stop if the current pattern has reached the minimum size
+    if(this.tiling[this.tiling.length-1][0].edges[0].arc.arcLength < this.minPolygonSize){
       return;
     }
 
@@ -192,7 +188,7 @@ export class RegularTesselation {
 
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
-          this.layers[layer].push( this.transformPattern(this.centralPattern, qTransform) );
+          this.tiling.push( this.transformPattern(this.centralPattern, qTransform) );
         }
         else {
 
@@ -220,12 +216,9 @@ export class RegularTesselation {
     }
   }
 
-  drawLayers() {
-    for (let i = 0; i < this.layers.length; i++) {
-      const layer = this.layers[i];
-      for (let j = 0; j < layer.length; j++) {
-        this.drawPattern(layer[j]);
-      }
+  drawTiling() {
+    for (let i = 0; i < this.tiling.length; i++) {
+      this.drawPattern(this.tiling[i]);
     }
   }
 

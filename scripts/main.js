@@ -772,7 +772,6 @@ var Polygon = function () {
     this.vertices = vertices;
     this.addEdges();
     this.findLongestEdge();
-
     //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
     //}
@@ -813,7 +812,6 @@ var Polygon = function () {
     key: 'subdivideEdges',
     value: function subdivideEdges() {
       this.edges[this.longestEdge].subdivideEdge();
-
       this.numDivisions = this.edges[this.longestEdge].points.length - 1;
 
       this.edges[(this.longestEdge + 1) % 3].subdivideEdge(this.numDivisions);
@@ -824,26 +822,16 @@ var Polygon = function () {
     value: function subdivideMesh() {
       this.subdivideEdges();
       this.mesh = [];
-      this.mesh = [].concat(this.edges[this.longestEdge].points);
-
-      var edge1 = undefined,
-          edge2 = undefined;
-      if (this.edges[(this.longestEdge + 1) % 3].points[0].compare(this.mesh[0])) {
-        edge2 = this.edges[(this.longestEdge + 1) % 3];
-        edge3 = this.edges[(this.longestEdge + 2) % 3];
-      } else {
-        edge3 = this.edges[(this.longestEdge + 1) % 3];
-        edge2 = this.edges[(this.longestEdge + 2) % 3];
-      }
+      this.mesh = [].concat(this.edges[0].points);
 
       for (var i = 1; i < this.numDivisions; i++) {
-        var startPoint = edge2.points[this.numDivisions - i];
-        var endPoint = edge3.points[i];
+        var startPoint = this.edges[2].points[this.numDivisions - i];
+        var endPoint = this.edges[1].points[i];
         this.subdivideInteriorArc(startPoint, endPoint, i);
       }
 
       //push the final vertex
-      this.mesh.push(edge2.points[0]);
+      this.mesh.push(this.edges[2].points[0]);
     }
 
     //find the points along the arc between opposite subdivions of the second two
@@ -1299,10 +1287,7 @@ var RegularTesselation = function () {
     this.params = new Parameters(p, q);
     this.transforms = new Transformations(p, q);
 
-    this.layers = [];
-    for (var i = 0; i <= 10; i++) {
-      this.layers[i] = [];
-    }
+    this.tiling = [];
 
     if (this.checkParams()) {
       return false;
@@ -1330,14 +1315,14 @@ var RegularTesselation = function () {
       this.buildCentralPattern();
 
       var t0 = performance.now();
-      this.generateLayers();
+      this.generateTiling();
       var t1 = performance.now();
-      console.log('GenerateLayers took ' + (t1 - t0) + ' milliseconds.');
+      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
 
       t0 = performance.now();
-      this.drawLayers();
+      this.drawTiling();
       t1 = performance.now();
-      console.log('DrawLayers took ' + (t1 - t0) + ' milliseconds.');
+      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
     }
 
     //fundamentalRegion calculation using Dunham's method
@@ -1414,19 +1399,19 @@ var RegularTesselation = function () {
         }
       }
 
-      this.layers[0][0] = this.centralPattern;
+      this.tiling[0] = this.centralPattern;
     }
 
     //TODO document this function
 
   }, {
-    key: 'generateLayers',
-    value: function generateLayers() {
+    key: 'generateTiling',
+    value: function generateTiling() {
       for (var i = 0; i < this.p; i++) {
         var qTransform = this.transforms.edgeTransforms[i];
         for (var j = 0; j < this.q - 2; j++) {
           if (this.p === 3 && this.q - 3 === j) {
-            this.layers[i].push(this.transformPattern(this.centralPattern, qTransform));
+            this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
           } else {
             this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
           }
@@ -1437,17 +1422,16 @@ var RegularTesselation = function () {
       }
     }
 
-    //calculate the polygons in each layer and add them to this.layers[layer] array
-    //but don't draw them yet
+    //calculate the polygons in each layer and add them to this.tiling[]
     //TODO document this function
 
   }, {
     key: 'layerRecursion',
     value: function layerRecursion(exposure, layer, transform) {
-      var clone = this.transformPattern(this.centralPattern, transform);
-      this.layers[layer].push(clone);
+      this.tiling.push(this.transformPattern(this.centralPattern, transform));
 
-      if (clone[0].edges[clone[0].longestEdge].arc.arcLength < this.minPolygonSize) {
+      //stop if the current pattern has reached the minimum size
+      if (this.tiling[this.tiling.length - 1][0].edges[0].arc.arcLength < this.minPolygonSize) {
         return;
       }
 
@@ -1469,7 +1453,7 @@ var RegularTesselation = function () {
 
         for (var j = 0; j < pgonsToDo; j++) {
           if (this.p === 3 && j === pgonsToDo - 1) {
-            this.layers[layer].push(this.transformPattern(this.centralPattern, qTransform));
+            this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
           } else {
 
             this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
@@ -1541,13 +1525,10 @@ var RegularTesselation = function () {
       }
     }
   }, {
-    key: 'drawLayers',
-    value: function drawLayers() {
-      for (var i = 0; i < this.layers.length; i++) {
-        var layer = this.layers[i];
-        for (var j = 0; j < layer.length; j++) {
-          this.drawPattern(layer[j]);
-        }
+    key: 'drawTiling',
+    value: function drawTiling() {
+      for (var i = 0; i < this.tiling.length; i++) {
+        this.drawPattern(this.tiling[i]);
       }
     }
 
@@ -1642,6 +1623,7 @@ window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 -
 var tesselation = undefined;
 var p = randomInt(2, 3) * 2;
 var q = randomInt(2, 4) * 2;
+
 if ((p - 2) * (q - 2) < 5) {
   q = 4;
   p = 6;
@@ -1649,8 +1631,8 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 8, 15);
-  //tesselation = new RegularTesselation(p, q, 2);
+  tesselation = new RegularTesselation(4, 6);
+  //tesselation = new RegularTesselation(p, q);
 };
 
 window.onresize = function () {
