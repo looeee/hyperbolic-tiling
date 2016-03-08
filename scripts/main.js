@@ -53,7 +53,7 @@ var ThreeJS = function () {
       if (this.scene === undefined) this.scene = new THREE.Scene();
       this.initCamera();
       this.initRenderer();
-      this.render();
+      //this.render();
 
       document.querySelector('#save-image').onclick = function () {
         return _this.saveImage();
@@ -170,13 +170,8 @@ var ThreeJS = function () {
         edgeStartingVertex += m;
       }
 
-      //tiny polygons get drawn with coloured materials instead of textures
-      if (_polygon.edges[0].arc.arcLength < 0.02) {
-        _polygon.materialIndex += 2;
-      }
       var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
-      //console.log(mesh);
     }
 
     //NOTE: some polygons are inverted due to vertex order,
@@ -196,6 +191,8 @@ var ThreeJS = function () {
   }, {
     key: 'createPattern',
     value: function createPattern(color, textures, wireframe) {
+      var _this2 = this;
+
       this.pattern = new THREE.MultiMaterial();
 
       for (var i = 0; i < textures.length; i++) {
@@ -205,40 +202,26 @@ var ThreeJS = function () {
           side: THREE.DoubleSide
         });
 
-        var texture = new THREE.TextureLoader().load(textures[i]);
+        var texture = new THREE.TextureLoader().load(textures[i], function () {
+          _this2.render();
+        });
 
         material.map = texture;
         this.pattern.materials.push(material);
       }
-
-      var black = new THREE.MeshBasicMaterial({
-        color: 0,
-        wireframe: wireframe,
-        side: THREE.DoubleSide
-      });
-      var white = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        wireframe: wireframe,
-        side: THREE.DoubleSide
-      });
-      this.pattern.materials.push(black);
-      this.pattern.materials.push(white);
     }
 
     //Only call render once by default.
-    //TODO: currently calling once per texture in this.pattern
 
   }, {
     key: 'render',
     value: function render() {
-      var _this2 = this;
-
       var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
       //if(sceneGetsUpdate){
-      requestAnimationFrame(function () {
-        _this2.render();
-      });
+      //requestAnimationFrame(() => {
+      //  this.render()
+      //});
       //}
       this.renderer.render(this.scene, this.camera);
     }
@@ -713,13 +696,17 @@ var Edge = function () {
     key: 'calculateSpacing',
     value: function calculateSpacing(numDivisions) {
       //subdivision spacing for edges
-      //NOTE: a value of ~0.01 is required to hide all gaps in edge polygons
-      this.spacing = this.arc.arcLength / 5;
-      if (this.spacing < 0.01) this.spacing = 0.01;
+      this.spacing = this.arc.arcLength > 0.03 ? this.arc.arcLength / 5 //approx maximum that hides all gaps
+      : 0.02;
+
+      //TESTING
+      //this.spacing = 0.2;
 
       //calculate the number of subdivisions required break the arc into an
-      //even number of pieces with each <= this.spacing
-      this.numDivisions = numDivisions || 2 * Math.ceil(this.arc.arcLength / this.spacing / 2);
+      //even number of pieces (or 1 in case of tiny polygons)
+      var subdivisions = this.arc.arcLength > 0.01 ? 2 * Math.ceil(this.arc.arcLength / this.spacing / 2) : 1;
+
+      this.numDivisions = numDivisions || subdivisions;
 
       //recalculate spacing based on number of points
       this.spacing = this.arc.arcLength / this.numDivisions;
@@ -743,7 +730,6 @@ var Edge = function () {
           this.points.push(p);
         }
       }
-
       //push the final vertex
       this.points.push(this.arc.endPoint);
     }
@@ -772,13 +758,8 @@ var Polygon = function () {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
-    //this.findLongestEdge();
-    //this.findCurviestEdge();
     this.findSubdivisionEdge();
-    //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
-    //}
-    //else this.mesh = this.vertices;
   }
 
   babelHelpers.createClass(Polygon, [{
@@ -1277,8 +1258,12 @@ var RegularTesselation = function () {
 
     this.p = p;
     this.q = q;
-    //a value of about 0.015 seems to be the minimum that webgl can handle.
-    this.minPolygonSize = 0.1;
+    //a value of about 0.01 seems to be the minimum that webgl can handle easily.
+    //TODO test different tilings and work out value needed for each if different
+    this.minPolygonSize = 0.009;
+
+    //TESTING
+    //this.minPolygonSize = 0.09;
 
     this.disk = new Disk();
     this.params = new Parameters(p, q);
@@ -1364,9 +1349,9 @@ var RegularTesselation = function () {
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
       //TESTING
-      //console.log(upper, lower);
-      this.disk.draw.polygon(upper, 0xffffff, this.textures, this.wireframe);
-      this.disk.draw.polygon(lower, 0xffffff, this.textures, this.wireframe);
+      //console.log(upper.mesh);
+      //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
+      //this.disk.draw.polygon(lower,0xffffff,this.textures,this.wireframe);
 
       return [upper, lower];
     }

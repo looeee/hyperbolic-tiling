@@ -30,8 +30,12 @@ export class RegularTesselation {
 
     this.p = p;
     this.q = q;
-    //a value of about 0.015 seems to be the minimum that webgl can handle.
-    this.minPolygonSize = 0.1;
+    //a value of about 0.01 seems to be the minimum that webgl can handle easily.
+    //TODO test different tilings and work out value needed for each if different
+    this.minPolygonSize = 0.009;
+
+    //TESTING
+    //this.minPolygonSize = 0.09;
 
     this.disk = new Disk();
     this.params = new Parameters(p, q);
@@ -108,9 +112,9 @@ export class RegularTesselation {
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
 
     //TESTING
-    //console.log(upper, lower);
-    this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
-    this.disk.draw.polygon(lower,0xffffff,this.textures,this.wireframe);
+    //console.log(upper.mesh);
+    //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
+    //this.disk.draw.polygon(lower,0xffffff,this.textures,this.wireframe);
 
     return [upper, lower];
   }

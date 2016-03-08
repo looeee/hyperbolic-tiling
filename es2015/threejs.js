@@ -24,7 +24,7 @@ export class ThreeJS {
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
-    this.render();
+    //this.render();
 
     document.querySelector('#save-image').onclick = () => this.saveImage();
     document.querySelector('#download-image').onclick = () => this.downloadImage();
@@ -161,13 +161,9 @@ export class ThreeJS {
       edgeStartingVertex += m;
     }
 
-    //tiny polygons get drawn with coloured materials instead of textures
-    if(polygon.edges[0].arc.arcLength < 0.02){
-      polygon.materialIndex += 2;
-    }
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
-    //console.log(mesh);
+
   }
 
   //NOTE: some polygons are inverted due to vertex order,
@@ -192,33 +188,19 @@ export class ThreeJS {
         side: THREE.DoubleSide,
       });
 
-      const texture = new THREE.TextureLoader().load(textures[i]);
+      const texture = new THREE.TextureLoader().load(textures[i], () => {this.render();});
 
       material.map = texture;
       this.pattern.materials.push(material);
     }
-
-    const black = new THREE.MeshBasicMaterial({
-      color: 0,
-      wireframe: wireframe,
-      side: THREE.DoubleSide,
-    });
-    const white = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      wireframe: wireframe,
-      side: THREE.DoubleSide,
-    });
-    this.pattern.materials.push(black);
-    this.pattern.materials.push(white);
   }
 
   //Only call render once by default.
-  //TODO: currently calling once per texture in this.pattern
   render(sceneGetsUpdate = false) {
     //if(sceneGetsUpdate){
-    requestAnimationFrame(() => {
-      this.render()
-    });
+    //requestAnimationFrame(() => {
+    //  this.render()
+    //});
     //}
     this.renderer.render(this.scene, this.camera);
   }

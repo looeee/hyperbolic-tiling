@@ -176,13 +176,20 @@ class Edge {
   // number of pieces)
   calculateSpacing( numDivisions ){
     //subdivision spacing for edges
-    //NOTE: a value of ~0.01 is required to hide all gaps in edge polygons
-    this.spacing = this.arc.arcLength / 5;
-    if(this.spacing < 0.01) this.spacing = 0.01;
+    this.spacing = (this.arc.arcLength > 0.03)
+                  ? this.arc.arcLength / 5 //approx maximum that hides all gaps
+                  : 0.02;
+
+    //TESTING
+    //this.spacing = 0.2;
 
     //calculate the number of subdivisions required break the arc into an
-    //even number of pieces with each <= this.spacing
-    this.numDivisions = numDivisions || 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 );
+    //even number of pieces (or 1 in case of tiny polygons)
+    const subdivisions = (this.arc.arcLength > 0.01)
+                    ? 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 )
+                    : 1;
+
+    this.numDivisions = numDivisions || subdivisions;
 
     //recalculate spacing based on number of points
     this.spacing = this.arc.arcLength / this.numDivisions;
@@ -208,9 +215,7 @@ class Edge {
             : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
         this.points.push(p);
       }
-
     }
-
     //push the final vertex
     this.points.push(this.arc.endPoint);
   }
@@ -233,13 +238,8 @@ export class Polygon {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
-    //this.findLongestEdge();
-    //this.findCurviestEdge();
     this.findSubdivisionEdge();
-    //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
-    //}
-    //else this.mesh = this.vertices;
   }
 
   addEdges(){
