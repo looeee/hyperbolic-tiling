@@ -46,7 +46,7 @@ if ((p-2)*(q-2) < 5){
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(4, 6);
+  tesselation = new RegularTesselation(6, 6);
   //tesselation = new RegularTesselation(p, q);
 }
 

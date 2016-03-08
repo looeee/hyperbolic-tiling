@@ -107,6 +107,7 @@ var ThreeJS = function () {
     key: 'initCamera',
     value: function initCamera() {
       this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+      this.camera.frustumCulled = false;
       this.scene.add(this.camera);
     }
   }, {
@@ -118,7 +119,7 @@ var ThreeJS = function () {
           preserveDrawingBuffer: true
         });
         this.renderer.setClearColor(0xffffff, 1.0);
-        document.body.appendChild(this.renderer.domElement);
+        //document.body.appendChild(this.renderer.domElement);
       }
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
@@ -216,14 +217,19 @@ var ThreeJS = function () {
   }, {
     key: 'render',
     value: function render() {
-      var sceneGetsUpdate = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
-
-      //if(sceneGetsUpdate){
-      //requestAnimationFrame(() => {
-      //  this.render()
-      //});
-      //}
       this.renderer.render(this.scene, this.camera);
+      this.appendImageToDom();
+      //window.setTimeout(() => {
+      //this.clearScene();
+      //}, 100);
+    }
+  }, {
+    key: 'appendImageToDom',
+    value: function appendImageToDom() {
+      var imageElem = document.querySelector('#tiling-image');
+      imageElem.style.height = window.innerHeight + 'px';
+      imageElem.style.width = window.innerWidth + 'px';
+      imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
     }
 
     //Download the canvas as a png image
@@ -231,9 +237,8 @@ var ThreeJS = function () {
   }, {
     key: 'downloadImage',
     value: function downloadImage() {
-      link = document.querySelector('#download-image');
+      var link = document.querySelector('#download-image');
       link.href = this.renderer.domElement.toDataURL();
-      console.log(link);
       link.download = 'hyperbolic-tiling.png';
     }
 
@@ -868,7 +873,7 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0x00c2ff);
+      this.draw.disk(this.centre, 1, 0); //0x00c2ff
     }
   }, {
     key: 'drawPoint',
@@ -1254,16 +1259,14 @@ var RegularTesselation = function () {
     //this.wireframe = true;
     console.log('{', p, ', ', q, '} tiling.');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
-
     this.p = p;
     this.q = q;
     //a value of about 0.01 seems to be the minimum that webgl can handle easily.
     //TODO test different tilings and work out value needed for each if different
-    this.minPolygonSize = 0.009;
+    this.minPolygonSize = 0.02;
 
     //TESTING
-    //this.minPolygonSize = 0.09;
+    //this.minPolygonSize = 0.02;
 
     this.disk = new Disk();
     this.params = new Parameters(p, q);
@@ -1419,6 +1422,10 @@ var RegularTesselation = function () {
       if (this.tiling[this.tiling.length - 1][0].edges[0].arc.arcLength < this.minPolygonSize) {
         return;
       }
+
+      //if(layer > 2){
+      //  return;
+      //}
 
       var pSkip = this.params.pSkip(exposure);
       var verticesToDo = this.params.verticesToDo(exposure);
@@ -1616,7 +1623,7 @@ if ((p - 2) * (q - 2) < 5) {
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(4, 6);
+  tesselation = new RegularTesselation(6, 6);
   //tesselation = new RegularTesselation(p, q);
 };
 

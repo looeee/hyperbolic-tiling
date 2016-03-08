@@ -73,6 +73,7 @@ export class ThreeJS {
   initCamera() {
     this.camera = new THREE.OrthographicCamera(window.innerWidth / -2,
       window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+    this.camera.frustumCulled = false;
     this.scene.add(this.camera);
   }
 
@@ -83,7 +84,7 @@ export class ThreeJS {
         preserveDrawingBuffer: true,
       });
       this.renderer.setClearColor(0xffffff, 1.0);
-      document.body.appendChild(this.renderer.domElement);
+      //document.body.appendChild(this.renderer.domElement);
     }
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
@@ -188,7 +189,10 @@ export class ThreeJS {
         side: THREE.DoubleSide,
       });
 
-      const texture = new THREE.TextureLoader().load(textures[i], () => {this.render();});
+      const texture = new THREE.TextureLoader().load(textures[i],
+        () => {
+          this.render();
+        });
 
       material.map = texture;
       this.pattern.materials.push(material);
@@ -196,20 +200,25 @@ export class ThreeJS {
   }
 
   //Only call render once by default.
-  render(sceneGetsUpdate = false) {
-    //if(sceneGetsUpdate){
-    //requestAnimationFrame(() => {
-    //  this.render()
-    //});
-    //}
+  render() {
     this.renderer.render(this.scene, this.camera);
+    this.appendImageToDom();
+    //window.setTimeout(() => {
+      //this.clearScene();
+    //}, 100);
+  }
+
+  appendImageToDom(){
+    const imageElem = document.querySelector('#tiling-image');
+    imageElem.style.height = window.innerHeight + 'px';
+    imageElem.style.width = window.innerWidth + 'px';
+    imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
   }
 
   //Download the canvas as a png image
   downloadImage(){
-    link = document.querySelector('#download-image');
+    const link = document.querySelector('#download-image');
     link.href = this.renderer.domElement.toDataURL();
-    console.log(link);
     link.download = 'hyperbolic-tiling.png';
   }
 

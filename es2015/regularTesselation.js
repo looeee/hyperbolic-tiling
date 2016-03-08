@@ -26,16 +26,14 @@ export class RegularTesselation {
     //this.wireframe = true;
     console.log('{', p, ', ' , q, '} tiling.');
     this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    //this.textures = ['./images/textures/black.png', './images/textures/white.png'];
-
     this.p = p;
     this.q = q;
     //a value of about 0.01 seems to be the minimum that webgl can handle easily.
     //TODO test different tilings and work out value needed for each if different
-    this.minPolygonSize = 0.009;
+    this.minPolygonSize = 0.02;
 
     //TESTING
-    //this.minPolygonSize = 0.09;
+    //this.minPolygonSize = 0.02;
 
     this.disk = new Disk();
     this.params = new Parameters(p, q);
@@ -175,6 +173,10 @@ export class RegularTesselation {
     if(this.tiling[this.tiling.length-1][0].edges[0].arc.arcLength < this.minPolygonSize){
       return;
     }
+
+    //if(layer > 2){
+    //  return;
+    //}
 
     let pSkip = this.params.pSkip(exposure);
     let verticesToDo = this.params.verticesToDo(exposure);

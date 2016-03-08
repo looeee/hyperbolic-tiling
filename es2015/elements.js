@@ -342,7 +342,7 @@ export class Disk {
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, 1, 0x00c2ff);
+    this.draw.disk(this.centre, 1, 0);//0x00c2ff
   }
 
   drawPoint(point, radius, color) {
