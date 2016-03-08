@@ -141,8 +141,7 @@ var ThreeJS = function () {
   }, {
     key: 'polygon',
     value: function polygon(_polygon, color, texture, wireframe) {
-      var l = _polygon.numDivisions + 1;
-      var d = _polygon.numDivisions;
+      var p = 1 / _polygon.numDivisions;
       var vertices = _polygon.mesh;
       var divisions = _polygon.numDivisions;
       var geometry = new THREE.Geometry();
@@ -153,11 +152,10 @@ var ThreeJS = function () {
       }
 
       var edgeStartingVertex = 0;
-      var p = 1 / d;
       //loop over each interior edge of the polygon's subdivion mesh
-      for (var i = 0; i < l - 1; i++) {
+      for (var i = 0; i < _polygon.numDivisions; i++) {
         //edge divisions reduce by one for each interior edge
-        var m = l - i;
+        var m = _polygon.numDivisions - i + 1;
         geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
 
         geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
@@ -171,11 +169,14 @@ var ThreeJS = function () {
         }
         edgeStartingVertex += m;
       }
-      if (_polygon.edges[_polygon.longestEdge].arc.arcLength < 0.02) {
+
+      //tiny polygons get drawn with coloured materials instead of textures
+      if (_polygon.edges[0].arc.arcLength < 0.02) {
         _polygon.materialIndex += 2;
       }
       var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
       this.scene.add(mesh);
+      //console.log(mesh);
     }
 
     //NOTE: some polygons are inverted due to vertex order,
@@ -711,10 +712,10 @@ var Edge = function () {
   babelHelpers.createClass(Edge, [{
     key: 'calculateSpacing',
     value: function calculateSpacing(numDivisions) {
-      //NOTE: this is the overall subdivision spacing for polygons.
-      //Not the best, but the simplest place to define it
-      //NOTE: a value of > ~0.01 is required to hide all gaps
-      this.spacing = 0.01;
+      //subdivision spacing for edges
+      //NOTE: a value of ~0.01 is required to hide all gaps in edge polygons
+      this.spacing = this.arc.arcLength / 5;
+      if (this.spacing < 0.01) this.spacing = 0.01;
 
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces with each <= this.spacing
@@ -771,7 +772,9 @@ var Polygon = function () {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
-    this.findLongestEdge();
+    //this.findLongestEdge();
+    //this.findCurviestEdge();
+    this.findSubdivisionEdge();
     //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
     //}
@@ -786,23 +789,17 @@ var Polygon = function () {
         this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
       }
     }
-  }, {
-    key: 'findCurviestEdge',
-    value: function findCurviestEdge() {
-      var a = this.edges[0].arc.curvature;
-      var b = this.edges[1].arc.curvature;
-      var c = this.edges[2].arc.curvature;
 
-      if (a > b && a > c) this.curviestEdge = 0;else if (b > c) this.curviestEdge = 1;else this.curviestEdge = 2;
-    }
-  }, {
-    key: 'findLongestEdge',
-    value: function findLongestEdge() {
-      var a = this.edges[0].arc.arcLength;
-      var b = this.edges[1].arc.arcLength;
-      var c = this.edges[2].arc.arcLength;
+    //The longest edge with radius > 0 should be used to calculate how the finely
+    //the polygon gets subdivided
 
-      if (a > b && a > c) this.longestEdge = 0;else if (b > c) this.longestEdge = 1;else this.longestEdge = 2;
+  }, {
+    key: 'findSubdivisionEdge',
+    value: function findSubdivisionEdge() {
+      var a = this.edges[0].arc.curvature === 0 ? 0 : this.edges[0].arc.arcLength;
+      var b = this.edges[1].arc.curvature === 0 ? 0 : this.edges[1].arc.arcLength;
+      var c = this.edges[2].arc.curvature === 0 ? 0 : this.edges[2].arc.arcLength;
+      if (a > b && a > c) this.subdivisionEdge = 0;else if (b > c) this.subdivisionEdge = 1;else this.subdivisionEdge = 2;
     }
 
     //subdivide the longest edge, then subdivide the other two edges with the
@@ -811,11 +808,11 @@ var Polygon = function () {
   }, {
     key: 'subdivideEdges',
     value: function subdivideEdges() {
-      this.edges[this.longestEdge].subdivideEdge();
-      this.numDivisions = this.edges[this.longestEdge].points.length - 1;
+      this.edges[this.subdivisionEdge].subdivideEdge();
+      this.numDivisions = this.edges[this.subdivisionEdge].points.length - 1;
 
-      this.edges[(this.longestEdge + 1) % 3].subdivideEdge(this.numDivisions);
-      this.edges[(this.longestEdge + 2) % 3].subdivideEdge(this.numDivisions);
+      this.edges[(this.subdivisionEdge + 1) % 3].subdivideEdge(this.numDivisions);
+      this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
     }
   }, {
     key: 'subdivideMesh',
@@ -890,7 +887,7 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0);
+      this.draw.disk(this.centre, 1, 0x00c2ff);
     }
   }, {
     key: 'drawPoint',
@@ -1365,8 +1362,11 @@ var RegularTesselation = function () {
     value: function fundamentalPattern() {
       var upper = this.fundamentalRegion();
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-      //console.log(upper.edges);
-      //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
+
+      //TESTING
+      //console.log(upper, lower);
+      this.disk.draw.polygon(upper, 0xffffff, this.textures, this.wireframe);
+      this.disk.draw.polygon(lower, 0xffffff, this.textures, this.wireframe);
 
       return [upper, lower];
     }

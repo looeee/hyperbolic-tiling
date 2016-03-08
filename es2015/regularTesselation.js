@@ -106,8 +106,11 @@ export class RegularTesselation {
   fundamentalPattern(){
     const upper = this.fundamentalRegion();
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-    //console.log(upper.edges);
-    //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
+
+    //TESTING
+    //console.log(upper, lower);
+    this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
+    this.disk.draw.polygon(lower,0xffffff,this.textures,this.wireframe);
 
     return [upper, lower];
   }

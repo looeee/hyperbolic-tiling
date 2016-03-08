@@ -110,7 +110,7 @@ export class Arc {
     else{
       this.calculateArc();
       this.arcLength = E.arcLength(this.circle, this.startAngle, this.endAngle);
-      this.curvature = this.arcLength / this.circle.radius;
+      this.curvature = (this.arcLength ) / (this.circle.radius);
     }
   }
 
@@ -175,10 +175,10 @@ class Edge {
   //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
   calculateSpacing( numDivisions ){
-    //NOTE: this is the overall subdivision spacing for polygons.
-    //Not the best, but the simplest place to define it
-    //NOTE: a value of > ~0.01 is required to hide all gaps
-    this.spacing = 0.01;
+    //subdivision spacing for edges
+    //NOTE: a value of ~0.01 is required to hide all gaps in edge polygons
+    this.spacing = this.arc.arcLength / 5;
+    if(this.spacing < 0.01) this.spacing = 0.01;
 
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces with each <= this.spacing
@@ -233,7 +233,9 @@ export class Polygon {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
-    this.findLongestEdge();
+    //this.findLongestEdge();
+    //this.findCurviestEdge();
+    this.findSubdivisionEdge();
     //if(this.edges[0].arc.arcLength > 0.02){
     this.subdivideMesh();
     //}
@@ -249,34 +251,31 @@ export class Polygon {
     }
   }
 
-  findCurviestEdge(){
-    const a = this.edges[0].arc.curvature;
-    const b = this.edges[1].arc.curvature;
-    const c = this.edges[2].arc.curvature;
-
-    if( a > b && a > c) this.curviestEdge = 0;
-    else if( b > c) this.curviestEdge = 1;
-    else this.curviestEdge = 2;
-  }
-
-  findLongestEdge(){
-    const a = this.edges[0].arc.arcLength;
-    const b = this.edges[1].arc.arcLength;
-    const c = this.edges[2].arc.arcLength;
-
-    if( a > b && a > c) this.longestEdge = 0;
-    else if( b > c) this.longestEdge = 1;
-    else this.longestEdge = 2;
+  //The longest edge with radius > 0 should be used to calculate how the finely
+  //the polygon gets subdivided
+  findSubdivisionEdge(){
+    const a = (this.edges[0].arc.curvature === 0)
+              ? 0
+              : this.edges[0].arc.arcLength;
+    const b = (this.edges[1].arc.curvature === 0)
+              ? 0
+              : this.edges[1].arc.arcLength;
+    const c = (this.edges[2].arc.curvature === 0)
+              ? 0
+              : this.edges[2].arc.arcLength;
+    if( a > b && a > c) this.subdivisionEdge = 0;
+    else if( b > c) this.subdivisionEdge = 1;
+    else this.subdivisionEdge = 2;
   }
 
   //subdivide the longest edge, then subdivide the other two edges with the
   //same number of points as the longest
   subdivideEdges(){
-    this.edges[this.longestEdge].subdivideEdge();
-    this.numDivisions = this.edges[this.longestEdge].points.length -1;
+    this.edges[this.subdivisionEdge].subdivideEdge();
+    this.numDivisions = this.edges[this.subdivisionEdge].points.length -1;
 
-    this.edges[(this.longestEdge + 1) % 3].subdivideEdge(this.numDivisions);
-    this.edges[(this.longestEdge + 2) % 3].subdivideEdge(this.numDivisions);
+    this.edges[(this.subdivisionEdge + 1) % 3].subdivideEdge(this.numDivisions);
+    this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
   }
 
   subdivideMesh(){
@@ -343,7 +342,7 @@ export class Disk {
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, 1, 0);
+    this.draw.disk(this.centre, 1, 0x00c2ff);
   }
 
   drawPoint(point, radius, color) {

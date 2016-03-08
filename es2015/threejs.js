@@ -102,8 +102,7 @@ export class ThreeJS {
 
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe){
-    const l = polygon.numDivisions + 1;
-    const d = polygon.numDivisions;
+    const p = 1/polygon.numDivisions;
     const vertices = polygon.mesh;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
@@ -114,11 +113,10 @@ export class ThreeJS {
     }
 
     let edgeStartingVertex = 0;
-    const p = 1/d;
     //loop over each interior edge of the polygon's subdivion mesh
-    for(let i = 0; i < l -1; i++){
+    for(let i = 0; i < polygon.numDivisions; i++){
       //edge divisions reduce by one for each interior edge
-      const m = l-i;
+      const m = polygon.numDivisions - i + 1;
       geometry.faces.push(
         new THREE.Face3(
           edgeStartingVertex,
@@ -162,11 +160,14 @@ export class ThreeJS {
       }
       edgeStartingVertex += m;
     }
-    if(polygon.edges[polygon.longestEdge].arc.arcLength < 0.02){
+
+    //tiny polygons get drawn with coloured materials instead of textures
+    if(polygon.edges[0].arc.arcLength < 0.02){
       polygon.materialIndex += 2;
     }
     const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
+    //console.log(mesh);
   }
 
   //NOTE: some polygons are inverted due to vertex order,
