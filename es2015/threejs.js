@@ -25,10 +25,6 @@ export class ThreeJS {
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
-    //this.render();
-
-    document.querySelector('#save-image').onclick = () => this.saveImage();
-    document.querySelector('#download-image').onclick = () => this.downloadImage();
   }
 
   reset() {
@@ -224,6 +220,7 @@ export class ThreeJS {
     //this.clearScene();
   }
 
+  //TODO doesn't update when calling generate a second time
   appendImageToDom(){
     const imageElem = document.querySelector('#tiling-image');
     imageElem.style.height = window.innerHeight + 'px';

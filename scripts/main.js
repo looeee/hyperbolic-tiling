@@ -708,21 +708,11 @@ var ThreeJS = function () {
   }
 
   ThreeJS.prototype.init = function init() {
-    var _this = this;
-
     this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
     this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
-    //this.render();
-
-    document.querySelector('#save-image').onclick = function () {
-      return _this.saveImage();
-    };
-    document.querySelector('#download-image').onclick = function () {
-      return _this.downloadImage();
-    };
   };
 
   ThreeJS.prototype.reset = function reset() {
@@ -855,7 +845,7 @@ var ThreeJS = function () {
   };
 
   ThreeJS.prototype.createPattern = function createPattern(color, textures, wireframe) {
-    var _this2 = this;
+    var _this = this;
 
     this.pattern = new THREE.MultiMaterial();
     var texturesLoaded = [];
@@ -871,12 +861,12 @@ var ThreeJS = function () {
         texturesLoaded.push(i);
         //call render when all textures are loaded
         if (texturesLoaded.length === textures.length) {
-          _this2.render();
+          _this.render();
         }
       });
 
       material.map = texture;
-      _this2.pattern.materials.push(material);
+      _this.pattern.materials.push(material);
     };
 
     for (var i = 0; i < textures.length; i++) {
@@ -889,6 +879,8 @@ var ThreeJS = function () {
     this.appendImageToDom();
     //this.clearScene();
   };
+
+  //TODO doesn't update when calling generate a second time
 
   ThreeJS.prototype.appendImageToDom = function appendImageToDom() {
     var imageElem = document.querySelector('#tiling-image');
@@ -1428,40 +1420,59 @@ fundamentalRegion() {
 // *  PAGE CONTROLLER CLASS
 // *
 // *************************************************************************
-var circleLimit1Spec = {
-  wireframe: false,
-  p: 6,
-  q: 6,
-  textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
-  edgeAdjacency: [//array of length p
-  [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
-  5 //edge_0 adjacency (range p - 1)
-  ], [1, 4], //edge_1 orientation, adjacency
-  [1, 3], [1, 2], [1, 1], [1, 0]],
-  minPolygonSize: 0.05
-};
 
 var Controller = function () {
   function Controller() {
     babelHelpers.classCallCheck(this, Controller);
 
     this.draw = new ThreeJS();
-    this.regularHyperbolicTiling(circleLimit1Spec);
+    this.regularHyperbolicTiling();
+    this.saveImageButtons();
   }
 
-  Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling(spec) {
+  Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
     var _this = this;
 
-    var regularTesselation = new RegularTesselation(spec);
     document.querySelector('#generate-tiling').onclick = function () {
+      var spec = _this.tilingSpec();
+      var regularTesselation = new RegularTesselation(spec);
+
       var t0 = performance.now();
       var tiling = regularTesselation.generateTiling();
       var t1 = performance.now();
       console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
-      _this.draw.polygonArray(tiling, circleLimit1Spec.textures);
+      _this.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
+    };
+  };
+
+  Controller.prototype.tilingSpec = function tilingSpec() {
+    var spec = {
+      wireframe: false,
+      p: document.querySelector('#p').value,
+      q: document.querySelector('#q').value,
+      textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
+      edgeAdjacency: [//array of length p
+      [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
+      5 //edge_0 adjacency (range p - 1)
+      ], [1, 4], //edge_1 orientation, adjacency
+      [1, 3], [1, 2], [1, 1], [1, 0]],
+      minPolygonSize: 0.05
+    };
+
+    return spec;
+  };
+
+  Controller.prototype.saveImageButtons = function saveImageButtons() {
+    var _this2 = this;
+
+    document.querySelector('#save-image').onclick = function () {
+      return _this2.draw.saveImage();
+    };
+    document.querySelector('#download-image').onclick = function () {
+      return _this2.draw.downloadImage();
     };
   };
 
