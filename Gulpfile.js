@@ -36,7 +36,7 @@ gulp.task('js', function() {
       babel({
         exclude: 'node_modules/**',
         babelrc: false,
-        presets: ['es2015-rollup'],
+        presets: ['es2015-loose-rollup'],
         //plugins: ['transform-class-properties'],
       })
     ]

@@ -6,24 +6,6 @@ babelHelpers.classCallCheck = function (instance, Constructor) {
   }
 };
 
-babelHelpers.createClass = function () {
-  function defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
-    }
-  }
-
-  return function (Constructor, protoProps, staticProps) {
-    if (protoProps) defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) defineProperties(Constructor, staticProps);
-    return Constructor;
-  };
-}();
-
 babelHelpers;
 
 // * ***********************************************************************
@@ -35,12 +17,12 @@ babelHelpers;
 // *
 // *************************************************************************
 
-var distance = function distance(point1, point2) {
+var distance = function (point1, point2) {
   return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
 };
 
 //does the line connecting p1, p2 go through the point (0,0)?
-var throughOrigin = function throughOrigin(point1, point2) {
+var throughOrigin = function (point1, point2) {
   //vertical line through centre
   if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
     return true;
@@ -51,13 +33,13 @@ var throughOrigin = function throughOrigin(point1, point2) {
 };
 
 //Find the length of the smaller arc between two angles on a given circle
-var arcLength = function arcLength(circle, startAngle, endAngle) {
+var arcLength = function (circle, startAngle, endAngle) {
   return Math.abs(startAngle - endAngle) > Math.PI ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle)) : circle.radius * Math.abs(startAngle - endAngle);
 };
 
 //find the two points a distance from a point on the circumference of a circle
 //in the direction of point2
-var directedSpacedPointOnArc = function directedSpacedPointOnArc(circle, point1, point2, spacing) {
+var directedSpacedPointOnArc = function (circle, point1, point2, spacing) {
   var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
   var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   var sinThetaNeg = -sinThetaPos;
@@ -77,19 +59,19 @@ var directedSpacedPointOnArc = function directedSpacedPointOnArc(circle, point1,
 
 //find the point at a distance from point1 along line defined by point1, point2,
 //in the direction of point2
-var directedSpacedPointOnLine = function directedSpacedPointOnLine(point1, point2, spacing) {
+var directedSpacedPointOnLine = function (point1, point2, spacing) {
   var dv = normalVector(point1, point2);
   return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
 };
 
 //.toFixed returns a string for some no doubt very good reason.
 //apply to fixed with default value of 10 and return as a float
-var toFixed = function toFixed(number) {
+var toFixed = function (number) {
   var places = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
   return parseFloat(number.toFixed(places));
 };
 
-var multiplyMatrices = function multiplyMatrices(m1, m2) {
+var multiplyMatrices = function (m1, m2) {
   var result = [];
   for (var i = 0; i < m1.length; i++) {
     result[i] = [];
@@ -105,7 +87,7 @@ var multiplyMatrices = function multiplyMatrices(m1, m2) {
 };
 
 //create nxn identityMatrix
-var identityMatrix = function identityMatrix(n) {
+var identityMatrix = function (n) {
   return Array.apply(null, new Array(n)).map(function (x, i, a) {
     return a.map(function (y, k) {
       return i === k ? 1 : 0;
@@ -114,7 +96,7 @@ var identityMatrix = function identityMatrix(n) {
 };
 
 //calculate the normal vector given 2 points
-var normalVector = function normalVector(p1, p2) {
+var normalVector = function (p1, p2) {
   var d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   return new Point((p2.x - p1.x) / d, (p2.y - p1.y) / d);
 };
@@ -306,228 +288,208 @@ var ThreeJS = function () {
     this.init();
   }
 
-  babelHelpers.createClass(ThreeJS, [{
-    key: 'init',
-    value: function init() {
-      var _this = this;
+  ThreeJS.prototype.init = function init() {
+    var _this = this;
 
-      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-      this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
-      if (this.scene === undefined) this.scene = new THREE.Scene();
-      this.initCamera();
-      this.initRenderer();
-      //this.render();
+    this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+    this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
+    if (this.scene === undefined) this.scene = new THREE.Scene();
+    this.initCamera();
+    this.initRenderer();
+    //this.render();
 
-      document.querySelector('#save-image').onclick = function () {
-        return _this.saveImage();
-      };
-      document.querySelector('#download-image').onclick = function () {
-        return _this.downloadImage();
-      };
+    document.querySelector('#save-image').onclick = function () {
+      return _this.saveImage();
+    };
+    document.querySelector('#download-image').onclick = function () {
+      return _this.downloadImage();
+    };
+  };
+
+  ThreeJS.prototype.reset = function reset() {
+    cancelAnimationFrame(this.id);
+    this.clearScene();
+    this.projector = null;
+    this.camera = null;
+    this.init();
+  };
+
+  //TODO: sometimes messes up ratio
+
+  ThreeJS.prototype.resize = function resize() {
+    var w = window.innerWidth / 2 - 5;
+    var h = window.innerHeight / 2 - 5;
+    if (this.radiusSetByWidth && w < h) {
+      this.radius = w;
+    } else if (!w < h) {
+      this.radius = h;
     }
-  }, {
-    key: 'reset',
-    value: function reset() {
-      cancelAnimationFrame(this.id);
-      this.clearScene();
-      this.projector = null;
-      this.camera = null;
-      this.init();
+
+    /*
+    this.camera.aspect = this.radius * -1,
+                    this.radius ,
+                    this.radius ,
+                    this.radius * -1,
+                    -2,
+                    1;
+    */
+    //this.camera.updateProjectionMatrix();
+    this.renderer.setSize((this.radius + 5) * 2, (this.radius + 5) * 2);
+  };
+
+  ThreeJS.prototype.clearScene = function clearScene() {
+    for (var i = this.scene.children.length - 1; i >= 0; i--) {
+      this.scene.remove(this.scene.children[i]);
+    }
+  };
+
+  ThreeJS.prototype.initCamera = function initCamera() {
+    this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+    this.camera.frustumCulled = false;
+    this.scene.add(this.camera);
+  };
+
+  ThreeJS.prototype.initRenderer = function initRenderer() {
+    if (this.renderer === undefined) {
+      this.renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true
+      });
+      this.renderer.setClearColor(0xffffff, 1.0);
+      //document.body.appendChild(this.renderer.domElement);
+    }
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  };
+
+  ThreeJS.prototype.disk = function disk(centre, radius, color) {
+    if (color === undefined) color = 0xffffff;
+    var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
+    var material = new THREE.MeshBasicMaterial({ color: color });
+
+    var circle = new THREE.Mesh(geometry, material);
+    circle.position.x = centre.x * this.radius;
+    circle.position.y = centre.y * this.radius;
+
+    this.scene.add(circle);
+  };
+
+  //Note: polygons assumed to be triangular!
+
+  ThreeJS.prototype.polygon = function polygon(_polygon, color, texture, wireframe) {
+    var p = 1 / _polygon.numDivisions;
+    var divisions = _polygon.numDivisions;
+    var geometry = new THREE.Geometry();
+    geometry.faceVertexUvs[0] = [];
+
+    for (var i = 0; i < _polygon.mesh.length; i++) {
+      geometry.vertices.push(new Point(_polygon.mesh[i].x * radius, _polygon.mesh[i].y * this.radius));
     }
 
-    //TODO: sometimes messes up ratio
+    //const radius = this.radius;
+    //geometry.vertices = polygon.expandedMesh;
+    //console.log(geometry.vertices, polygon.expandedMesh);
+    //geometry.vertices = polygon.expandedSubdivisionMesh();
 
-  }, {
-    key: 'resize',
-    value: function resize() {
-      var w = window.innerWidth / 2 - 5;
-      var h = window.innerHeight / 2 - 5;
-      if (this.radiusSetByWidth && w < h) {
-        this.radius = w;
-      } else if (!w < h) {
-        this.radius = h;
+    var edgeStartingVertex = 0;
+    //loop over each interior edge of the polygon's subdivion mesh
+    for (var i = 0; i < divisions; i++) {
+      //edge divisions reduce by one for each interior edge
+      var m = divisions - i + 1;
+      geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
+
+      geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
+
+      //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
+      for (var j = 0; j < m - 2; j++) {
+        geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
+        geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
+        geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
+        geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
       }
-
-      /*
-      this.camera.aspect = this.radius * -1,
-                      this.radius ,
-                      this.radius ,
-                      this.radius * -1,
-                      -2,
-                      1;
-      */
-      //this.camera.updateProjectionMatrix();
-      this.renderer.setSize((this.radius + 5) * 2, (this.radius + 5) * 2);
-    }
-  }, {
-    key: 'clearScene',
-    value: function clearScene() {
-      for (var i = this.scene.children.length - 1; i >= 0; i--) {
-        this.scene.remove(this.scene.children[i]);
-      }
-    }
-  }, {
-    key: 'initCamera',
-    value: function initCamera() {
-      this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
-      this.camera.frustumCulled = false;
-      this.scene.add(this.camera);
-    }
-  }, {
-    key: 'initRenderer',
-    value: function initRenderer() {
-      if (this.renderer === undefined) {
-        this.renderer = new THREE.WebGLRenderer({
-          antialias: true,
-          preserveDrawingBuffer: true
-        });
-        this.renderer.setClearColor(0xffffff, 1.0);
-        //document.body.appendChild(this.renderer.domElement);
-      }
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-  }, {
-    key: 'disk',
-    value: function disk(centre, radius, color) {
-      if (color === undefined) color = 0xffffff;
-      var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-      var material = new THREE.MeshBasicMaterial({ color: color });
-
-      var circle = new THREE.Mesh(geometry, material);
-      circle.position.x = centre.x * this.radius;
-      circle.position.y = centre.y * this.radius;
-
-      this.scene.add(circle);
+      edgeStartingVertex += m;
     }
 
-    //Note: polygons assumed to be triangular!
+    var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
+    this.scene.add(mesh);
+  };
 
-  }, {
-    key: 'polygon',
-    value: function polygon(_polygon, color, texture, wireframe) {
-      var p = 1 / _polygon.numDivisions;
-      var divisions = _polygon.numDivisions;
-      var geometry = new THREE.Geometry();
-      geometry.faceVertexUvs[0] = [];
+  //NOTE: some polygons are inverted due to vertex order,
+  //solved this by making material doubles sided but this might cause problems with textures
 
-      for (var i = 0; i < _polygon.mesh.length; i++) {
-        geometry.vertices.push(new Point(_polygon.mesh[i].x * radius, _polygon.mesh[i].y * this.radius));
-      }
+  ThreeJS.prototype.createMesh = function createMesh(geometry, color, textures, materialIndex, wireframe) {
+    if (wireframe === undefined) wireframe = false;
+    if (color === undefined) color = 0xffffff;
 
-      //const radius = this.radius;
-      //geometry.vertices = polygon.expandedMesh;
-      //console.log(geometry.vertices, polygon.expandedMesh);
-      //geometry.vertices = polygon.expandedSubdivisionMesh();
+    if (!this.pattern) {
+      this.createPattern(color, textures, wireframe);
+    }
+    return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
+  };
 
-      var edgeStartingVertex = 0;
-      //loop over each interior edge of the polygon's subdivion mesh
-      for (var i = 0; i < divisions; i++) {
-        //edge divisions reduce by one for each interior edge
-        var m = divisions - i + 1;
-        geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
+  ThreeJS.prototype.createPattern = function createPattern(color, textures, wireframe) {
+    var _this2 = this;
 
-        geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
+    this.pattern = new THREE.MultiMaterial();
+    var texturesLoaded = [];
 
-        //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
-        for (var j = 0; j < m - 2; j++) {
-          geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
-          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
-          geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
-          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
+    var _loop = function (i) {
+      var material = new THREE.MeshBasicMaterial({
+        color: color,
+        wireframe: wireframe,
+        side: THREE.DoubleSide
+      });
+
+      var texture = new THREE.TextureLoader().load(textures[i], function () {
+        texturesLoaded.push(i);
+        //call render when all textures are loaded
+        if (texturesLoaded.length === textures.length) {
+          _this2.render();
         }
-        edgeStartingVertex += m;
-      }
+      });
 
-      var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
-      this.scene.add(mesh);
+      material.map = texture;
+      _this2.pattern.materials.push(material);
+    };
+
+    for (var i = 0; i < textures.length; i++) {
+      _loop(i);
     }
+  };
 
-    //NOTE: some polygons are inverted due to vertex order,
-    //solved this by making material doubles sided but this might cause problems with textures
+  ThreeJS.prototype.render = function render() {
 
-  }, {
-    key: 'createMesh',
-    value: function createMesh(geometry, color, textures, materialIndex, wireframe) {
-      if (wireframe === undefined) wireframe = false;
-      if (color === undefined) color = 0xffffff;
+    this.renderer.render(this.scene, this.camera);
+    this.appendImageToDom();
+    //window.setTimeout(() => {
+    this.clearScene();
+    //}, 100);
+  };
 
-      if (!this.pattern) {
-        this.createPattern(color, textures, wireframe);
-      }
-      return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
-    }
-  }, {
-    key: 'createPattern',
-    value: function createPattern(color, textures, wireframe) {
-      var _this2 = this;
+  ThreeJS.prototype.appendImageToDom = function appendImageToDom() {
+    var imageElem = document.querySelector('#tiling-image');
+    imageElem.style.height = window.innerHeight + 'px';
+    imageElem.style.width = window.innerWidth + 'px';
+    imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
+  };
 
-      this.pattern = new THREE.MultiMaterial();
-      var texturesLoaded = [];
+  //Download the canvas as a png image
 
-      var _loop = function _loop(i) {
-        var material = new THREE.MeshBasicMaterial({
-          color: color,
-          wireframe: wireframe,
-          side: THREE.DoubleSide
-        });
+  ThreeJS.prototype.downloadImage = function downloadImage() {
+    var link = document.querySelector('#download-image');
+    link.href = this.renderer.domElement.toDataURL();
+    link.download = 'hyperbolic-tiling.png';
+  };
 
-        var texture = new THREE.TextureLoader().load(textures[i], function () {
-          texturesLoaded.push(i);
-          //call render when all textures are loaded
-          if (texturesLoaded.length === textures.length) {
-            _this2.render();
-          }
-        });
+  //convert the canvas to a base64URL and send to saveImage.php
 
-        material.map = texture;
-        _this2.pattern.materials.push(material);
-      };
+  ThreeJS.prototype.saveImage = function saveImage() {
+    var data = this.renderer.domElement.toDataURL();
+    var xhttp = new XMLHttpRequest();
+    xhttp.open('POST', 'saveImage.php', true);
+    xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+    xhttp.send('img=' + data);
+  };
 
-      for (var i = 0; i < textures.length; i++) {
-        _loop(i);
-      }
-    }
-  }, {
-    key: 'render',
-    value: function render() {
-
-      this.renderer.render(this.scene, this.camera);
-      this.appendImageToDom();
-      //window.setTimeout(() => {
-      this.clearScene();
-      //}, 100);
-    }
-  }, {
-    key: 'appendImageToDom',
-    value: function appendImageToDom() {
-      var imageElem = document.querySelector('#tiling-image');
-      imageElem.style.height = window.innerHeight + 'px';
-      imageElem.style.width = window.innerWidth + 'px';
-      imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
-    }
-
-    //Download the canvas as a png image
-
-  }, {
-    key: 'downloadImage',
-    value: function downloadImage() {
-      var link = document.querySelector('#download-image');
-      link.href = this.renderer.domElement.toDataURL();
-      link.download = 'hyperbolic-tiling.png';
-    }
-
-    //convert the canvas to a base64URL and send to saveImage.php
-
-  }, {
-    key: 'saveImage',
-    value: function saveImage() {
-      var data = this.renderer.domElement.toDataURL();
-      var xhttp = new XMLHttpRequest();
-      xhttp.open('POST', 'saveImage.php', true);
-      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      xhttp.send('img=' + data);
-    }
-  }]);
   return ThreeJS;
 }();
 
@@ -562,58 +524,51 @@ var Point = function () {
 
   //compare two points taking rounding errors into account
 
-  babelHelpers.createClass(Point, [{
-    key: 'compare',
-    value: function compare(otherPoint) {
-      if (typeof otherPoint === 'undefined') {
-        console.warn('Compare Points: point not defined.');
-        return false;
-      }
-      var a = toFixed(this.x) === toFixed(otherPoint.x);
-      var b = toFixed(this.y) === toFixed(otherPoint.y);
-      if (a && b) return true;else return false;
+  Point.prototype.compare = function compare(otherPoint) {
+    if (typeof otherPoint === 'undefined') {
+      console.warn('Compare Points: point not defined.');
+      return false;
     }
+    var a = toFixed(this.x) === toFixed(otherPoint.x);
+    var b = toFixed(this.y) === toFixed(otherPoint.y);
+    if (a && b) return true;else return false;
+  };
 
-    //move the point to hyperboloid (Weierstrass) space, apply the transform,
-    //then move back
+  //move the point to hyperboloid (Weierstrass) space, apply the transform,
+  //then move back
 
-  }, {
-    key: 'transform',
-    value: function transform(_transform) {
-      var mat = _transform.matrix;
-      var p = this.poincareToHyperboloid();
-      var x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
-      var y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
-      var z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
-      var q = new Point(x, y);
-      q.z = z;
-      return q.hyperboloidToPoincare();
-    }
-  }, {
-    key: 'poincareToHyperboloid',
-    value: function poincareToHyperboloid() {
-      var factor = 1 / (1 - this.x * this.x - this.y * this.y);
-      var x = 2 * factor * this.x;
-      var y = 2 * factor * this.y;
-      var z = factor * (1 + this.x * this.x + this.y * this.y);
-      var p = new Point(x, y);
-      p.z = z;
-      return p;
-    }
-  }, {
-    key: 'hyperboloidToPoincare',
-    value: function hyperboloidToPoincare() {
-      var factor = 1 / (1 + this.z);
-      var x = factor * this.x;
-      var y = factor * this.y;
-      return new Point(x, y);
-    }
-  }, {
-    key: 'clone',
-    value: function clone() {
-      return new Point(this.x, this.y);
-    }
-  }]);
+  Point.prototype.transform = function transform(_transform) {
+    var mat = _transform.matrix;
+    var p = this.poincareToHyperboloid();
+    var x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
+    var y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
+    var z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
+    var q = new Point(x, y);
+    q.z = z;
+    return q.hyperboloidToPoincare();
+  };
+
+  Point.prototype.poincareToHyperboloid = function poincareToHyperboloid() {
+    var factor = 1 / (1 - this.x * this.x - this.y * this.y);
+    var x = 2 * factor * this.x;
+    var y = 2 * factor * this.y;
+    var z = factor * (1 + this.x * this.x + this.y * this.y);
+    var p = new Point(x, y);
+    p.z = z;
+    return p;
+  };
+
+  Point.prototype.hyperboloidToPoincare = function hyperboloidToPoincare() {
+    var factor = 1 / (1 + this.z);
+    var x = factor * this.x;
+    var y = factor * this.y;
+    return new Point(x, y);
+  };
+
+  Point.prototype.clone = function clone() {
+    return new Point(this.x, this.y);
+  };
+
   return Point;
 }();
 
@@ -652,35 +607,32 @@ var Arc = function () {
 
   //Calculate the arc using Dunham's method
 
-  babelHelpers.createClass(Arc, [{
-    key: 'calculateArc',
-    value: function calculateArc() {
-      //calculate centre of arcCircle relative to unit disk
-      var hp = this.hyperboloidCrossProduct(this.startPoint.poincareToHyperboloid(), this.endPoint.poincareToHyperboloid());
+  Arc.prototype.calculateArc = function calculateArc() {
+    //calculate centre of arcCircle relative to unit disk
+    var hp = this.hyperboloidCrossProduct(this.startPoint.poincareToHyperboloid(), this.endPoint.poincareToHyperboloid());
 
-      var arcCentre = new Point(hp.x / hp.z, hp.y / hp.z);
-      var arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
+    var arcCentre = new Point(hp.x / hp.z, hp.y / hp.z);
+    var arcRadius = Math.sqrt(Math.pow(this.startPoint.x - arcCentre.x, 2) + Math.pow(this.startPoint.y - arcCentre.y, 2));
 
-      //translate points to origin and calculate arctan
-      this.startAngle = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);
-      this.endAngle = Math.atan2(this.endPoint.y - arcCentre.y, this.endPoint.x - arcCentre.x);
+    //translate points to origin and calculate arctan
+    this.startAngle = Math.atan2(this.startPoint.y - arcCentre.y, this.startPoint.x - arcCentre.x);
+    this.endAngle = Math.atan2(this.endPoint.y - arcCentre.y, this.endPoint.x - arcCentre.x);
 
-      //angles are in (-pi, pi), transform to (0,2pi)
-      this.startAngle = this.startAngle < 0 ? 2 * Math.PI + this.startAngle : this.startAngle;
-      this.endAngle = this.endAngle < 0 ? 2 * Math.PI + this.endAngle : this.endAngle;
+    //angles are in (-pi, pi), transform to (0,2pi)
+    this.startAngle = this.startAngle < 0 ? 2 * Math.PI + this.startAngle : this.startAngle;
+    this.endAngle = this.endAngle < 0 ? 2 * Math.PI + this.endAngle : this.endAngle;
 
-      this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
-    }
-  }, {
-    key: 'hyperboloidCrossProduct',
-    value: function hyperboloidCrossProduct(point3D_1, point3D_2) {
-      return {
-        x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
-        y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-        z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
-      };
-    }
-  }]);
+    this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
+  };
+
+  Arc.prototype.hyperboloidCrossProduct = function hyperboloidCrossProduct(point3D_1, point3D_2) {
+    return {
+      x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
+      y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
+      z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+    };
+  };
+
   return Arc;
 }();
 
@@ -704,84 +656,78 @@ var Edge = function () {
   //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
 
-  babelHelpers.createClass(Edge, [{
-    key: 'calculateSpacing',
-    value: function calculateSpacing(numDivisions) {
-      //subdivision spacing for edges
-      this.spacing = this.arc.arcLength > 0.03 ? this.arc.arcLength / 5 //approx maximum that hides all gaps
-      : 0.02;
+  Edge.prototype.calculateSpacing = function calculateSpacing(numDivisions) {
+    //subdivision spacing for edges
+    this.spacing = this.arc.arcLength > 0.03 ? this.arc.arcLength / 5 //approx maximum that hides all gaps
+    : 0.02;
 
-      //calculate the number of subdivisions required break the arc into an
-      //even number of pieces (or 1 in case of tiny polygons)
-      var subdivisions = this.arc.arcLength > 0.01 ? 2 * Math.ceil(this.arc.arcLength / this.spacing / 2) : 1;
+    //calculate the number of subdivisions required break the arc into an
+    //even number of pieces (or 1 in case of tiny polygons)
+    var subdivisions = this.arc.arcLength > 0.01 ? 2 * Math.ceil(this.arc.arcLength / this.spacing / 2) : 1;
 
-      this.numDivisions = numDivisions || subdivisions;
+    this.numDivisions = numDivisions || subdivisions;
 
-      //recalculate spacing based on number of points
-      this.spacing = this.arc.arcLength / this.numDivisions;
-    }
+    //recalculate spacing based on number of points
+    this.spacing = this.arc.arcLength / this.numDivisions;
+  };
 
-    //calculate the spacing for subdividing the edge into an even number of pieces.
-    //For the first ( longest ) edge this will be calculated based on spacing
-    //then for the rest of the edges it will be calculated based on the number of
-    //subdivisions of the first edge ( so that all edges are divided into an equal
-    // number of pieces)
+  //calculate the spacing for subdividing the edge into an even number of pieces.
+  //For the first ( longest ) edge this will be calculated based on spacing
+  //then for the rest of the edges it will be calculated based on the number of
+  //subdivisions of the first edge ( so that all edges are divided into an equal
+  // number of pieces)
 
-  }, {
-    key: 'calculateExpandedSpacing',
-    value: function calculateExpandedSpacing(numDivisions) {
-      //subdivision spacing for edges
-      this.expandedSpacing = this.arc.arcLength > 0.03 * radius ? this.arc.arcLength / 5 //approx maximum that hides all gaps
-      : 0.02 * radius;
+  Edge.prototype.calculateExpandedSpacing = function calculateExpandedSpacing(numDivisions) {
+    //subdivision spacing for edges
+    this.expandedSpacing = this.arc.arcLength > 0.03 * radius ? this.arc.arcLength / 5 //approx maximum that hides all gaps
+    : 0.02 * radius;
 
-      //calculate the number of subdivisions required break the arc into an
-      //even number of pieces (or 1 in case of tiny polygons)
-      var subdivisions = this.arc.arcLength > 0.01 * radius ? 2 * Math.ceil(this.arc.arcLength / this.expandedSpacing / 2) : 1;
+    //calculate the number of subdivisions required break the arc into an
+    //even number of pieces (or 1 in case of tiny polygons)
+    var subdivisions = this.arc.arcLength > 0.01 * radius ? 2 * Math.ceil(this.arc.arcLength / this.expandedSpacing / 2) : 1;
 
-      this.numDivisions = numDivisions || subdivisions;
+    this.numDivisions = numDivisions || subdivisions;
 
-      //recalculate spacing based on number of points
-      this.expandedSpacing = this.arc.arcLength / this.numDivisions;
-    }
-  }, {
-    key: 'subdivideExpandedEdge',
-    value: function subdivideExpandedEdge(numDivisions) {
-      this.calculateExpandedSpacing(numDivisions);
-      this.points = [this.arc.startPoint];
+    //recalculate spacing based on number of points
+    this.expandedSpacing = this.arc.arcLength / this.numDivisions;
+  };
 
-      //tiny pgons near the edges of the disk don't need to be subdivided
-      if (this.arc.arcLength > this.expandedSpacing) {
-        var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
+  Edge.prototype.subdivideExpandedEdge = function subdivideExpandedEdge(numDivisions) {
+    this.calculateExpandedSpacing(numDivisions);
+    this.points = [this.arc.startPoint];
+
+    //tiny pgons near the edges of the disk don't need to be subdivided
+    if (this.arc.arcLength > this.expandedSpacing) {
+      var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
+      this.points.push(p);
+
+      for (var i = 0; i < this.numDivisions - 2; i++) {
+        p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
         this.points.push(p);
-
-        for (var i = 0; i < this.numDivisions - 2; i++) {
-          p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
-          this.points.push(p);
-        }
       }
-      //push the final vertex
-      this.points.push(this.arc.endPoint);
     }
-  }, {
-    key: 'subdivideEdge',
-    value: function subdivideEdge(numDivisions) {
-      this.calculateSpacing(numDivisions);
-      this.points = [this.arc.startPoint];
+    //push the final vertex
+    this.points.push(this.arc.endPoint);
+  };
 
-      //tiny pgons near the edges of the disk don't need to be subdivided
-      if (this.arc.arcLength > this.spacing) {
-        var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
+  Edge.prototype.subdivideEdge = function subdivideEdge(numDivisions) {
+    this.calculateSpacing(numDivisions);
+    this.points = [this.arc.startPoint];
+
+    //tiny pgons near the edges of the disk don't need to be subdivided
+    if (this.arc.arcLength > this.spacing) {
+      var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
+      this.points.push(p);
+
+      for (var i = 0; i < this.numDivisions - 2; i++) {
+        p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing) : directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
         this.points.push(p);
-
-        for (var i = 0; i < this.numDivisions - 2; i++) {
-          p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing) : directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
-          this.points.push(p);
-        }
       }
-      //push the final vertex
-      this.points.push(this.arc.endPoint);
     }
-  }]);
+    //push the final vertex
+    this.points.push(this.arc.endPoint);
+  };
+
   return Edge;
 }();
 
@@ -816,172 +762,152 @@ var Polygon = function () {
     */
   }
 
-  babelHelpers.createClass(Polygon, [{
-    key: 'addExpandedVertices',
-    value: function addExpandedVertices(newRadius) {
-      this.expandedVertices = [new Point(this.vertices[0].x * newRadius, this.vertices[0].y * newRadius), new Point(this.vertices[1].x * newRadius, this.vertices[1].y * newRadius), new Point(this.vertices[2].x * newRadius, this.vertices[2].y * newRadius)];
-    }
-  }, {
-    key: 'addExpandedEdges',
-    value: function addExpandedEdges() {
-      this.expandedEdges = [new Edge(this.expandedVertices[0], this.expandedVertices[1]), new Edge(this.expandedVertices[1], this.expandedVertices[2]), new Edge(this.expandedVertices[2], this.expandedVertices[0])];
-    }
+  Polygon.prototype.addExpandedVertices = function addExpandedVertices(newRadius) {
+    this.expandedVertices = [new Point(this.vertices[0].x * newRadius, this.vertices[0].y * newRadius), new Point(this.vertices[1].x * newRadius, this.vertices[1].y * newRadius), new Point(this.vertices[2].x * newRadius, this.vertices[2].y * newRadius)];
+  };
 
-    //The longest edge with radius > 0 should be used to calculate how the finely
-    //the polygon gets subdivided
+  Polygon.prototype.addExpandedEdges = function addExpandedEdges() {
+    this.expandedEdges = [new Edge(this.expandedVertices[0], this.expandedVertices[1]), new Edge(this.expandedVertices[1], this.expandedVertices[2]), new Edge(this.expandedVertices[2], this.expandedVertices[0])];
+  };
 
-  }, {
-    key: 'findExpandedSubdivisionEdge',
-    value: function findExpandedSubdivisionEdge() {
-      var a = this.expandedEdges[0].arc.curvature === 0 ? 0 : this.expandedEdges[0].arc.arcLength;
-      var b = this.expandedEdges[1].arc.curvature === 0 ? 0 : this.expandedEdges[1].arc.arcLength;
-      var c = this.expandedEdges[2].arc.curvature === 0 ? 0 : this.expandedEdges[2].arc.arcLength;
-      if (a > b && a > c) this.expandedSubdivisionEdge = 0;else if (b > c) this.expandedSubdivisionEdge = 1;else this.expandedSubdivisionEdge = 2;
-    }
+  //The longest edge with radius > 0 should be used to calculate how the finely
+  //the polygon gets subdivided
 
-    //subdivide the subdivision edge, then subdivide the other two edges with the
-    //same number of points as the subdivision
+  Polygon.prototype.findExpandedSubdivisionEdge = function findExpandedSubdivisionEdge() {
+    var a = this.expandedEdges[0].arc.curvature === 0 ? 0 : this.expandedEdges[0].arc.arcLength;
+    var b = this.expandedEdges[1].arc.curvature === 0 ? 0 : this.expandedEdges[1].arc.arcLength;
+    var c = this.expandedEdges[2].arc.curvature === 0 ? 0 : this.expandedEdges[2].arc.arcLength;
+    if (a > b && a > c) this.expandedSubdivisionEdge = 0;else if (b > c) this.expandedSubdivisionEdge = 1;else this.expandedSubdivisionEdge = 2;
+  };
 
-  }, {
-    key: 'subdivideExpandedEdges',
-    value: function subdivideExpandedEdges() {
-      this.expandedEdges[this.expandedSubdivisionEdge].subdivideExpandedEdge();
-      this.expandedNumDivisions = this.expandedEdges[this.expandedSubdivisionEdge].points.length - 1;
+  //subdivide the subdivision edge, then subdivide the other two edges with the
+  //same number of points as the subdivision
 
-      this.expandedEdges[(this.expandedSubdivisionEdge + 1) % 3].subdivideExpandedEdge(this.numDivisions);
-      this.expandedEdges[(this.expandedSubdivisionEdge + 2) % 3].subdivideExpandedEdge(this.numDivisions);
-    }
-  }, {
-    key: 'subdivideExpandedMesh',
-    value: function subdivideExpandedMesh() {
-      this.subdivideExpandedEdges();
-      this.expandedMesh = [].concat(this.expandedEdges[0].points);
+  Polygon.prototype.subdivideExpandedEdges = function subdivideExpandedEdges() {
+    this.expandedEdges[this.expandedSubdivisionEdge].subdivideExpandedEdge();
+    this.expandedNumDivisions = this.expandedEdges[this.expandedSubdivisionEdge].points.length - 1;
 
-      for (var i = 1; i < this.expandedNumDivisions; i++) {
-        var startPoint = this.expandedEdges[2].points[this.expandedNumDivisions - i];
-        var endPoint = this.expandedEdges[1].points[i];
-        //console.log(startPoint, endPoint);
-        this.subdivideInteriorExpandedArc(startPoint, endPoint, i);
-      }
+    this.expandedEdges[(this.expandedSubdivisionEdge + 1) % 3].subdivideExpandedEdge(this.numDivisions);
+    this.expandedEdges[(this.expandedSubdivisionEdge + 2) % 3].subdivideExpandedEdge(this.numDivisions);
+  };
 
-      //push the final vertex
-      this.expandedMesh.push(this.expandedEdges[2].points[0]);
+  Polygon.prototype.subdivideExpandedMesh = function subdivideExpandedMesh() {
+    this.subdivideExpandedEdges();
+    this.expandedMesh = [].concat(this.expandedEdges[0].points);
+
+    for (var i = 1; i < this.expandedNumDivisions; i++) {
+      var startPoint = this.expandedEdges[2].points[this.expandedNumDivisions - i];
+      var endPoint = this.expandedEdges[1].points[i];
+      //console.log(startPoint, endPoint);
+      this.subdivideInteriorExpandedArc(startPoint, endPoint, i);
     }
 
-    //find the points along the arc between opposite subdivions of the second two
-    //edges of the polygon
+    //push the final vertex
+    this.expandedMesh.push(this.expandedEdges[2].points[0]);
+  };
 
-  }, {
-    key: 'subdivideInteriorExpandedArc',
-    value: function subdivideInteriorExpandedArc(startPoint, endPoint, arcIndex) {
-      var circle = new Arc(startPoint, endPoint).circle;
-      this.expandedMesh.push(startPoint);
+  //find the points along the arc between opposite subdivions of the second two
+  //edges of the polygon
 
-      //for each arc, the number of divisions will be reduced by one
-      var divisions = this.expandedNumDivisions - arcIndex;
+  Polygon.prototype.subdivideInteriorExpandedArc = function subdivideInteriorExpandedArc(startPoint, endPoint, arcIndex) {
+    var circle = new Arc(startPoint, endPoint).circle;
+    this.expandedMesh.push(startPoint);
 
-      //if the line get divided add points along line to mesh
-      if (divisions > 1) {
-        var spacing = distance(startPoint, endPoint) / divisions;
-        //let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
-        var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
-        for (var j = 0; j < divisions - 1; j++) {
-          this.expandedMesh.push(nextPoint);
-          //nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
-          nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
-        }
-      }
+    //for each arc, the number of divisions will be reduced by one
+    var divisions = this.expandedNumDivisions - arcIndex;
 
-      this.expandedMesh.push(endPoint);
-    }
-  }, {
-    key: 'addEdges',
-    value: function addEdges() {
-      this.edges = [];
-      for (var i = 0; i < this.vertices.length; i++) {
-        this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
+    //if the line get divided add points along line to mesh
+    if (divisions > 1) {
+      var spacing = distance(startPoint, endPoint) / divisions;
+      //let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
+      var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
+      for (var j = 0; j < divisions - 1; j++) {
+        this.expandedMesh.push(nextPoint);
+        //nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
+        nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
       }
     }
 
-    //The longest edge with radius > 0 should be used to calculate how the finely
-    //the polygon gets subdivided
+    this.expandedMesh.push(endPoint);
+  };
 
-  }, {
-    key: 'findSubdivisionEdge',
-    value: function findSubdivisionEdge() {
-      var a = this.edges[0].arc.curvature === 0 ? 0 : this.edges[0].arc.arcLength;
-      var b = this.edges[1].arc.curvature === 0 ? 0 : this.edges[1].arc.arcLength;
-      var c = this.edges[2].arc.curvature === 0 ? 0 : this.edges[2].arc.arcLength;
-      if (a > b && a > c) this.subdivisionEdge = 0;else if (b > c) this.subdivisionEdge = 1;else this.subdivisionEdge = 2;
+  Polygon.prototype.addEdges = function addEdges() {
+    this.edges = [];
+    for (var i = 0; i < this.vertices.length; i++) {
+      this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
+    }
+  };
+
+  //The longest edge with radius > 0 should be used to calculate how the finely
+  //the polygon gets subdivided
+
+  Polygon.prototype.findSubdivisionEdge = function findSubdivisionEdge() {
+    var a = this.edges[0].arc.curvature === 0 ? 0 : this.edges[0].arc.arcLength;
+    var b = this.edges[1].arc.curvature === 0 ? 0 : this.edges[1].arc.arcLength;
+    var c = this.edges[2].arc.curvature === 0 ? 0 : this.edges[2].arc.arcLength;
+    if (a > b && a > c) this.subdivisionEdge = 0;else if (b > c) this.subdivisionEdge = 1;else this.subdivisionEdge = 2;
+  };
+
+  //subdivide the subdivision edge, then subdivide the other two edges with the
+  //same number of points as the subdivision
+
+  Polygon.prototype.subdivideEdges = function subdivideEdges() {
+    this.edges[this.subdivisionEdge].subdivideEdge();
+    this.numDivisions = this.edges[this.subdivisionEdge].points.length - 1;
+
+    this.edges[(this.subdivisionEdge + 1) % 3].subdivideEdge(this.numDivisions);
+    this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
+  };
+
+  Polygon.prototype.subdivideMesh = function subdivideMesh() {
+    this.subdivideEdges();
+    this.mesh = [].concat(this.edges[0].points);
+
+    for (var i = 1; i < this.numDivisions; i++) {
+      var startPoint = this.edges[2].points[this.numDivisions - i];
+      var endPoint = this.edges[1].points[i];
+      this.subdivideInteriorArc(startPoint, endPoint, i);
     }
 
-    //subdivide the subdivision edge, then subdivide the other two edges with the
-    //same number of points as the subdivision
+    //push the final vertex
+    this.mesh.push(this.edges[2].points[0]);
+  };
 
-  }, {
-    key: 'subdivideEdges',
-    value: function subdivideEdges() {
-      this.edges[this.subdivisionEdge].subdivideEdge();
-      this.numDivisions = this.edges[this.subdivisionEdge].points.length - 1;
+  //find the points along the arc between opposite subdivions of the second two
+  //edges of the polygon
 
-      this.edges[(this.subdivisionEdge + 1) % 3].subdivideEdge(this.numDivisions);
-      this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
-    }
-  }, {
-    key: 'subdivideMesh',
-    value: function subdivideMesh() {
-      this.subdivideEdges();
-      this.mesh = [].concat(this.edges[0].points);
+  Polygon.prototype.subdivideInteriorArc = function subdivideInteriorArc(startPoint, endPoint, arcIndex) {
+    var circle = new Arc(startPoint, endPoint).circle;
+    this.mesh.push(startPoint);
 
-      for (var i = 1; i < this.numDivisions; i++) {
-        var startPoint = this.edges[2].points[this.numDivisions - i];
-        var endPoint = this.edges[1].points[i];
-        this.subdivideInteriorArc(startPoint, endPoint, i);
+    //for each arc, the number of divisions will be reduced by one
+    var divisions = this.numDivisions - arcIndex;
+
+    //if the line get divided add points along line to mesh
+    if (divisions > 1) {
+      var spacing = distance(startPoint, endPoint) / divisions;
+      var nextPoint = directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
+      for (var j = 0; j < divisions - 1; j++) {
+        this.mesh.push(nextPoint);
+        nextPoint = directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
       }
-
-      //push the final vertex
-      this.mesh.push(this.edges[2].points[0]);
     }
 
-    //find the points along the arc between opposite subdivions of the second two
-    //edges of the polygon
+    this.mesh.push(endPoint);
+  };
 
-  }, {
-    key: 'subdivideInteriorArc',
-    value: function subdivideInteriorArc(startPoint, endPoint, arcIndex) {
-      var circle = new Arc(startPoint, endPoint).circle;
-      this.mesh.push(startPoint);
+  //Apply a Transform to the polygon
 
-      //for each arc, the number of divisions will be reduced by one
-      var divisions = this.numDivisions - arcIndex;
+  Polygon.prototype.transform = function transform(_transform2) {
+    var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
 
-      //if the line get divided add points along line to mesh
-      if (divisions > 1) {
-        var spacing = distance(startPoint, endPoint) / divisions;
-        var nextPoint = directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
-        for (var j = 0; j < divisions - 1; j++) {
-          this.mesh.push(nextPoint);
-          nextPoint = directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
-        }
-      }
-
-      this.mesh.push(endPoint);
+    var newVertices = [];
+    for (var i = 0; i < this.vertices.length; i++) {
+      newVertices.push(this.vertices[i].transform(_transform2));
     }
+    return new Polygon(newVertices, materialIndex);
+  };
 
-    //Apply a Transform to the polygon
-
-  }, {
-    key: 'transform',
-    value: function transform(_transform2) {
-      var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
-
-      var newVertices = [];
-      for (var i = 0; i < this.vertices.length; i++) {
-        newVertices.push(this.vertices[i].transform(_transform2));
-      }
-      return new Polygon(newVertices, materialIndex);
-    }
-  }]);
   return Polygon;
 }();
 
@@ -996,43 +922,36 @@ var Disk = function () {
 
   //draw the disk background
 
-  babelHelpers.createClass(Disk, [{
-    key: 'drawDisk',
-    value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0x00c2ff); //0x00c2ff
-    }
-  }, {
-    key: 'drawPoint',
-    value: function drawPoint(point, radius, color) {
-      this.draw.disk(point, radius, color, false);
-    }
+  Disk.prototype.drawDisk = function drawDisk() {
+    this.draw.disk(this.centre, 1, 0x00c2ff); //0x00c2ff
+  };
 
-    //Draw an arc (hyperbolic line segment) between two points on the disk
+  Disk.prototype.drawPoint = function drawPoint(point, radius, color) {
+    this.draw.disk(point, radius, color, false);
+  };
 
-  }, {
-    key: 'drawArc',
-    value: function drawArc(arc, color) {
-      if (arc.straightLine) {
-        this.draw.line(arc.p1, arc.p2, color);
-      } else {
-        this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
-      }
+  //Draw an arc (hyperbolic line segment) between two points on the disk
+
+  Disk.prototype.drawArc = function drawArc(arc, color) {
+    if (arc.straightLine) {
+      this.draw.line(arc.p1, arc.p2, color);
+    } else {
+      this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
     }
-  }, {
-    key: 'drawPolygonOutline',
-    value: function drawPolygonOutline(polygon, color) {
-      var l = polygon.vertices.length;
-      for (var i = 0; i < l; i++) {
-        var arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l]);
-        this.drawArc(arc, color);
-      }
+  };
+
+  Disk.prototype.drawPolygonOutline = function drawPolygonOutline(polygon, color) {
+    var l = polygon.vertices.length;
+    for (var i = 0; i < l; i++) {
+      var arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l]);
+      this.drawArc(arc, color);
     }
-  }, {
-    key: 'drawPolygon',
-    value: function drawPolygon(polygon, color, texture, wireframe) {
-      this.draw.polygon(polygon, color, texture, wireframe);
-    }
-  }]);
+  };
+
+  Disk.prototype.drawPolygon = function drawPolygon(polygon, color, texture, wireframe) {
+    this.draw.polygon(polygon, color, texture, wireframe);
+  };
+
   return Disk;
 }();
 
@@ -1084,22 +1003,20 @@ var Transform = function () {
     this.position = position || false; //position not always required
   }
 
-  babelHelpers.createClass(Transform, [{
-    key: 'multiply',
-    value: function multiply(transform) {
-      if (!transform instanceof Transform) {
-        console.error('Error: ' + transform + 'is not a Transform');
-        return false;
-      }
-      var mat = multiplyMatrices(transform.matrix, this.matrix);
-      var position = transform.position;
-      var orientation = 1; //rotation
-      if (transform.orientation * this.orientation < 0) {
-        orientation = -1;
-      }
-      return new Transform(mat, orientation, position);
+  Transform.prototype.multiply = function multiply(transform) {
+    if (!transform instanceof Transform) {
+      console.error('Error: ' + transform + 'is not a Transform');
+      return false;
     }
-  }]);
+    var mat = multiplyMatrices(transform.matrix, this.matrix);
+    var position = transform.position;
+    var orientation = 1; //rotation
+    if (transform.orientation * this.orientation < 0) {
+      orientation = -1;
+    }
+    return new Transform(mat, orientation, position);
+  };
+
   return Transform;
 }();
 
@@ -1132,120 +1049,109 @@ var Transformations = function () {
 
   //reflect across the hypotenuse of the fundamental region of a tesselation
 
-  babelHelpers.createClass(Transformations, [{
-    key: 'initHypotenuseReflection',
-    value: function initHypotenuseReflection() {
-      this.hypReflection = new Transform(identityMatrix(3), -1);
-      this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
-      this.hypReflection.matrix[0][1] = Math.sin(2 * Math.PI / this.p);
-      this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
-      this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
+  Transformations.prototype.initHypotenuseReflection = function initHypotenuseReflection() {
+    this.hypReflection = new Transform(identityMatrix(3), -1);
+    this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
+    this.hypReflection.matrix[0][1] = Math.sin(2 * Math.PI / this.p);
+    this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
+    this.hypReflection.matrix[1][1] = -Math.cos(2 * Math.PI / this.p);
+  };
+
+  //reflect across the first edge of the polygon (which crosses the radius
+  // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
+  //across any edge
+
+  Transformations.prototype.initEdgeReflection = function initEdgeReflection() {
+    var cosp = Math.cos(Math.PI / this.p);
+    var sinp = Math.sin(Math.PI / this.p);
+    var cos2p = Math.cos(2 * Math.PI / this.p);
+    var sin2p = Math.sin(2 * Math.PI / this.p);
+
+    var coshq = Math.cos(Math.PI / this.q) / sinp;
+    var sinhq = Math.sqrt(coshq * coshq - 1);
+
+    var cosh2q = 2 * coshq * coshq - 1;
+    var sinh2q = 2 * sinhq * coshq;
+    var num = 2;
+    var den = 6;
+    this.edgeReflection = new Transform(identityMatrix(3), -1);
+    this.edgeReflection.matrix[0][0] = -cosh2q;
+    this.edgeReflection.matrix[0][2] = sinh2q;
+    this.edgeReflection.matrix[2][0] = -sinh2q;
+    this.edgeReflection.matrix[2][2] = cosh2q;
+  };
+
+  Transformations.prototype.initEdgeBisectorReflection = function initEdgeBisectorReflection() {
+    this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
+    this.edgeBisectorReflection.matrix[1][1] = -1;
+  };
+
+  //set up clockwise and anticlockwise rotations which will rotate by
+  // PI/(number of sides of central polygon)
+
+  Transformations.prototype.initPgonRotations = function initPgonRotations() {
+    this.rotatePolygonCW = [];
+    this.rotatePolygonCCW = [];
+    for (var i = 0; i < this.p; i++) {
+      this.rotatePolygonCW[i] = new Transform(identityMatrix(3), 1);
+      this.rotatePolygonCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].matrix[0][1] = -Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].matrix[1][0] = Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
+
+      this.rotatePolygonCCW[i] = new Transform(identityMatrix(3), 1);
+      this.rotatePolygonCCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].matrix[0][1] = Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].matrix[1][0] = -Math.sin(2 * i * Math.PI / this.p);
+      this.rotatePolygonCCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
     }
+  };
 
-    //reflect across the first edge of the polygon (which crosses the radius
-    // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
-    //across any edge
+  //orientation: either reflection = -1 OR rotation = 1
 
-  }, {
-    key: 'initEdgeReflection',
-    value: function initEdgeReflection() {
-      var cosp = Math.cos(Math.PI / this.p);
-      var sinp = Math.sin(Math.PI / this.p);
-      var cos2p = Math.cos(2 * Math.PI / this.p);
-      var sin2p = Math.sin(2 * Math.PI / this.p);
-
-      var coshq = Math.cos(Math.PI / this.q) / sinp;
-      var sinhq = Math.sqrt(coshq * coshq - 1);
-
-      var cosh2q = 2 * coshq * coshq - 1;
-      var sinh2q = 2 * sinhq * coshq;
-      var num = 2;
-      var den = 6;
-      this.edgeReflection = new Transform(identityMatrix(3), -1);
-      this.edgeReflection.matrix[0][0] = -cosh2q;
-      this.edgeReflection.matrix[0][2] = sinh2q;
-      this.edgeReflection.matrix[2][0] = -sinh2q;
-      this.edgeReflection.matrix[2][2] = cosh2q;
+  Transformations.prototype.initEdges = function initEdges() {
+    this.edges = [];
+    for (var i = 0; i < this.p; i++) {
+      this.edges.push({
+        orientation: 1,
+        adjacentEdge: i
+      });
     }
-  }, {
-    key: 'initEdgeBisectorReflection',
-    value: function initEdgeBisectorReflection() {
-      this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
-      this.edgeBisectorReflection.matrix[1][1] = -1;
-    }
+  };
 
-    //set up clockwise and anticlockwise rotations which will rotate by
-    // PI/(number of sides of central polygon)
+  Transformations.prototype.initEdgeTransforms = function initEdgeTransforms() {
+    this.edgeTransforms = [];
 
-  }, {
-    key: 'initPgonRotations',
-    value: function initPgonRotations() {
-      this.rotatePolygonCW = [];
-      this.rotatePolygonCCW = [];
-      for (var i = 0; i < this.p; i++) {
-        this.rotatePolygonCW[i] = new Transform(identityMatrix(3), 1);
-        this.rotatePolygonCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
-        this.rotatePolygonCW[i].matrix[0][1] = -Math.sin(2 * i * Math.PI / this.p);
-        this.rotatePolygonCW[i].matrix[1][0] = Math.sin(2 * i * Math.PI / this.p);
-        this.rotatePolygonCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
-
-        this.rotatePolygonCCW[i] = new Transform(identityMatrix(3), 1);
-        this.rotatePolygonCCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
-        this.rotatePolygonCCW[i].matrix[0][1] = Math.sin(2 * i * Math.PI / this.p);
-        this.rotatePolygonCCW[i].matrix[1][0] = -Math.sin(2 * i * Math.PI / this.p);
-        this.rotatePolygonCCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
+    for (var i = 0; i < this.p; i++) {
+      var adj = this.edges[i].adjacentEdge;
+      //Case 1: reflection
+      if (this.edges[i].orientation === -1) {
+        var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
+        mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
+        this.edgeTransforms[i] = new Transform(mat);
       }
-    }
-
-    //orientation: either reflection = -1 OR rotation = 1
-
-  }, {
-    key: 'initEdges',
-    value: function initEdges() {
-      this.edges = [];
-      for (var i = 0; i < this.p; i++) {
-        this.edges.push({
-          orientation: 1,
-          adjacentEdge: i
-        });
-      }
-    }
-  }, {
-    key: 'initEdgeTransforms',
-    value: function initEdgeTransforms() {
-      this.edgeTransforms = [];
-
-      for (var i = 0; i < this.p; i++) {
-        var adj = this.edges[i].adjacentEdge;
-        //Case 1: reflection
-        if (this.edges[i].orientation === -1) {
-          var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
+      //Case 2: rotation
+      else if (this.edges[i].orientation === 1) {
+          var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
           mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
           this.edgeTransforms[i] = new Transform(mat);
+        } else {
+          console.error('initEdgeTransforms(): invalid orientation value');
+          console.error(this.edges[i]);
         }
-        //Case 2: rotation
-        else if (this.edges[i].orientation === 1) {
-            var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
-            mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-            this.edgeTransforms[i] = new Transform(mat);
-          } else {
-            console.error('initEdgeTransforms(): invalid orientation value');
-            console.error(this.edges[i]);
-          }
-        this.edgeTransforms[i].orientation = this.edges[adj].orientation;
-        this.edgeTransforms[i].position = adj;
-      }
+      this.edgeTransforms[i].orientation = this.edges[adj].orientation;
+      this.edgeTransforms[i].position = adj;
     }
-  }, {
-    key: 'shiftTrans',
-    value: function shiftTrans(transform, shift) {
-      var newEdge = (transform.position + transform.orientation * shift + 2 * this.p) % this.p;
-      if (newEdge < 0 || newEdge > this.p - 1) {
-        console.error('Error: shiftTran newEdge out of range.');
-      }
-      return transform.multiply(this.edgeTransforms[newEdge]);
+  };
+
+  Transformations.prototype.shiftTrans = function shiftTrans(transform, shift) {
+    var newEdge = (transform.position + transform.orientation * shift + 2 * this.p) % this.p;
+    if (newEdge < 0 || newEdge > this.p - 1) {
+      console.error('Error: shiftTran newEdge out of range.');
     }
-  }]);
+    return transform.multiply(this.edgeTransforms[newEdge]);
+  };
+
   return Transformations;
 }();
 
@@ -1267,80 +1173,74 @@ var Parameters = function () {
     this.maxExposure = q - 1;
   }
 
-  babelHelpers.createClass(Parameters, [{
-    key: 'exposure',
-    value: function exposure(layer, vertexNum, pgonNum) {
-      if (layer === 0) {
-        if (pgonNum === 0) {
-          //layer 0, pgon 0
-          if (this.q === 3) return this.maxExposure;else return this.minExposure;
-        } else return this.maxExposure; //layer 0, pgon != 0
-      } else {
-          //layer != 0
-          if (vertexNum === 0 && pgonNum === 0) {
-            return this.minExposure;
-          } else if (vertexNum === 0) {
-            if (this.q !== 3) return this.maxExposure;else return this.minExposure;
-          } else if (pgonNum === 0) {
-            if (this.q !== 3) return this.minExposure;else return this.maxExposure;
-          } else return this.maxExposure;
-        }
-    }
-  }, {
-    key: 'pSkip',
-    value: function pSkip(exposure) {
-      if (exposure === this.minExposure) {
-        if (this.q !== 3) return 1;else return 3;
-      } else if (exposure === this.maxExposure) {
-        if (this.p === 3) return 1;else if (this.q === 3) return 2;else return 0;
-      } else {
-        console.error('pSkip: wrong exposure value!');
-        return false;
+  Parameters.prototype.exposure = function exposure(layer, vertexNum, pgonNum) {
+    if (layer === 0) {
+      if (pgonNum === 0) {
+        //layer 0, pgon 0
+        if (this.q === 3) return this.maxExposure;else return this.minExposure;
+      } else return this.maxExposure; //layer 0, pgon != 0
+    } else {
+        //layer != 0
+        if (vertexNum === 0 && pgonNum === 0) {
+          return this.minExposure;
+        } else if (vertexNum === 0) {
+          if (this.q !== 3) return this.maxExposure;else return this.minExposure;
+        } else if (pgonNum === 0) {
+          if (this.q !== 3) return this.minExposure;else return this.maxExposure;
+        } else return this.maxExposure;
       }
+  };
+
+  Parameters.prototype.pSkip = function pSkip(exposure) {
+    if (exposure === this.minExposure) {
+      if (this.q !== 3) return 1;else return 3;
+    } else if (exposure === this.maxExposure) {
+      if (this.p === 3) return 1;else if (this.q === 3) return 2;else return 0;
+    } else {
+      console.error('pSkip: wrong exposure value!');
+      return false;
     }
-  }, {
-    key: 'qSkip',
-    value: function qSkip(exposure, vertexNum) {
-      if (exposure === this.minExposure) {
-        if (vertexNum === 0) {
-          if (this.q !== 3) return -1;else return 0;
-        } else {
-          if (this.p === 3) return -1;else return 0;
-        }
-      } else if (exposure === this.maxExposure) {
-        if (vertexNum === 0) {
-          if (this.p === 3 || this.q === 3) return 0;else return -1;
-        } else return 0;
+  };
+
+  Parameters.prototype.qSkip = function qSkip(exposure, vertexNum) {
+    if (exposure === this.minExposure) {
+      if (vertexNum === 0) {
+        if (this.q !== 3) return -1;else return 0;
       } else {
-        console.error('qSkip: wrong exposure value!');
-        return false;
+        if (this.p === 3) return -1;else return 0;
       }
+    } else if (exposure === this.maxExposure) {
+      if (vertexNum === 0) {
+        if (this.p === 3 || this.q === 3) return 0;else return -1;
+      } else return 0;
+    } else {
+      console.error('qSkip: wrong exposure value!');
+      return false;
     }
-  }, {
-    key: 'verticesToDo',
-    value: function verticesToDo(exposure) {
-      if (this.p === 3) return 1;else if (exposure === this.minExposure) {
-        if (this.q === 3) return this.p - 5;else return this.p - 3;
-      } else if (exposure === this.maxExposure) {
-        if (this.q === 3) return this.p - 4;else return this.p - 2;
-      } else {
-        console.error('verticesToDo: wrong exposure value!');
-        return false;
-      }
+  };
+
+  Parameters.prototype.verticesToDo = function verticesToDo(exposure) {
+    if (this.p === 3) return 1;else if (exposure === this.minExposure) {
+      if (this.q === 3) return this.p - 5;else return this.p - 3;
+    } else if (exposure === this.maxExposure) {
+      if (this.q === 3) return this.p - 4;else return this.p - 2;
+    } else {
+      console.error('verticesToDo: wrong exposure value!');
+      return false;
     }
-  }, {
-    key: 'pgonsToDo',
-    value: function pgonsToDo(exposure, vertexNum) {
-      if (this.q === 3) return 1;else if (vertexNum === 0) return this.q - 3;else if (exposure === this.minExposure) {
-        if (this.p === 3) return this.q - 4;else return this.q - 2;
-      } else if (exposure === this.maxExposure) {
-        if (this.p === 3) return this.q - 3;else return this.q - 2;
-      } else {
-        console.error('pgonsToDo: wrong exposure value!');
-        return false;
-      }
+  };
+
+  Parameters.prototype.pgonsToDo = function pgonsToDo(exposure, vertexNum) {
+    if (this.q === 3) return 1;else if (vertexNum === 0) return this.q - 3;else if (exposure === this.minExposure) {
+      if (this.p === 3) return this.q - 4;else return this.q - 2;
+    } else if (exposure === this.maxExposure) {
+      if (this.p === 3) return this.q - 3;else return this.q - 2;
+    } else {
+      console.error('pgonsToDo: wrong exposure value!');
+      return false;
     }
-  }]);
+  };
+
   return Parameters;
 }();
 
@@ -1395,253 +1295,219 @@ var RegularTesselation = function () {
     this.init();
   }
 
-  babelHelpers.createClass(RegularTesselation, [{
-    key: 'init',
-    value: function init(p, q) {
-      this.tiling = [];
+  RegularTesselation.prototype.init = function init(p, q) {
+    this.tiling = [];
 
-      this.buildCentralPattern();
+    this.buildCentralPattern();
 
-      var t0 = performance.now();
-      this.generateTiling();
-      var t1 = performance.now();
-      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
+    var t0 = performance.now();
+    this.generateTiling();
+    var t1 = performance.now();
+    console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
 
-      t0 = performance.now();
-      this.drawTiling();
-      t1 = performance.now();
-      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
-    }
+    t0 = performance.now();
+    this.drawTiling();
+    t1 = performance.now();
+    console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
+  };
 
-    //fundamentalRegion calculation using Dunham's method
-    //this is a right angle triangle above the radius on the line (0,0) -> (0,1)
-    //of the central polygon
+  //fundamentalRegion calculation using Dunham's method
+  //this is a right angle triangle above the radius on the line (0,0) -> (0,1)
+  //of the central polygon
 
-  }, {
-    key: 'fundamentalRegion',
-    value: function fundamentalRegion() {
-      var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
+  RegularTesselation.prototype.fundamentalRegion = function fundamentalRegion() {
+    var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
 
-      var sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
+    var sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
 
-      var coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
-      var sinhq = Math.sqrt(coshq * coshq - 1);
+    var coshq = Math.cos(Math.PI / this.q) / Math.sin(Math.PI / this.p);
+    var sinhq = Math.sqrt(coshq * coshq - 1);
 
-      var rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
-      var x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
+    var rad2 = sinh2 / (cosh2 + 1); //radius of circle containing layer 0
+    var x2pt = sinhq / (coshq + 1); //x coordinate of third vertex of triangle
 
-      //point at end of hypotenuse of fundamental region
-      var xqpt = Math.cos(Math.PI / this.p) * rad2;
-      var yqpt = Math.sin(Math.PI / this.p) * rad2;
+    //point at end of hypotenuse of fundamental region
+    var xqpt = Math.cos(Math.PI / this.p) * rad2;
+    var yqpt = Math.sin(Math.PI / this.p) * rad2;
 
-      //create points and move them from the unit disk to our radius
-      var p1 = new Point(xqpt, yqpt);
-      var p2 = new Point(x2pt, 0);
-      var p3 = p1.transform(this.transforms.edgeBisectorReflection);
-      var vertices = [this.disk.centre, p1, p2];
+    //create points and move them from the unit disk to our radius
+    var p1 = new Point(xqpt, yqpt);
+    var p2 = new Point(x2pt, 0);
+    var p3 = p1.transform(this.transforms.edgeBisectorReflection);
+    var vertices = [this.disk.centre, p1, p2];
 
-      return new Polygon(vertices, 0);
-    }
+    return new Polygon(vertices, 0);
+  };
 
-    //this is a kite shaped region consisting of two copies of the fundamental
-    //region with different textures applied to create the basic pattern
-    //NOTE: for the time being just using edge bisector reflection to recreate Circle
-    //Limit I, other patterns will require different options
+  //this is a kite shaped region consisting of two copies of the fundamental
+  //region with different textures applied to create the basic pattern
+  //NOTE: for the time being just using edge bisector reflection to recreate Circle
+  //Limit I, other patterns will require different options
 
-  }, {
-    key: 'fundamentalPattern',
-    value: function fundamentalPattern() {
-      var upper = this.fundamentalRegion();
-      var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-      return [upper, lower];
-    }
+  RegularTesselation.prototype.fundamentalPattern = function fundamentalPattern() {
+    var upper = this.fundamentalRegion();
+    var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
+    return [upper, lower];
+  };
 
-    //The pattern in the central polygon is made up of transformed copies
-    //of the fundamental pattern
+  //The pattern in the central polygon is made up of transformed copies
+  //of the fundamental pattern
 
-  }, {
-    key: 'buildCentralPattern',
-    value: function buildCentralPattern() {
-      //add the first two polygons to the central pattern
-      this.centralPattern = this.fundamentalPattern();
+  RegularTesselation.prototype.buildCentralPattern = function buildCentralPattern() {
+    //add the first two polygons to the central pattern
+    this.centralPattern = this.fundamentalPattern();
 
-      //NOTE: could do this more concisely using array indices and multiplying transforms
-      //but naming the regions for clarity
-      var upper = this.centralPattern[0];
-      var lower = this.centralPattern[1];
+    //NOTE: could do this more concisely using array indices and multiplying transforms
+    //but naming the regions for clarity
+    var upper = this.centralPattern[0];
+    var lower = this.centralPattern[1];
 
-      //created reflected versions of the two pattern pieces
-      var upperReflected = this.centralPattern[0].transform(this.transforms.edgeBisectorReflection);
-      var lowerReflected = this.centralPattern[1].transform(this.transforms.edgeBisectorReflection);
+    //created reflected versions of the two pattern pieces
+    var upperReflected = this.centralPattern[0].transform(this.transforms.edgeBisectorReflection);
+    var lowerReflected = this.centralPattern[1].transform(this.transforms.edgeBisectorReflection);
 
-      for (var i = 1; i < this.p; i++) {
-        if (i % 2 === 1) {
-          this.centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
-          this.centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
-        } else {
-          this.centralPattern.push(upper.transform(this.transforms.rotatePolygonCW[i]));
-          this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
-        }
-      }
-
-      this.tiling[0] = this.centralPattern;
-    }
-
-    //TODO document this function
-
-  }, {
-    key: 'generateTiling',
-    value: function generateTiling() {
-      for (var i = 0; i < this.p; i++) {
-        var qTransform = this.transforms.edgeTransforms[i];
-        for (var j = 0; j < this.q - 2; j++) {
-          if (this.p === 3 && this.q - 3 === j) {
-            this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
-          } else {
-            this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
-          }
-          if (-1 % this.p !== 0) {
-            qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
-          }
-        }
-      }
-    }
-
-    //calculate the polygons in each layer and add them to this.tiling[]
-    //TODO document this function
-
-  }, {
-    key: 'layerRecursion',
-    value: function layerRecursion(exposure, layer, transform) {
-      this.tiling.push(this.transformPattern(this.centralPattern, transform));
-
-      //stop if the current pattern has reached the minimum size
-      if (this.tiling[this.tiling.length - 1][0].edges[0].arc.arcLength < this.minPolygonSize) {
-        return;
-      }
-
-      //if(layer > 2){
-      //  return;
-      //}
-
-      var pSkip = this.params.pSkip(exposure);
-      var verticesToDo = this.params.verticesToDo(exposure);
-
-      for (var i = 0; i < verticesToDo; i++) {
-        var pTransform = this.transforms.shiftTrans(transform, pSkip);
-        var qTransform = undefined;
-
-        var qSkip = this.params.qSkip(exposure, i);
-        if (qSkip % this.p !== 0) {
-          qTransform = this.transforms.shiftTrans(pTransform, qSkip);
-        } else {
-          qTransform = pTransform;
-        }
-
-        var pgonsToDo = this.params.pgonsToDo(exposure, i);
-
-        for (var j = 0; j < pgonsToDo; j++) {
-          if (this.p === 3 && j === pgonsToDo - 1) {
-            this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
-          } else {
-
-            this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
-          }
-          if (-1 % this.p !== 0) {
-            qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
-          }
-        }
-        pSkip = (pSkip + 1) % this.p;
-      }
-    }
-  }, {
-    key: 'transformPattern',
-    value: function transformPattern(pattern, transform) {
-      var newPattern = [];
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = pattern[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var polygon = _step.value;
-
-          newPattern.push(polygon.transform(transform));
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      return newPattern;
-    }
-  }, {
-    key: 'drawPattern',
-    value: function drawPattern(pattern) {
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
-
-      try {
-        for (var _iterator2 = pattern[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var polygon = _step2.value;
-
-          this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
-        }
-      } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
-      }
-    }
-  }, {
-    key: 'drawTiling',
-    value: function drawTiling() {
-      for (var i = 0; i < this.tiling.length; i++) {
-        this.drawPattern(this.tiling[i]);
-      }
-    }
-
-    //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
-    //either an elliptical or euclidean tesselation);
-
-  }, {
-    key: 'checkParams',
-    value: function checkParams() {
-      if ((this.p - 2) * (this.q - 2) <= 4) {
-        console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
-        return true;
-      } else if (this.q < 3 || isNaN(this.q)) {
-        console.error('Tesselation error: at least 3 p-gons must meet \
-                    at each vertex!');
-        return true;
-      } else if (this.p < 3 || isNaN(this.p)) {
-        console.error('Tesselation error: polygon needs at least 3 sides!');
-        return true;
+    for (var i = 1; i < this.p; i++) {
+      if (i % 2 === 1) {
+        this.centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
+        this.centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
       } else {
-        return false;
+        this.centralPattern.push(upper.transform(this.transforms.rotatePolygonCW[i]));
+        this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
       }
     }
-  }]);
+
+    this.tiling[0] = this.centralPattern;
+  };
+
+  //TODO document this function
+
+  RegularTesselation.prototype.generateTiling = function generateTiling() {
+    for (var i = 0; i < this.p; i++) {
+      var qTransform = this.transforms.edgeTransforms[i];
+      for (var j = 0; j < this.q - 2; j++) {
+        if (this.p === 3 && this.q - 3 === j) {
+          this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
+        } else {
+          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
+        }
+        if (-1 % this.p !== 0) {
+          qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+        }
+      }
+    }
+  };
+
+  //calculate the polygons in each layer and add them to this.tiling[]
+  //TODO document this function
+
+  RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform) {
+    this.tiling.push(this.transformPattern(this.centralPattern, transform));
+
+    //stop if the current pattern has reached the minimum size
+    if (this.tiling[this.tiling.length - 1][0].edges[0].arc.arcLength < this.minPolygonSize) {
+      return;
+    }
+
+    //if(layer > 2){
+    //  return;
+    //}
+
+    var pSkip = this.params.pSkip(exposure);
+    var verticesToDo = this.params.verticesToDo(exposure);
+
+    for (var i = 0; i < verticesToDo; i++) {
+      var pTransform = this.transforms.shiftTrans(transform, pSkip);
+      var qTransform = undefined;
+
+      var qSkip = this.params.qSkip(exposure, i);
+      if (qSkip % this.p !== 0) {
+        qTransform = this.transforms.shiftTrans(pTransform, qSkip);
+      } else {
+        qTransform = pTransform;
+      }
+
+      var pgonsToDo = this.params.pgonsToDo(exposure, i);
+
+      for (var j = 0; j < pgonsToDo; j++) {
+        if (this.p === 3 && j === pgonsToDo - 1) {
+          this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
+        } else {
+
+          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+        }
+        if (-1 % this.p !== 0) {
+          qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
+        }
+      }
+      pSkip = (pSkip + 1) % this.p;
+    }
+  };
+
+  RegularTesselation.prototype.transformPattern = function transformPattern(pattern, transform) {
+    var newPattern = [];
+    for (var _iterator = pattern, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      var _ref;
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
+      }
+
+      var polygon = _ref;
+
+      newPattern.push(polygon.transform(transform));
+    }
+    return newPattern;
+  };
+
+  RegularTesselation.prototype.drawPattern = function drawPattern(pattern) {
+    for (var _iterator2 = pattern, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+      var _ref2;
+
+      if (_isArray2) {
+        if (_i2 >= _iterator2.length) break;
+        _ref2 = _iterator2[_i2++];
+      } else {
+        _i2 = _iterator2.next();
+        if (_i2.done) break;
+        _ref2 = _i2.value;
+      }
+
+      var polygon = _ref2;
+
+      this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
+    }
+  };
+
+  RegularTesselation.prototype.drawTiling = function drawTiling() {
+    for (var i = 0; i < this.tiling.length; i++) {
+      this.drawPattern(this.tiling[i]);
+    }
+  };
+
+  //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
+  //either an elliptical or euclidean tesselation);
+
+  RegularTesselation.prototype.checkParams = function checkParams() {
+    if ((this.p - 2) * (this.q - 2) <= 4) {
+      console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
+      return true;
+    } else if (this.q < 3 || isNaN(this.q)) {
+      console.error('Tesselation error: at least 3 p-gons must meet \
+                    at each vertex!');
+      return true;
+    } else if (this.p < 3 || isNaN(this.p)) {
+      console.error('Tesselation error: polygon needs at least 3 sides!');
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   return RegularTesselation;
 }();
 
@@ -1695,7 +1561,7 @@ var circleLimit1Spec = {
   5 //edge_0 adjacency (range p - 1)
   ], [1, 4], //edge_1 orientation, adjacency
   [1, 3], [1, 2], [1, 1], [1, 0]],
-  minPolygonSize: 0.05
+  minPolygonSize: 0.02
 };
 
 var Controller = function () {
@@ -1706,16 +1572,14 @@ var Controller = function () {
     this.setupButtons();
   }
 
-  babelHelpers.createClass(Controller, [{
-    key: 'setupButtons',
-    value: function setupButtons() {
-      var _this = this;
+  Controller.prototype.setupButtons = function setupButtons() {
+    var _this = this;
 
-      document.querySelector('#generate-tiling').onclick = function () {
-        return new RegularTesselation(_this.tilingSpec);
-      };
-    }
-  }]);
+    document.querySelector('#generate-tiling').onclick = function () {
+      return new RegularTesselation(_this.tilingSpec);
+    };
+  };
+
   return Controller;
 }();
 

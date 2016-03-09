@@ -18,7 +18,7 @@ const circleLimit1Spec = {
                   ],
                   [1, 4], //edge_1 orientation, adjacency
                   [1, 3], [1, 2], [1, 1], [1, 0]],
-  minPolygonSize: 0.05,
+  minPolygonSize: 0.02,
 };
 
 
