@@ -28,13 +28,21 @@ const circleLimit1Spec = {
 
 export class Controller {
   constructor() {
-    this.tilingSpec = circleLimit1Spec;
-    this.setupButtons();
-    //this.draw = new ThreeJS();
+    this.draw = new ThreeJS();
+    this.regularHyperbolicTiling( circleLimit1Spec );
   }
 
-  setupButtons() {
-    document.querySelector('#generate-tiling').onclick = () =>
-      new RegularTesselation(this.tilingSpec);
+  regularHyperbolicTiling( spec ){
+    const regularTesselation = new RegularTesselation( spec );
+    document.querySelector('#generate-tiling').onclick = () => {
+      let t0 = performance.now();
+      const tiling = regularTesselation.generateTiling();
+      let t1 = performance.now();
+      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.')
+      t0 = performance.now();
+      this.draw.polygonArray( tiling, circleLimit1Spec.textures);
+      t1 = performance.now();
+      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.')
+    }
   }
 }

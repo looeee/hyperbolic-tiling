@@ -9,6 +9,7 @@ import { Point } from './elements';
 // *  are converted to screen space (which involves multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
+//TODO refactor create materials based on passed in textures array
 export class ThreeJS {
   constructor() {
     this.init();
@@ -99,6 +100,15 @@ export class ThreeJS {
     circle.position.y = centre.y * this.radius;
 
     this.scene.add(circle);
+  }
+
+  polygonArray( array, textureArray, color, wireframe ){
+    color = color || 0xffffff;
+    wireframe = wireframe || false;
+
+    for(let i = 0; i< array.length; i++){
+      this.polygon(array[i], color, textureArray, wireframe);
+    }
   }
 
   //Note: polygons assumed to be triangular!
@@ -209,12 +219,9 @@ export class ThreeJS {
   }
 
   render() {
-
     this.renderer.render(this.scene, this.camera);
     this.appendImageToDom();
-    //window.setTimeout(() => {
-    this.clearScene();
-    //}, 100);
+    //this.clearScene();
   }
 
   appendImageToDom(){

@@ -1,7 +1,7 @@
 import * as E from './euclid';
 
 import {
-  Polygon, Point, Disk
+  Polygon, Point
 }
 from './elements';
 
@@ -49,27 +49,13 @@ export class RegularTesselation {
 
     console.log('{', this.p, ', ' , this.q, '} tiling.');
 
-    this.disk = new Disk();
+    //this.disk = new Disk();
     this.params = new Parameters(this.p, this.q);
     this.transforms = new Transformations(this.p, this.q);
 
     if (this.checkParams()) {
       return false;
     }
-
-    this.init();
-  }
-
-  init(p, q) {
-    let t0 = performance.now();
-    const tiling = this.generateTiling();
-    let t1 = performance.now();
-    console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.')
-
-    t0 = performance.now();
-    this.drawTiling( tiling );
-    t1 = performance.now();
-    console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.')
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -207,9 +193,10 @@ export class RegularTesselation {
   }
 
   drawTiling( tiling ) {
-    for (let i = 0; i < tiling.length; i++) {
-      this.disk.drawPolygon(tiling[i], 0xffffff, this.textures, this.wireframe);
-    }
+    this.disk.draw.polygonArray(tiling, this.textures);
+    //for (let i = 0; i < tiling.length; i++) {
+    //  this.disk.drawPolygon(tiling[i], 0xffffff, this.textures, this.wireframe);
+    //}
   }
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is

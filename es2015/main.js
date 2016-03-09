@@ -35,12 +35,6 @@ window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 
 
 const controller = new Controller();
 
-//Run after load to get window width and height
-window.onload = () => {
-  //tesselation = new RegularTesselation(circleLimit1Spec);
-  //tesselation = new RegularTesselation(p, q);
-}
+//window.onload = () => {}
 
-window.onresize = () => {
-  //tesselation.disk.draw.resize();
-}
+//window.onresize = () => {}

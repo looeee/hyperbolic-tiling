@@ -451,54 +451,6 @@ export class Polygon {
   }
 }
 
-// * ***********************************************************************
-// *
-// *  DISK CLASS
-// *  Poincare Disk representation of the hyperbolic plane (as the unit disk).
-// *  Contains any functions used to draw to the disk which check the element
-// *  to be drawn lie on the disk then passes them to Three.js for drawing
-// *
-// *************************************************************************
-export class Disk {
-  constructor() {
-    this.draw = new ThreeJS();
-    this.centre = new Point(0, 0);
-    //this.drawDisk();
-  }
-
-  //draw the disk background
-  drawDisk() {
-    this.draw.disk(this.centre, 1, 0x00c2ff);//0x00c2ff
-  }
-
-  drawPoint(point, radius, color) {
-    this.draw.disk(point, radius, color, false);
-  }
-
-  //Draw an arc (hyperbolic line segment) between two points on the disk
-  drawArc(arc, color) {
-    if (arc.straightLine) {
-      this.draw.line(arc.p1, arc.p2, color);
-    }
-    else {
-      this.draw.segment(arc.circle, arc.startAngle, arc.endAngle, color);
-    }
-  }
-
-  drawPolygonOutline(polygon, color) {
-    const l = polygon.vertices.length;
-    for (let i = 0; i < l; i++) {
-      const arc = new Arc(polygon.vertices[i], polygon.vertices[(i + 1) % l])
-      this.drawArc(arc, color);
-    }
-  }
-
-  drawPolygon(polygon, color, texture, wireframe) {
-    this.draw.polygon(polygon, color, texture, wireframe);
-  }
-}
-
-
 /*
 
 //Incentre of triangular polygon
