@@ -220,38 +220,3 @@ export class RegularTesselation {
     }
   }
 }
-
-/*
-buildCentralPolygon() {
-  const vertices = [];
-  for (let i = 0; i < this.p; i++) {
-    const p = this.fr.vertices[1];
-    vertices.push(p.transform(this.transforms.rotatePolygonCW[i]))
-  }
-  this.centralPolygon = new Polygon(vertices, true);
-}
-*/
-
-/*
-//calculate the fundamental region (triangle out of which Layer 0 is built)
-//using Coxeter's method
-fundamentalRegion() {
-  const s = Math.sin(Math.PI / this.p);
-  const t = Math.cos(Math.PI / this.q);
-  //multiply these by the disks radius (Coxeter used unit disk);
-  const r = 1 / Math.sqrt((t * t) / (s * s) - 1) * window.radius;
-  const d = 1 / Math.sqrt(1 - (s * s) / (t * t)) * window.radius;
-  const b = new Point(window.radius * Math.cos(Math.PI / this.p), window.radius * Math.sin(Math.PI / this.p));
-
-  const circle = new Circle(d, 0, r);
-
-  //there will be two points of intersection, of which we want the first
-  const p1 = E.circleLineIntersect(circle, this.disk.centre, b).p1;
-
-  const p2 = new Point(d - r, 0);
-
-  const vertices = [this.disk.centre, p1, p2];
-
-  return new Polygon(vertices);
-}
-*/

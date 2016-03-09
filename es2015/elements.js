@@ -450,36 +450,3 @@ export class Polygon {
     return new Polygon(newVertices, materialIndex);
   }
 }
-
-/*
-
-//Incentre of triangular polygon
-findCentre() {
-  const a = E.distance(this.vertices[0], this.vertices[1]);
-  const b = E.distance(this.vertices[1], this.vertices[2]);
-  const c = E.distance(this.vertices[0], this.vertices[2]);
-  const x = (a*this.vertices[2].x + b*this.vertices[0].x + c*this.vertices[1].x)/(a+b+c);
-  const y = (a*this.vertices[2].y + b*this.vertices[0].y + c*this.vertices[1].y)/(a+b+c);
-  this.centre = new Point(x, y);
-}
-barycentre() {
-  const l = this.vertices.length;
-  const first = this.vertices[0];
-  const last = this.vertices[l - 1];
-
-  let twicearea = 0,
-    x = 0,
-    y = 0,
-    p1, p2, f;
-  for (let i = 0, j = l - 1; i < l; j = i++) {
-    p1 = this.vertices[i];
-    p2 = this.vertices[j];
-    f = p1.x * p2.y - p2.x * p1.y;
-    twicearea += f;
-    x += (p1.x + p2.x) * f;
-    y += (p1.y + p2.y) * f;
-  }
-  f = twicearea * 3;
-  return new Point(x / f, y / f);
-}
-*/

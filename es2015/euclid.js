@@ -149,16 +149,6 @@ export const normalVector = (p1, p2) => {
 
 
 /* OLD/UNUSED FUNCTIONS
-//find the point at a distance from point1 along line defined by point1, point2,
-//in the direction of point2
-export const directedSpacedPointOnLineOLD = (point1, point2, spacing) => {
-  const circle = new Circle(point1.x, point1.y, spacing);
-  const points = circleLineIntersect(circle, point1, point2);
-  const a = distance(points.p1, point2);
-  const b = distance(points.p2, point2);
-  return (a < b) ? points.p1 : points.p2;
-}
-
 //find the two points a distance from a point on the circumference of a circle
 export const spacedPointOnArc = (circle, point, spacing) => {
   const cosTheta = -((spacing * spacing) / (2 * circle.radius * circle.radius) - 1);
@@ -283,13 +273,6 @@ export const centralAngle = (p1, p2, r) => {
 }
 
 export const radians = (degrees) =>  (Math.PI / 180) * degrees;
-
-
-//NOTE: rotations are now done using transforms
-export const rotatePointAboutOrigin = (point2D, angle) => {
-  return new Point(Math.cos(angle) * point2D.x - Math.sin(angle) * point2D.y,
-    Math.sin(angle) * point2D.x + Math.cos(angle) * point2D.y);
-}
 
 //NOTE: now using Dunhams method to calculate arcs
 //calculate the radius and centre of the circle required to draw a line between
