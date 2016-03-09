@@ -13,7 +13,12 @@
 	z-index: -1;
 }
 
-
+#loading{
+	position: absolute;
+	top: 25%;
+	left:  25%;
+	z-index: -2;
+}
 
 #title{
 	position: absolute;
@@ -54,7 +59,12 @@
 	left: 2%;
 	width: auto;
 	color: #7F7F7F;
-	text-align: right;
+}
+
+#selected-radius{
+	width: 30px;
+	display: inline;
+	position: relative;
 }
 
 #right-controls{

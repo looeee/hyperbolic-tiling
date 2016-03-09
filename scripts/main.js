@@ -1364,24 +1364,58 @@ var RegularTesselation = function () {
 
 // * ***********************************************************************
 // *
-// *  PAGE CONTROLLER CLASS
+// *  CONTROLLER CLASS
 // *
 // *************************************************************************
-
 var Controller = function () {
   function Controller() {
     babelHelpers.classCallCheck(this, Controller);
 
+    this.getElements();
+    this.setupControls();
     this.draw = new ThreeJS();
     this.regularHyperbolicTiling();
-    this.saveImageButtons();
   }
 
-  Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
+  //any calls to document.querySelector() go here
+
+  Controller.prototype.getElements = function getElements() {
+    this.leftControlsDiv = document.querySelector('#left-controls');
+    this.rightControlsDiv = document.querySelector('#right-controls');
+    this.imageControlsDiv = document.querySelector('#image-controls');
+    this.saveImageBtn = document.querySelector('#save-image');
+    this.downloadImageBtn = document.querySelector('#download-image');
+    this.pValueDropdown = document.querySelector('#p');
+    this.qValueDropdown = document.querySelector('#q');
+    this.generateTilingBtn = document.querySelector('#generate-tiling');
+    this.showControlsCheckbox = document.querySelector('#show-controls');
+    this.imageElem = document.querySelector('#tiling-image');
+    this.radiusSlider = document.querySelector('#tiling-radius');
+    this.radiusValue = document.querySelector('#selected-radius');
+  };
+
+  Controller.prototype.setupControls = function setupControls() {
+    this.saveImageButtons();
+    this.hideControls();
+    this.setupRadiusSlider();
+  };
+
+  Controller.prototype.setupRadiusSlider = function setupRadiusSlider() {
     var _this = this;
 
-    document.querySelector('#generate-tiling').onclick = function () {
-      var spec = _this.tilingSpec();
+    var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+    this.radiusSlider.setAttribute('max', maxRadius);
+    this.radiusValue.innerHTML = this.radiusSlider.value;
+    this.radiusSlider.oninput = function () {
+      _this.radiusValue.innerHTML = _this.radiusSlider.value;
+    };
+  };
+
+  Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
+    var _this2 = this;
+
+    this.generateTilingBtn.onclick = function () {
+      var spec = _this2.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
 
       var t0 = performance.now();
@@ -1389,17 +1423,19 @@ var Controller = function () {
       var t1 = performance.now();
       console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
-      _this.draw.polygonArray(tiling, spec.textures);
+      _this2.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
+
+      _this2.imageControlsDiv.classList.remove('hide');
     };
   };
 
   Controller.prototype.tilingSpec = function tilingSpec() {
     var spec = {
       wireframe: false,
-      p: document.querySelector('#p').value,
-      q: document.querySelector('#q').value,
+      p: this.pValueDropdown.value,
+      q: this.qValueDropdown.value,
       textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
       edgeAdjacency: [//array of length p
       [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
@@ -1413,13 +1449,21 @@ var Controller = function () {
   };
 
   Controller.prototype.saveImageButtons = function saveImageButtons() {
-    var _this2 = this;
+    var _this3 = this;
 
-    document.querySelector('#save-image').onclick = function () {
-      return _this2.draw.saveImage();
+    this.saveImageBtn.onclick = function () {
+      return _this3.draw.saveImage();
     };
-    document.querySelector('#download-image').onclick = function () {
-      return _this2.draw.downloadImage();
+    this.downloadImageBtn.onclick = function () {
+      return _this3.draw.downloadImage();
+    };
+  };
+
+  Controller.prototype.hideControls = function hideControls() {
+    var _this4 = this;
+
+    this.showControlsCheckbox.onclick = function () {
+      _this4.leftControlsDiv.classList.toggle('hide');
     };
   };
 

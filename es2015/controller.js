@@ -8,39 +8,73 @@ import {
 from './threejs';
 // * ***********************************************************************
 // *
-// *  PAGE CONTROLLER CLASS
+// *  CONTROLLER CLASS
 // *
 // *************************************************************************
-
-
 export class Controller {
   constructor() {
+    this.getElements();
+    this.setupControls();
     this.draw = new ThreeJS();
     this.regularHyperbolicTiling( );
+
+  }
+
+  //any calls to document.querySelector() go here
+  getElements(){
+    this.leftControlsDiv = document.querySelector('#left-controls');
+    this.rightControlsDiv = document.querySelector('#right-controls');
+    this.imageControlsDiv = document.querySelector('#image-controls');
+    this.saveImageBtn = document.querySelector('#save-image');
+    this.downloadImageBtn = document.querySelector('#download-image');
+    this.pValueDropdown = document.querySelector('#p');
+    this.qValueDropdown = document.querySelector('#q');
+    this.generateTilingBtn = document.querySelector('#generate-tiling');
+    this.showControlsCheckbox = document.querySelector('#show-controls');
+    this.imageElem = document.querySelector('#tiling-image');
+    this.radiusSlider = document.querySelector('#tiling-radius');
+    this.radiusValue = document.querySelector('#selected-radius');
+  }
+
+  setupControls(){
     this.saveImageButtons();
+    this.hideControls();
+    this.setupRadiusSlider();
+  }
+
+  setupRadiusSlider(){
+    const maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+    this.radiusSlider.setAttribute('max', maxRadius);
+    this.radiusValue.innerHTML = this.radiusSlider.value;
+    this.radiusSlider.oninput = () => {
+      this.radiusValue.innerHTML = this.radiusSlider.value;
+    }
   }
 
   regularHyperbolicTiling(  ){
-    document.querySelector('#generate-tiling').onclick = () => {
+    this.generateTilingBtn.onclick = () => {
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation( spec );
 
       let t0 = performance.now();
       const tiling = regularTesselation.generateTiling();
       let t1 = performance.now();
-      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.')
+      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
       this.draw.polygonArray( tiling, spec.textures);
       t1 = performance.now();
-      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.')
+      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
+
+      this.imageControlsDiv.classList.remove('hide');
+
     }
   }
 
   tilingSpec(){
     const spec = {
       wireframe: false,
-      p: document.querySelector('#p').value,
-      q: document.querySelector('#q').value,
+      p: this.pValueDropdown.value,
+      q: this.qValueDropdown.value,
       textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
       edgeAdjacency: [ //array of length p
                       [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
@@ -55,8 +89,13 @@ export class Controller {
   }
 
   saveImageButtons(){
-    document.querySelector('#save-image').onclick = () => this.draw.saveImage();
-    document.querySelector('#download-image').onclick = () => this.draw.downloadImage();
+    this.saveImageBtn.onclick = () => this.draw.saveImage();
+    this.downloadImageBtn.onclick = () => this.draw.downloadImage();
+  }
 
+  hideControls(){
+    this.showControlsCheckbox.onclick = () => {
+      this.leftControlsDiv.classList.toggle('hide');
+    }
   }
 }

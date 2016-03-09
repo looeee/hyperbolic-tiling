@@ -72,6 +72,12 @@ button:hover {
   margin: auto;
   z-index: -1; }
 
+#loading {
+  position: absolute;
+  top: 25%;
+  left: 25%;
+  z-index: -2; }
+
 #title {
   position: absolute;
   top: 3%;
@@ -106,8 +112,12 @@ button:hover {
   margin-right: 0;
   left: 2%;
   width: auto;
-  color: #7F7F7F;
-  text-align: right; }
+  color: #7F7F7F; }
+
+#selected-radius {
+  width: 30px;
+  display: inline;
+  position: relative; }
 
 #right-controls {
   position: absolute;
