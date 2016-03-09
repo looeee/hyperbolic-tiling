@@ -180,9 +180,6 @@ class Edge {
                   ? this.arc.arcLength / 5 //approx maximum that hides all gaps
                   : 0.02;
 
-    //TESTING
-    //this.spacing = 0.2;
-
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces (or 1 in case of tiny polygons)
     const subdivisions = (this.arc.arcLength > 0.01)
@@ -195,21 +192,63 @@ class Edge {
     this.spacing = this.arc.arcLength / this.numDivisions;
   }
 
+  //calculate the spacing for subdividing the edge into an even number of pieces.
+  //For the first ( longest ) edge this will be calculated based on spacing
+  //then for the rest of the edges it will be calculated based on the number of
+  //subdivisions of the first edge ( so that all edges are divided into an equal
+  // number of pieces)
+  calculateExpandedSpacing( numDivisions ){
+    //subdivision spacing for edges
+    this.expandedSpacing = (this.arc.arcLength > 0.03 * radius)
+                  ? this.arc.arcLength / 5 //approx maximum that hides all gaps
+                  : 0.02 * radius;
+
+    //calculate the number of subdivisions required break the arc into an
+    //even number of pieces (or 1 in case of tiny polygons)
+    const subdivisions = (this.arc.arcLength > 0.01 * radius)
+                    ? 2* Math.ceil( (this.arc.arcLength / this.expandedSpacing) / 2 )
+                    : 1;
+
+    this.numDivisions = numDivisions || subdivisions;
+
+    //recalculate spacing based on number of points
+    this.expandedSpacing = this.arc.arcLength / this.numDivisions;
+  }
+
+  subdivideExpandedEdge( numDivisions ) {
+    this.calculateExpandedSpacing( numDivisions );
+    this.points = [this.arc.startPoint];
+
+    //tiny pgons near the edges of the disk don't need to be subdivided
+    if(this.arc.arcLength > this.expandedSpacing){
+      let p = (!this.arc.straightLine)
+              ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing)
+              : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
+      this.points.push(p);
+
+      for(let i = 0; i < this.numDivisions - 2; i++){
+        p = (!this.arc.straightLine)
+            ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing)
+            : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
+        this.points.push(p);
+      }
+    }
+    //push the final vertex
+    this.points.push(this.arc.endPoint);
+  }
+
   subdivideEdge( numDivisions ) {
     this.calculateSpacing( numDivisions );
-
     this.points = [this.arc.startPoint];
 
     //tiny pgons near the edges of the disk don't need to be subdivided
     if(this.arc.arcLength > this.spacing){
-
       let p = (!this.arc.straightLine)
               ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing)
               : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
-
       this.points.push(p);
 
-      for(let i = 0; i < this.numDivisions -2; i++){
+      for(let i = 0; i < this.numDivisions - 2; i++){
         p = (!this.arc.straightLine)
             ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing)
             : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
@@ -240,13 +279,101 @@ export class Polygon {
     this.addEdges();
     this.findSubdivisionEdge();
     this.subdivideMesh();
+    /*
+    this.addExpandedVertices( radius );
+    this.addExpandedEdges();
+    this.findExpandedSubdivisionEdge();
+    this.subdivideExpandedMesh();
+    */
+  }
+
+  addExpandedVertices( newRadius){
+    this.expandedVertices = [
+      new Point(this.vertices[0].x * newRadius, this.vertices[0].y * newRadius),
+      new Point(this.vertices[1].x * newRadius, this.vertices[1].y * newRadius),
+      new Point(this.vertices[2].x * newRadius, this.vertices[2].y * newRadius)
+    ]
+  }
+
+  addExpandedEdges(){
+    this.expandedEdges = [
+      new Edge(this.expandedVertices[0], this.expandedVertices[1]),
+      new Edge(this.expandedVertices[1], this.expandedVertices[2]),
+      new Edge(this.expandedVertices[2], this.expandedVertices[0]),
+    ];
+  }
+
+  //The longest edge with radius > 0 should be used to calculate how the finely
+  //the polygon gets subdivided
+  findExpandedSubdivisionEdge(){
+    const a = (this.expandedEdges[0].arc.curvature === 0)
+              ? 0
+              : this.expandedEdges[0].arc.arcLength;
+    const b = (this.expandedEdges[1].arc.curvature === 0)
+              ? 0
+              : this.expandedEdges[1].arc.arcLength;
+    const c = (this.expandedEdges[2].arc.curvature === 0)
+              ? 0
+              : this.expandedEdges[2].arc.arcLength;
+    if( a > b && a > c) this.expandedSubdivisionEdge = 0;
+    else if( b > c) this.expandedSubdivisionEdge = 1;
+    else this.expandedSubdivisionEdge = 2;
+  }
+
+  //subdivide the subdivision edge, then subdivide the other two edges with the
+  //same number of points as the subdivision
+  subdivideExpandedEdges(){
+    this.expandedEdges[this.expandedSubdivisionEdge].subdivideExpandedEdge();
+    this.expandedNumDivisions = this.expandedEdges[this.expandedSubdivisionEdge].points.length -1;
+
+    this.expandedEdges[(this.expandedSubdivisionEdge + 1) % 3].subdivideExpandedEdge(this.numDivisions);
+    this.expandedEdges[(this.expandedSubdivisionEdge + 2) % 3].subdivideExpandedEdge(this.numDivisions);
+  }
+
+  subdivideExpandedMesh(){
+    this.subdivideExpandedEdges();
+    this.expandedMesh = [].concat(this.expandedEdges[0].points);
+
+    for(let i = 1; i < this.expandedNumDivisions; i++){
+      const startPoint = this.expandedEdges[2].points[(this.expandedNumDivisions - i)];
+      const endPoint = this.expandedEdges[1].points[i];
+      //console.log(startPoint, endPoint);
+      this.subdivideInteriorExpandedArc(startPoint, endPoint, i);
+    }
+
+    //push the final vertex
+    this.expandedMesh.push(this.expandedEdges[2].points[0]);
+  }
+
+  //find the points along the arc between opposite subdivions of the second two
+  //edges of the polygon
+  subdivideInteriorExpandedArc(startPoint, endPoint, arcIndex){
+    const circle = new Arc(startPoint, endPoint).circle;
+    this.expandedMesh.push(startPoint);
+
+    //for each arc, the number of divisions will be reduced by one
+    const divisions = this.expandedNumDivisions - arcIndex;
+
+    //if the line get divided add points along line to mesh
+    if(divisions > 1){
+      const spacing = E.distance(startPoint, endPoint) / (divisions);
+      //let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
+      let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
+      for(let j = 0; j < divisions -1 ; j++){
+        this.expandedMesh.push(nextPoint);
+        //nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
+        nextPoint = E.directedSpacedPointOnLine(nextPoint, endPoint, spacing);
+      }
+    }
+
+    this.expandedMesh.push(endPoint);
   }
 
   addEdges(){
     this.edges = [];
     for (let i = 0; i < this.vertices.length; i++) {
       this.edges.push(
-        new Edge(this.vertices[i], this.vertices[(i+1)%this.vertices.length])
+        new Edge(this.vertices[i], this.vertices[(i+1) % this.vertices.length])
       )
     }
   }
@@ -268,8 +395,8 @@ export class Polygon {
     else this.subdivisionEdge = 2;
   }
 
-  //subdivide the longest edge, then subdivide the other two edges with the
-  //same number of points as the longest
+  //subdivide the subdivision edge, then subdivide the other two edges with the
+  //same number of points as the subdivision
   subdivideEdges(){
     this.edges[this.subdivisionEdge].subdivideEdge();
     this.numDivisions = this.edges[this.subdivisionEdge].points.length -1;
@@ -280,7 +407,6 @@ export class Polygon {
 
   subdivideMesh(){
     this.subdivideEdges();
-    this.mesh = [];
     this.mesh = [].concat(this.edges[0].points);
 
     for(let i = 1; i < this.numDivisions; i++){
@@ -337,12 +463,12 @@ export class Disk {
   constructor() {
     this.draw = new ThreeJS();
     this.centre = new Point(0, 0);
-    this.drawDisk();
+    //this.drawDisk();
   }
 
   //draw the disk background
   drawDisk() {
-    this.draw.disk(this.centre, 1, 0);//0x00c2ff
+    this.draw.disk(this.centre, 1, 0x00c2ff);//0x00c2ff
   }
 
   drawPoint(point, radius, color) {

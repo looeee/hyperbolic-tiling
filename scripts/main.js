@@ -28,237 +28,6 @@ babelHelpers;
 
 // * ***********************************************************************
 // *
-// *  THREE JS CLASS
-// *
-// *  All operations involved in drawing to the screen occur here.
-// *  All objects are assumed to be on the unit Disk when passed here and
-// *  are converted to screen space (which involves multiplying
-// *  by the radius ~ half screen resolution)
-// *************************************************************************
-
-var ThreeJS = function () {
-  function ThreeJS() {
-    babelHelpers.classCallCheck(this, ThreeJS);
-
-    this.init();
-  }
-
-  babelHelpers.createClass(ThreeJS, [{
-    key: 'init',
-    value: function init() {
-      var _this = this;
-
-      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-      this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
-      if (this.scene === undefined) this.scene = new THREE.Scene();
-      this.initCamera();
-      this.initRenderer();
-      //this.render();
-
-      document.querySelector('#save-image').onclick = function () {
-        return _this.saveImage();
-      };
-      document.querySelector('#download-image').onclick = function () {
-        return _this.downloadImage();
-      };
-    }
-  }, {
-    key: 'reset',
-    value: function reset() {
-      cancelAnimationFrame(this.id);
-      this.clearScene();
-      this.projector = null;
-      this.camera = null;
-      this.init();
-    }
-
-    //TODO: sometimes messes up ratio
-
-  }, {
-    key: 'resize',
-    value: function resize() {
-      var w = window.innerWidth / 2 - 5;
-      var h = window.innerHeight / 2 - 5;
-      if (this.radiusSetByWidth && w < h) {
-        this.radius = w;
-      } else if (!w < h) {
-        this.radius = h;
-      }
-
-      /*
-      this.camera.aspect = this.radius * -1,
-                      this.radius ,
-                      this.radius ,
-                      this.radius * -1,
-                      -2,
-                      1;
-      */
-      //this.camera.updateProjectionMatrix();
-      this.renderer.setSize((this.radius + 5) * 2, (this.radius + 5) * 2);
-    }
-  }, {
-    key: 'clearScene',
-    value: function clearScene() {
-      for (var i = this.scene.children.length - 1; i >= 0; i--) {
-        this.scene.remove(this.scene.children[i]);
-      }
-    }
-  }, {
-    key: 'initCamera',
-    value: function initCamera() {
-      this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
-      this.camera.frustumCulled = false;
-      this.scene.add(this.camera);
-    }
-  }, {
-    key: 'initRenderer',
-    value: function initRenderer() {
-      if (this.renderer === undefined) {
-        this.renderer = new THREE.WebGLRenderer({
-          antialias: true,
-          preserveDrawingBuffer: true
-        });
-        this.renderer.setClearColor(0xffffff, 1.0);
-        //document.body.appendChild(this.renderer.domElement);
-      }
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-  }, {
-    key: 'disk',
-    value: function disk(centre, radius, color) {
-      if (color === undefined) color = 0xffffff;
-      var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-      var material = new THREE.MeshBasicMaterial({ color: color });
-
-      var circle = new THREE.Mesh(geometry, material);
-      circle.position.x = centre.x * this.radius;
-      circle.position.y = centre.y * this.radius;
-
-      this.scene.add(circle);
-    }
-
-    //Note: polygons assumed to be triangular!
-
-  }, {
-    key: 'polygon',
-    value: function polygon(_polygon, color, texture, wireframe) {
-      var p = 1 / _polygon.numDivisions;
-      var vertices = _polygon.mesh;
-      var divisions = _polygon.numDivisions;
-      var geometry = new THREE.Geometry();
-      geometry.faceVertexUvs[0] = [];
-
-      for (var i = 0; i < vertices.length; i++) {
-        geometry.vertices.push(new Point(vertices[i].x * this.radius, vertices[i].y * this.radius));
-      }
-
-      var edgeStartingVertex = 0;
-      //loop over each interior edge of the polygon's subdivion mesh
-      for (var i = 0; i < _polygon.numDivisions; i++) {
-        //edge divisions reduce by one for each interior edge
-        var m = _polygon.numDivisions - i + 1;
-        geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
-
-        geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
-
-        //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
-        for (var j = 0; j < m - 2; j++) {
-          geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
-          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
-          geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
-          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
-        }
-        edgeStartingVertex += m;
-      }
-
-      var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
-      this.scene.add(mesh);
-    }
-
-    //NOTE: some polygons are inverted due to vertex order,
-    //solved this by making material doubles sided but this might cause problems with textures
-
-  }, {
-    key: 'createMesh',
-    value: function createMesh(geometry, color, textures, materialIndex, wireframe) {
-      if (wireframe === undefined) wireframe = false;
-      if (color === undefined) color = 0xffffff;
-
-      if (!this.pattern) {
-        this.createPattern(color, textures, wireframe);
-      }
-      return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
-    }
-  }, {
-    key: 'createPattern',
-    value: function createPattern(color, textures, wireframe) {
-      var _this2 = this;
-
-      this.pattern = new THREE.MultiMaterial();
-
-      for (var i = 0; i < textures.length; i++) {
-        var material = new THREE.MeshBasicMaterial({
-          color: color,
-          wireframe: wireframe,
-          side: THREE.DoubleSide
-        });
-
-        var texture = new THREE.TextureLoader().load(textures[i], function () {
-          _this2.render();
-        });
-
-        material.map = texture;
-        this.pattern.materials.push(material);
-      }
-    }
-
-    //Only call render once by default.
-
-  }, {
-    key: 'render',
-    value: function render() {
-      this.renderer.render(this.scene, this.camera);
-      this.appendImageToDom();
-      //window.setTimeout(() => {
-      //this.clearScene();
-      //}, 100);
-    }
-  }, {
-    key: 'appendImageToDom',
-    value: function appendImageToDom() {
-      var imageElem = document.querySelector('#tiling-image');
-      imageElem.style.height = window.innerHeight + 'px';
-      imageElem.style.width = window.innerWidth + 'px';
-      imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
-    }
-
-    //Download the canvas as a png image
-
-  }, {
-    key: 'downloadImage',
-    value: function downloadImage() {
-      var link = document.querySelector('#download-image');
-      link.href = this.renderer.domElement.toDataURL();
-      link.download = 'hyperbolic-tiling.png';
-    }
-
-    //convert the canvas to a base64URL and send to saveImage.php
-
-  }, {
-    key: 'saveImage',
-    value: function saveImage() {
-      var data = this.renderer.domElement.toDataURL();
-      var xhttp = new XMLHttpRequest();
-      xhttp.open('POST', 'saveImage.php', true);
-      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      xhttp.send('img=' + data);
-    }
-  }]);
-  return ThreeJS;
-}();
-
-// * ***********************************************************************
-// *
 // *   EUCLIDEAN FUNCTIONS
 // *   a place to stash all the functions that are euclidean geometrical
 // *   operations
@@ -311,10 +80,6 @@ var directedSpacedPointOnArc = function directedSpacedPointOnArc(circle, point1,
 var directedSpacedPointOnLine = function directedSpacedPointOnLine(point1, point2, spacing) {
   var dv = normalVector(point1, point2);
   return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
-};
-
-var randomInt = function randomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
 //.toFixed returns a string for some no doubt very good reason.
@@ -525,6 +290,248 @@ export const perpendicularSlope = (p1, p2) => {
 */
 
 // * ***********************************************************************
+// *
+// *  THREE JS CLASS
+// *
+// *  All operations involved in drawing to the screen occur here.
+// *  All objects are assumed to be on the unit Disk when passed here and
+// *  are converted to screen space (which involves multiplying
+// *  by the radius ~ half screen resolution)
+// *************************************************************************
+
+var ThreeJS = function () {
+  function ThreeJS() {
+    babelHelpers.classCallCheck(this, ThreeJS);
+
+    this.init();
+  }
+
+  babelHelpers.createClass(ThreeJS, [{
+    key: 'init',
+    value: function init() {
+      var _this = this;
+
+      this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+      this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
+      if (this.scene === undefined) this.scene = new THREE.Scene();
+      this.initCamera();
+      this.initRenderer();
+      //this.render();
+
+      document.querySelector('#save-image').onclick = function () {
+        return _this.saveImage();
+      };
+      document.querySelector('#download-image').onclick = function () {
+        return _this.downloadImage();
+      };
+    }
+  }, {
+    key: 'reset',
+    value: function reset() {
+      cancelAnimationFrame(this.id);
+      this.clearScene();
+      this.projector = null;
+      this.camera = null;
+      this.init();
+    }
+
+    //TODO: sometimes messes up ratio
+
+  }, {
+    key: 'resize',
+    value: function resize() {
+      var w = window.innerWidth / 2 - 5;
+      var h = window.innerHeight / 2 - 5;
+      if (this.radiusSetByWidth && w < h) {
+        this.radius = w;
+      } else if (!w < h) {
+        this.radius = h;
+      }
+
+      /*
+      this.camera.aspect = this.radius * -1,
+                      this.radius ,
+                      this.radius ,
+                      this.radius * -1,
+                      -2,
+                      1;
+      */
+      //this.camera.updateProjectionMatrix();
+      this.renderer.setSize((this.radius + 5) * 2, (this.radius + 5) * 2);
+    }
+  }, {
+    key: 'clearScene',
+    value: function clearScene() {
+      for (var i = this.scene.children.length - 1; i >= 0; i--) {
+        this.scene.remove(this.scene.children[i]);
+      }
+    }
+  }, {
+    key: 'initCamera',
+    value: function initCamera() {
+      this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+      this.camera.frustumCulled = false;
+      this.scene.add(this.camera);
+    }
+  }, {
+    key: 'initRenderer',
+    value: function initRenderer() {
+      if (this.renderer === undefined) {
+        this.renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          preserveDrawingBuffer: true
+        });
+        this.renderer.setClearColor(0xffffff, 1.0);
+        //document.body.appendChild(this.renderer.domElement);
+      }
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+  }, {
+    key: 'disk',
+    value: function disk(centre, radius, color) {
+      if (color === undefined) color = 0xffffff;
+      var geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
+      var material = new THREE.MeshBasicMaterial({ color: color });
+
+      var circle = new THREE.Mesh(geometry, material);
+      circle.position.x = centre.x * this.radius;
+      circle.position.y = centre.y * this.radius;
+
+      this.scene.add(circle);
+    }
+
+    //Note: polygons assumed to be triangular!
+
+  }, {
+    key: 'polygon',
+    value: function polygon(_polygon, color, texture, wireframe) {
+      var p = 1 / _polygon.numDivisions;
+      var divisions = _polygon.numDivisions;
+      var geometry = new THREE.Geometry();
+      geometry.faceVertexUvs[0] = [];
+
+      for (var i = 0; i < _polygon.mesh.length; i++) {
+        geometry.vertices.push(new Point(_polygon.mesh[i].x * radius, _polygon.mesh[i].y * this.radius));
+      }
+
+      //const radius = this.radius;
+      //geometry.vertices = polygon.expandedMesh;
+      //console.log(geometry.vertices, polygon.expandedMesh);
+      //geometry.vertices = polygon.expandedSubdivisionMesh();
+
+      var edgeStartingVertex = 0;
+      //loop over each interior edge of the polygon's subdivion mesh
+      for (var i = 0; i < divisions; i++) {
+        //edge divisions reduce by one for each interior edge
+        var m = divisions - i + 1;
+        geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
+
+        geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
+
+        //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
+        for (var j = 0; j < m - 2; j++) {
+          geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
+          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
+          geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
+          geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
+        }
+        edgeStartingVertex += m;
+      }
+
+      var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
+      this.scene.add(mesh);
+    }
+
+    //NOTE: some polygons are inverted due to vertex order,
+    //solved this by making material doubles sided but this might cause problems with textures
+
+  }, {
+    key: 'createMesh',
+    value: function createMesh(geometry, color, textures, materialIndex, wireframe) {
+      if (wireframe === undefined) wireframe = false;
+      if (color === undefined) color = 0xffffff;
+
+      if (!this.pattern) {
+        this.createPattern(color, textures, wireframe);
+      }
+      return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
+    }
+  }, {
+    key: 'createPattern',
+    value: function createPattern(color, textures, wireframe) {
+      var _this2 = this;
+
+      this.pattern = new THREE.MultiMaterial();
+      var texturesLoaded = [];
+
+      var _loop = function _loop(i) {
+        var material = new THREE.MeshBasicMaterial({
+          color: color,
+          wireframe: wireframe,
+          side: THREE.DoubleSide
+        });
+
+        var texture = new THREE.TextureLoader().load(textures[i], function () {
+          texturesLoaded.push(i);
+          //call render when all textures are loaded
+          if (texturesLoaded.length === textures.length) {
+            _this2.render();
+          }
+        });
+
+        material.map = texture;
+        _this2.pattern.materials.push(material);
+      };
+
+      for (var i = 0; i < textures.length; i++) {
+        _loop(i);
+      }
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+
+      this.renderer.render(this.scene, this.camera);
+      this.appendImageToDom();
+      //window.setTimeout(() => {
+      this.clearScene();
+      //}, 100);
+    }
+  }, {
+    key: 'appendImageToDom',
+    value: function appendImageToDom() {
+      var imageElem = document.querySelector('#tiling-image');
+      imageElem.style.height = window.innerHeight + 'px';
+      imageElem.style.width = window.innerWidth + 'px';
+      imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
+    }
+
+    //Download the canvas as a png image
+
+  }, {
+    key: 'downloadImage',
+    value: function downloadImage() {
+      var link = document.querySelector('#download-image');
+      link.href = this.renderer.domElement.toDataURL();
+      link.download = 'hyperbolic-tiling.png';
+    }
+
+    //convert the canvas to a base64URL and send to saveImage.php
+
+  }, {
+    key: 'saveImage',
+    value: function saveImage() {
+      var data = this.renderer.domElement.toDataURL();
+      var xhttp = new XMLHttpRequest();
+      xhttp.open('POST', 'saveImage.php', true);
+      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      xhttp.send('img=' + data);
+    }
+  }]);
+  return ThreeJS;
+}();
+
+// * ***********************************************************************
 // * ***********************************************************************
 // * ***********************************************************************
 // *
@@ -704,9 +711,6 @@ var Edge = function () {
       this.spacing = this.arc.arcLength > 0.03 ? this.arc.arcLength / 5 //approx maximum that hides all gaps
       : 0.02;
 
-      //TESTING
-      //this.spacing = 0.2;
-
       //calculate the number of subdivisions required break the arc into an
       //even number of pieces (or 1 in case of tiny polygons)
       var subdivisions = this.arc.arcLength > 0.01 ? 2 * Math.ceil(this.arc.arcLength / this.spacing / 2) : 1;
@@ -716,18 +720,57 @@ var Edge = function () {
       //recalculate spacing based on number of points
       this.spacing = this.arc.arcLength / this.numDivisions;
     }
+
+    //calculate the spacing for subdividing the edge into an even number of pieces.
+    //For the first ( longest ) edge this will be calculated based on spacing
+    //then for the rest of the edges it will be calculated based on the number of
+    //subdivisions of the first edge ( so that all edges are divided into an equal
+    // number of pieces)
+
+  }, {
+    key: 'calculateExpandedSpacing',
+    value: function calculateExpandedSpacing(numDivisions) {
+      //subdivision spacing for edges
+      this.expandedSpacing = this.arc.arcLength > 0.03 * radius ? this.arc.arcLength / 5 //approx maximum that hides all gaps
+      : 0.02 * radius;
+
+      //calculate the number of subdivisions required break the arc into an
+      //even number of pieces (or 1 in case of tiny polygons)
+      var subdivisions = this.arc.arcLength > 0.01 * radius ? 2 * Math.ceil(this.arc.arcLength / this.expandedSpacing / 2) : 1;
+
+      this.numDivisions = numDivisions || subdivisions;
+
+      //recalculate spacing based on number of points
+      this.expandedSpacing = this.arc.arcLength / this.numDivisions;
+    }
+  }, {
+    key: 'subdivideExpandedEdge',
+    value: function subdivideExpandedEdge(numDivisions) {
+      this.calculateExpandedSpacing(numDivisions);
+      this.points = [this.arc.startPoint];
+
+      //tiny pgons near the edges of the disk don't need to be subdivided
+      if (this.arc.arcLength > this.expandedSpacing) {
+        var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
+        this.points.push(p);
+
+        for (var i = 0; i < this.numDivisions - 2; i++) {
+          p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
+          this.points.push(p);
+        }
+      }
+      //push the final vertex
+      this.points.push(this.arc.endPoint);
+    }
   }, {
     key: 'subdivideEdge',
     value: function subdivideEdge(numDivisions) {
       this.calculateSpacing(numDivisions);
-
       this.points = [this.arc.startPoint];
 
       //tiny pgons near the edges of the disk don't need to be subdivided
       if (this.arc.arcLength > this.spacing) {
-
         var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
-
         this.points.push(p);
 
         for (var i = 0; i < this.numDivisions - 2; i++) {
@@ -765,9 +808,93 @@ var Polygon = function () {
     this.addEdges();
     this.findSubdivisionEdge();
     this.subdivideMesh();
+    /*
+    this.addExpandedVertices( radius );
+    this.addExpandedEdges();
+    this.findExpandedSubdivisionEdge();
+    this.subdivideExpandedMesh();
+    */
   }
 
   babelHelpers.createClass(Polygon, [{
+    key: 'addExpandedVertices',
+    value: function addExpandedVertices(newRadius) {
+      this.expandedVertices = [new Point(this.vertices[0].x * newRadius, this.vertices[0].y * newRadius), new Point(this.vertices[1].x * newRadius, this.vertices[1].y * newRadius), new Point(this.vertices[2].x * newRadius, this.vertices[2].y * newRadius)];
+    }
+  }, {
+    key: 'addExpandedEdges',
+    value: function addExpandedEdges() {
+      this.expandedEdges = [new Edge(this.expandedVertices[0], this.expandedVertices[1]), new Edge(this.expandedVertices[1], this.expandedVertices[2]), new Edge(this.expandedVertices[2], this.expandedVertices[0])];
+    }
+
+    //The longest edge with radius > 0 should be used to calculate how the finely
+    //the polygon gets subdivided
+
+  }, {
+    key: 'findExpandedSubdivisionEdge',
+    value: function findExpandedSubdivisionEdge() {
+      var a = this.expandedEdges[0].arc.curvature === 0 ? 0 : this.expandedEdges[0].arc.arcLength;
+      var b = this.expandedEdges[1].arc.curvature === 0 ? 0 : this.expandedEdges[1].arc.arcLength;
+      var c = this.expandedEdges[2].arc.curvature === 0 ? 0 : this.expandedEdges[2].arc.arcLength;
+      if (a > b && a > c) this.expandedSubdivisionEdge = 0;else if (b > c) this.expandedSubdivisionEdge = 1;else this.expandedSubdivisionEdge = 2;
+    }
+
+    //subdivide the subdivision edge, then subdivide the other two edges with the
+    //same number of points as the subdivision
+
+  }, {
+    key: 'subdivideExpandedEdges',
+    value: function subdivideExpandedEdges() {
+      this.expandedEdges[this.expandedSubdivisionEdge].subdivideExpandedEdge();
+      this.expandedNumDivisions = this.expandedEdges[this.expandedSubdivisionEdge].points.length - 1;
+
+      this.expandedEdges[(this.expandedSubdivisionEdge + 1) % 3].subdivideExpandedEdge(this.numDivisions);
+      this.expandedEdges[(this.expandedSubdivisionEdge + 2) % 3].subdivideExpandedEdge(this.numDivisions);
+    }
+  }, {
+    key: 'subdivideExpandedMesh',
+    value: function subdivideExpandedMesh() {
+      this.subdivideExpandedEdges();
+      this.expandedMesh = [].concat(this.expandedEdges[0].points);
+
+      for (var i = 1; i < this.expandedNumDivisions; i++) {
+        var startPoint = this.expandedEdges[2].points[this.expandedNumDivisions - i];
+        var endPoint = this.expandedEdges[1].points[i];
+        //console.log(startPoint, endPoint);
+        this.subdivideInteriorExpandedArc(startPoint, endPoint, i);
+      }
+
+      //push the final vertex
+      this.expandedMesh.push(this.expandedEdges[2].points[0]);
+    }
+
+    //find the points along the arc between opposite subdivions of the second two
+    //edges of the polygon
+
+  }, {
+    key: 'subdivideInteriorExpandedArc',
+    value: function subdivideInteriorExpandedArc(startPoint, endPoint, arcIndex) {
+      var circle = new Arc(startPoint, endPoint).circle;
+      this.expandedMesh.push(startPoint);
+
+      //for each arc, the number of divisions will be reduced by one
+      var divisions = this.expandedNumDivisions - arcIndex;
+
+      //if the line get divided add points along line to mesh
+      if (divisions > 1) {
+        var spacing = distance(startPoint, endPoint) / divisions;
+        //let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
+        var nextPoint = directedSpacedPointOnLine(startPoint, endPoint, spacing);
+        for (var j = 0; j < divisions - 1; j++) {
+          this.expandedMesh.push(nextPoint);
+          //nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
+          nextPoint = directedSpacedPointOnLine(nextPoint, endPoint, spacing);
+        }
+      }
+
+      this.expandedMesh.push(endPoint);
+    }
+  }, {
     key: 'addEdges',
     value: function addEdges() {
       this.edges = [];
@@ -788,8 +915,8 @@ var Polygon = function () {
       if (a > b && a > c) this.subdivisionEdge = 0;else if (b > c) this.subdivisionEdge = 1;else this.subdivisionEdge = 2;
     }
 
-    //subdivide the longest edge, then subdivide the other two edges with the
-    //same number of points as the longest
+    //subdivide the subdivision edge, then subdivide the other two edges with the
+    //same number of points as the subdivision
 
   }, {
     key: 'subdivideEdges',
@@ -804,7 +931,6 @@ var Polygon = function () {
     key: 'subdivideMesh',
     value: function subdivideMesh() {
       this.subdivideEdges();
-      this.mesh = [];
       this.mesh = [].concat(this.edges[0].points);
 
       for (var i = 1; i < this.numDivisions; i++) {
@@ -865,7 +991,7 @@ var Disk = function () {
 
     this.draw = new ThreeJS();
     this.centre = new Point(0, 0);
-    this.drawDisk();
+    //this.drawDisk();
   }
 
   //draw the disk background
@@ -873,7 +999,7 @@ var Disk = function () {
   babelHelpers.createClass(Disk, [{
     key: 'drawDisk',
     value: function drawDisk() {
-      this.draw.disk(this.centre, 1, 0); //0x00c2ff
+      this.draw.disk(this.centre, 1, 0x00c2ff); //0x00c2ff
     }
   }, {
     key: 'drawPoint',
@@ -1084,30 +1210,6 @@ var Transformations = function () {
         });
       }
     }
-
-    /*
-    //TESTING: manually setting edges for {4, q} tilings
-    initEdges() {
-      this.edges = [];
-      this.edges.push({
-        orientation: 1,
-        adjacentEdge: 3,
-      });
-      this.edges.push({
-        orientation: 1,
-        adjacentEdge: 2,
-      });
-      this.edges.push({
-        orientation: 1,
-        adjacentEdge: 1,
-      });
-      this.edges.push({
-        orientation: 1,
-        adjacentEdge: 0,
-      });
-    }
-    */
-
   }, {
     key: 'initEdgeTransforms',
     value: function initEdgeTransforms() {
@@ -1244,59 +1346,60 @@ var Parameters = function () {
 
 // * ***********************************************************************
 // *    TESSELATION CLASS
-// *    Creates a regular Tesselation of the Poincare Disk
-// *    q: number of p-gons meeting at each vertex
-// *    p: number of sides of p-gon
-// *    using the techniques created by Coxeter and Dunham
+// *    Creates a regular Tesselation of the Poincare Disk using the techniques
+// *    created by Coxeter and Dunham
+// *
+// *    spec = {
+// *      wireframe: true/false
+// *      p: number of sides of p-gon
+// *      q: number of p-gons meeting at each vertex
+// *      textures: array
+// *      edgeAdjacency: [ (multiDim array)
+// *                      [
+// *                        edge_0 orientation (-1 = reflection, 1 = rotation)],
+// *                        edge_0 adjacency (range p - 1)],
+// *                      ],
+// *                    ...
+// *                      [edge_p orientation, edge_p adjacency]
+// *                    ],
+// *      minPolygonSize: stop at polygons below this size
+// *    }
+// *
+// *
 // *
 // *************************************************************************
+
 var RegularTesselation = function () {
-  function RegularTesselation(p, q) {
+  function RegularTesselation(spec) {
     babelHelpers.classCallCheck(this, RegularTesselation);
 
-    //TESTING
-    this.wireframe = false;
-    //this.wireframe = true;
-    console.log('{', p, ', ', q, '} tiling.');
-    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    this.p = p;
-    this.q = q;
+    this.wireframe = spec.wireframe || false;
+    this.textures = spec.textures;
+    this.p = spec.p || 4;
+    this.q = spec.q || 6;
+
     //a value of about 0.01 seems to be the minimum that webgl can handle easily.
     //TODO test different tilings and work out value needed for each if different
-    this.minPolygonSize = 0.02;
+    this.minPolygonSize = spec.minPolygonSize || 0.1;
 
-    //TESTING
-    //this.minPolygonSize = 0.02;
+    console.log('{', this.p, ', ', this.q, '} tiling.');
 
     this.disk = new Disk();
-    this.params = new Parameters(p, q);
-    this.transforms = new Transformations(p, q);
-
-    this.tiling = [];
+    this.params = new Parameters(this.p, this.q);
+    this.transforms = new Transformations(this.p, this.q);
 
     if (this.checkParams()) {
       return false;
     }
 
     this.init();
-    //this.testing();
   }
 
   babelHelpers.createClass(RegularTesselation, [{
-    key: 'testing',
-    value: function testing() {
-      var p1 = new Point(0.1, 0.1);
-      var p2 = new Point(-0.1, 0.3);
-      this.disk.drawPoint(p1, 0.01, 0xff0000);
-      this.disk.drawPoint(p2, 0.01, 0xff0000);
-
-      var p3 = directedSpacedPointOnLine(p2, p1, .1);
-      console.log(p3);
-      this.disk.drawPoint(p3, 0.01, 0);
-    }
-  }, {
     key: 'init',
     value: function init(p, q) {
+      this.tiling = [];
+
       this.buildCentralPattern();
 
       var t0 = performance.now();
@@ -1350,12 +1453,6 @@ var RegularTesselation = function () {
     value: function fundamentalPattern() {
       var upper = this.fundamentalRegion();
       var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-
-      //TESTING
-      //console.log(upper.mesh);
-      //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
-      //this.disk.draw.polygon(lower,0xffffff,this.textures,this.wireframe);
-
       return [upper, lower];
     }
 
@@ -1585,6 +1682,45 @@ fundamentalRegion() {
 
 // * ***********************************************************************
 // *
+// *  PAGE CONTROLLER CLASS
+// *
+// *************************************************************************
+var circleLimit1Spec = {
+  wireframe: false,
+  p: 6,
+  q: 6,
+  textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
+  edgeAdjacency: [//array of length p
+  [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
+  5 //edge_0 adjacency (range p - 1)
+  ], [1, 4], //edge_1 orientation, adjacency
+  [1, 3], [1, 2], [1, 1], [1, 0]],
+  minPolygonSize: 0.05
+};
+
+var Controller = function () {
+  function Controller() {
+    babelHelpers.classCallCheck(this, Controller);
+
+    this.tilingSpec = circleLimit1Spec;
+    this.setupButtons();
+  }
+
+  babelHelpers.createClass(Controller, [{
+    key: 'setupButtons',
+    value: function setupButtons() {
+      var _this = this;
+
+      document.querySelector('#generate-tiling').onclick = function () {
+        return new RegularTesselation(_this.tilingSpec);
+      };
+    }
+  }]);
+  return Controller;
+}();
+
+// * ***********************************************************************
+// *
 // *   POLYFILLS
 // *
 // *************************************************************************
@@ -1612,21 +1748,14 @@ Math.cot = Math.cot || function (x) {
 //Global radius
 window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
-var tesselation = undefined;
-var p = randomInt(2, 3) * 2;
-var q = randomInt(2, 4) * 2;
-
-if ((p - 2) * (q - 2) < 5) {
-  q = 4;
-  p = 6;
-}
+var controller = new Controller();
 
 //Run after load to get window width and height
 window.onload = function () {
-  tesselation = new RegularTesselation(6, 6);
+  //tesselation = new RegularTesselation(circleLimit1Spec);
   //tesselation = new RegularTesselation(p, q);
 };
 
 window.onresize = function () {
-  tesselation.disk.draw.resize();
+  //tesselation.disk.draw.resize();
 };

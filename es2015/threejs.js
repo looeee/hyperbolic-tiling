@@ -104,20 +104,24 @@ export class ThreeJS {
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, texture, wireframe){
     const p = 1/polygon.numDivisions;
-    const vertices = polygon.mesh;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
-    for(let i = 0; i < vertices.length; i++){
-      geometry.vertices.push(new Point(vertices[i].x * this.radius, vertices[i].y * this.radius));
+    for(let i = 0; i < polygon.mesh.length; i++){
+      geometry.vertices.push(new Point(polygon.mesh[i].x * radius, polygon.mesh[i].y * this.radius));
     }
+
+    //const radius = this.radius;
+    //geometry.vertices = polygon.expandedMesh;
+    //console.log(geometry.vertices, polygon.expandedMesh);
+    //geometry.vertices = polygon.expandedSubdivisionMesh();
 
     let edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh
-    for(let i = 0; i < polygon.numDivisions; i++){
+    for(let i = 0; i < divisions; i++){
       //edge divisions reduce by one for each interior edge
-      const m = polygon.numDivisions - i + 1;
+      const m = divisions - i + 1;
       geometry.faces.push(
         new THREE.Face3(
           edgeStartingVertex,
@@ -181,6 +185,7 @@ export class ThreeJS {
 
   createPattern(color, textures, wireframe){
     this.pattern = new THREE.MultiMaterial();
+    const texturesLoaded = [];
 
     for( let i = 0; i < textures.length; i++){
       const material = new THREE.MeshBasicMaterial({
@@ -191,7 +196,11 @@ export class ThreeJS {
 
       const texture = new THREE.TextureLoader().load(textures[i],
         () => {
-          this.render();
+          texturesLoaded.push(i);
+          //call render when all textures are loaded
+          if(texturesLoaded.length === textures.length){
+            this.render();
+          }
         });
 
       material.map = texture;
@@ -199,12 +208,12 @@ export class ThreeJS {
     }
   }
 
-  //Only call render once by default.
   render() {
+
     this.renderer.render(this.scene, this.camera);
     this.appendImageToDom();
     //window.setTimeout(() => {
-      //this.clearScene();
+    this.clearScene();
     //}, 100);
   }
 

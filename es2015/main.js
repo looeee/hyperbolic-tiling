@@ -1,8 +1,7 @@
-import * as E from './euclid';
 import {
-  RegularTesselation
+  Controller
 }
-from './regularTesselation';
+from './controller';
 
 // * ***********************************************************************
 // *
@@ -34,22 +33,14 @@ Math.cot = Math.cot || function(x) {
 //Global radius
 window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
-let tesselation;
-let p = E.randomInt(2, 3)*2;
-let q = E.randomInt(2, 4)*2;
-
-if ((p-2)*(q-2) < 5){
-  q = 4;
-  p = 6
-}
-
+const controller = new Controller();
 
 //Run after load to get window width and height
 window.onload = () => {
-  tesselation = new RegularTesselation(6, 6);
+  //tesselation = new RegularTesselation(circleLimit1Spec);
   //tesselation = new RegularTesselation(p, q);
 }
 
 window.onresize = () => {
-  tesselation.disk.draw.resize();
+  //tesselation.disk.draw.resize();
 }

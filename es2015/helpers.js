@@ -121,29 +121,6 @@ export class Transformations {
     }
   }
 
-  /*
-  //TESTING: manually setting edges for {4, q} tilings
-  initEdges() {
-    this.edges = [];
-    this.edges.push({
-      orientation: 1,
-      adjacentEdge: 3,
-    });
-    this.edges.push({
-      orientation: 1,
-      adjacentEdge: 2,
-    });
-    this.edges.push({
-      orientation: 1,
-      adjacentEdge: 1,
-    });
-    this.edges.push({
-      orientation: 1,
-      adjacentEdge: 0,
-    });
-  }
-  */
-
   initEdgeTransforms() {
     this.edgeTransforms = [];
 

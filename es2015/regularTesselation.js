@@ -1,7 +1,7 @@
 import * as E from './euclid';
 
 import {
-  Polygon, Arc, Circle, Point, Disk
+  Polygon, Point, Disk
 }
 from './elements';
 
@@ -13,54 +13,56 @@ from './helpers';
 
 // * ***********************************************************************
 // *    TESSELATION CLASS
-// *    Creates a regular Tesselation of the Poincare Disk
-// *    q: number of p-gons meeting at each vertex
-// *    p: number of sides of p-gon
-// *    using the techniques created by Coxeter and Dunham
+// *    Creates a regular Tesselation of the Poincare Disk using the techniques
+// *    created by Coxeter and Dunham
+// *
+// *    spec = {
+// *      wireframe: true/false
+// *      p: number of sides of p-gon
+// *      q: number of p-gons meeting at each vertex
+// *      textures: array
+// *      edgeAdjacency: [ (multiDim array)
+// *                      [
+// *                        edge_0 orientation (-1 = reflection, 1 = rotation)],
+// *                        edge_0 adjacency (range p - 1)],
+// *                      ],
+// *                    ...
+// *                      [edge_p orientation, edge_p adjacency]
+// *                    ],
+// *      minPolygonSize: stop at polygons below this size
+// *    }
+// *
+// *
 // *
 // *************************************************************************
+
 export class RegularTesselation {
-  constructor(p, q) {
-    //TESTING
-    this.wireframe = false;
-    //this.wireframe = true;
-    console.log('{', p, ', ' , q, '} tiling.');
-    this.textures = ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'];
-    this.p = p;
-    this.q = q;
+  constructor(spec) {
+    this.wireframe = spec.wireframe || false;
+    this.textures = spec.textures;
+    this.p = spec.p || 4;
+    this.q = spec.q || 6;
+
     //a value of about 0.01 seems to be the minimum that webgl can handle easily.
     //TODO test different tilings and work out value needed for each if different
-    this.minPolygonSize = 0.02;
+    this.minPolygonSize = spec.minPolygonSize || 0.1;
 
-    //TESTING
-    //this.minPolygonSize = 0.02;
+    console.log('{', this.p, ', ' , this.q, '} tiling.');
 
     this.disk = new Disk();
-    this.params = new Parameters(p, q);
-    this.transforms = new Transformations(p, q);
-
-    this.tiling = [];
+    this.params = new Parameters(this.p, this.q);
+    this.transforms = new Transformations(this.p, this.q);
 
     if (this.checkParams()) {
       return false;
     }
 
     this.init();
-    //this.testing();
-  }
-
-  testing(){
-    const p1 = new Point(0.1, 0.1);
-    const p2 = new Point(-0.1, 0.3);
-    this.disk.drawPoint(p1,0.01, 0xff0000);
-    this.disk.drawPoint(p2,0.01, 0xff0000);
-
-    const p3 = E.directedSpacedPointOnLine(p2,p1,.1);
-    console.log(p3);
-    this.disk.drawPoint(p3,0.01, 0);
   }
 
   init(p, q) {
+    this.tiling = [];
+
     this.buildCentralPattern();
 
     let t0 = performance.now();
@@ -108,12 +110,6 @@ export class RegularTesselation {
   fundamentalPattern(){
     const upper = this.fundamentalRegion();
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
-
-    //TESTING
-    //console.log(upper.mesh);
-    //this.disk.draw.polygon(upper,0xffffff,this.textures,this.wireframe);
-    //this.disk.draw.polygon(lower,0xffffff,this.textures,this.wireframe);
-
     return [upper, lower];
   }
 
