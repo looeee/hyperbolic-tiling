@@ -16,20 +16,30 @@
   </head>
 
   <body>
-    <button id="save-image">Save to Server</button>
-    <a id="download-image"><button>Download Image</button></a>
-    <button id="generate-tiling">Generate Tiling</button>
-    <br>
-    <select id="p">
-      <option value="4">4</option>
-      <option value="6" selected="selected">6</option>
-      <option value="8">8</option>
-    </select><span>-sided polygons.</span>
-    <select id="q">
-      <option value="4">4</option>
-      <option value="6" selected="selected">6</option>
-      <option value="8">8</option>
-    </select><span> polygons meeting at each vertex.</span>
+    <div id="left-controls">
+      <select id="p">
+        <option value="4">4</option>
+        <option value="6" selected="selected">6</option>
+        <option value="8">8</option>
+      </select><span>-sided polygons.</span>
+      <select id="q">
+        <option value="4">4</option>
+        <option value="6" selected="selected">6</option>
+        <option value="8">8</option>
+      </select><span> polygons meeting at each vertex.</span>
+    </div>
+
+    <div id="right-controls">
+
+      <div id="image-controls" class="hide">
+        <button id="save-image">Save to Server</button>
+        <a id="download-image"><button>Download Image</button></a>
+      </div>
+
+      <button id="generate-tiling">Generate Tiling</button>
+    </div>
+
+
     <img id="tiling-image"></img>
   </body>
 

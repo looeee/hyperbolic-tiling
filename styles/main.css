@@ -14,13 +14,6 @@ canvas {
   margin: auto;
   z-index: -1; }
 
-#tiling-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  margin: auto;
-  z-index: -1; }
-
 h1 {
   font-weight: 900;
   color: darkgrey; }
@@ -51,6 +44,34 @@ input, option, select, button {
 button:hover {
   background-image: linear-gradient(to bottom, #252525, #000000); }
 
+::-webkit-scrollbar {
+  width: 6px;
+  height: 3px; }
+
+::-webkit-scrollbar-track-piece {
+  background-color: #fff;
+  -webkit-border-radius: 6px; }
+
+::-webkit-scrollbar-thumb:vertical {
+  height: 6px;
+  background-color: #666;
+  -webkit-border-radius: 6px; }
+
+::-webkit-scrollbar-thumb:horizontal {
+  width: 6px;
+  background-color: #666;
+  -webkit-border-radius: 6px; }
+
+.hide {
+  display: none !important; }
+
+#tiling-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: auto;
+  z-index: -1; }
+
 #title {
   position: absolute;
   top: 3%;
@@ -79,16 +100,16 @@ button:hover {
   width: inherit;
   height: inherit; }
 
-#controlsLeft {
+#left-controls {
   position: absolute;
   margin-top: 2%;
   margin-right: 0;
   left: 2%;
-  width: 45%;
+  width: auto;
   color: #7F7F7F;
   text-align: right; }
 
-#controlsRight {
+#right-controls {
   position: absolute;
   margin-top: 2%;
   margin-right: 0;
@@ -100,21 +121,3 @@ button:hover {
 #buttonLeft {
   position: absolute;
   left: 2%; }
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 3px; }
-
-::-webkit-scrollbar-track-piece {
-  background-color: #fff;
-  -webkit-border-radius: 6px; }
-
-::-webkit-scrollbar-thumb:vertical {
-  height: 6px;
-  background-color: #666;
-  -webkit-border-radius: 6px; }
-
-::-webkit-scrollbar-thumb:horizontal {
-  width: 6px;
-  background-color: #666;
-  -webkit-border-radius: 6px; }

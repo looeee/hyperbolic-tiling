@@ -217,7 +217,7 @@ export class ThreeJS {
   render() {
     this.renderer.render(this.scene, this.camera);
     this.appendImageToDom();
-    //this.clearScene();
+    this.clearScene();
   }
 
   //TODO doesn't update when calling generate a second time

@@ -860,7 +860,7 @@ var ThreeJS = function () {
   ThreeJS.prototype.render = function render() {
     this.renderer.render(this.scene, this.camera);
     this.appendImageToDom();
-    //this.clearScene();
+    this.clearScene();
   };
 
   //TODO doesn't update when calling generate a second time
@@ -1288,7 +1288,6 @@ var RegularTesselation = function () {
 
   RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {
     this.addTransformedPattern(tiling, transform);
-
     //stop if the current pattern has reached the minimum size
     //TODO two step method for ending recursion using warning flag
     if (tiling[tiling.length - 1].edges[0].arc.arcLength < this.minPolygonSize) {

@@ -17,7 +17,8 @@ var projectname = 'hyperbolic-tiling',
 //Put all css/scss tasks here
 gulp.task('css', function() {
   return gulp.src(scss_path)
-    .pipe(sass()) //.on('error', sass.logError))
+    .pipe(sass())
+    .on('error', sass.logError)
     .pipe(autoprefixer({
       browsers: ['last 3 version', 'ie 9'],
       cascade: true,
@@ -47,26 +48,15 @@ gulp.task('js', function() {
   .pipe(livereload());
 });
 
-/* OLD METHOD BROWSERIFY AND BABELIFY
-//Put all javascript tasks here
-gulp.task('js', function() {
-  return browserify({
-    entries: es2015_path + 'main.js',
-    extensions: ['.js'],
-    debug: true
-  })
-    .transform('babelify', {presets: ['es2015']})
-    .bundle()
-    .pipe(source('main.js'))
-    .pipe(gulp.dest(scripts_path))
-    .pipe(livereload());
+gulp.task('reload', function() {
+  gulp.src('./*.html', { read: false })
+  .pipe(livereload());
 });
-*/
-
 
 //default task
 gulp.task('default', ['css', 'js'], function() {
   livereload.listen();
   gulp.watch(scss_path, ['css']);
   gulp.watch(es2015_path + '/**/*.js', ['js']);
+  gulp.watch('**/*.html', ['reload']);
 });

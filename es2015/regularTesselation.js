@@ -145,11 +145,10 @@ export class RegularTesselation {
   //TODO document this function
   layerRecursion(exposure, layer, transform, tiling) {
     this.addTransformedPattern(tiling, transform);
-
     //stop if the current pattern has reached the minimum size
     //TODO two step method for ending recursion using warning flag
     if(tiling[tiling.length-1].edges[0].arc.arcLength < this.minPolygonSize){
-      return;
+      return
     }
 
     let pSkip = this.params.pSkip(exposure);

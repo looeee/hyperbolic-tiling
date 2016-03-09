@@ -1,19 +1,8 @@
-body{
-	height: 100%;
-	width: 100%;
-	font-family: 'Roboto', sans-serif;
-	margin: 0;
-	top: 0;
-	left: 0;
-  background-color: white;
-}
+@import 'universal';
 
-canvas{
-	position: absolute;
-	top: 0;
-	left: 0;
-	margin: auto;
-	z-index: -1;
+
+.hide{
+	display: none !important;
 }
 
 #tiling-image{
@@ -24,41 +13,7 @@ canvas{
 	z-index: -1;
 }
 
-h1{
-	font-weight: 900;
-  color: darkgrey;
-}
 
-h2,h3{
-	font-weight: 700;
-  color: darkgrey;
-  text-align: center;
-}
-
-p{
-  color: darkgrey;
-  text-align: center;
-}
-
-li{
-  text-align: left;
-  color: darkgrey;
-}
-
-input, option, select, button{
-  background-color: Transparent;
-  background-repeat: no-repeat;
-  cursor:pointer;
-  overflow: hidden;
-  outline:none;
-  color: #7F7F7F;
-  border: solid #7F7F7F 1px;
-  border-radius: 2px;
-}
-
-button:hover {
-	background-image: linear-gradient(to bottom, #252525, #000000);
-}
 
 #title{
 	position: absolute;
@@ -92,17 +47,17 @@ button:hover {
 
 }
 
-#controlsLeft{
+#left-controls{
 	position: absolute;
 	margin-top: 2%;
   margin-right: 0;
 	left: 2%;
-	width: 45%;
+	width: auto;
 	color: #7F7F7F;
 	text-align: right;
 }
 
-#controlsRight{
+#right-controls{
 	position: absolute;
 	margin-top: 2%;
   margin-right: 0;
@@ -115,26 +70,4 @@ button:hover {
 #buttonLeft{
   position: absolute;
   left: 2%;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-  height: 3px;
-}
-
-::-webkit-scrollbar-track-piece {
-  background-color: #fff;
-  -webkit-border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:vertical {
-  height: 6px;
-  background-color: #666;
-  -webkit-border-radius: 6px;
-}
-
-::-webkit-scrollbar-thumb:horizontal {
-  width: 6px;
-  background-color: #666;
-  -webkit-border-radius: 6px;
 }
