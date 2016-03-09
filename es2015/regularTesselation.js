@@ -43,7 +43,7 @@ export class RegularTesselation {
     this.p = spec.p || 4;
     this.q = spec.q || 6;
 
-    //a value of about 0.01 seems to be the minimum that webgl can handle easily.
+    //a value of about 0.02 seems to be the minimum that webgl can handle easily.
     //TODO test different tilings and work out value needed for each if different
     this.minPolygonSize = spec.minPolygonSize || 0.1;
 
@@ -61,17 +61,13 @@ export class RegularTesselation {
   }
 
   init(p, q) {
-    this.tiling = [];
-
-    this.buildCentralPattern();
-
     let t0 = performance.now();
-    this.generateTiling();
+    const tiling = this.generateTiling();
     let t1 = performance.now();
     console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.')
 
     t0 = performance.now();
-    this.drawTiling();
+    this.drawTiling( tiling );
     t1 = performance.now();
     console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.')
   }
@@ -98,7 +94,7 @@ export class RegularTesselation {
     const p1 = new Point(xqpt, yqpt);
     const p2 = new Point(x2pt, 0);
     const p3 = p1.transform(this.transforms.edgeBisectorReflection);
-    const vertices = [this.disk.centre, p1, p2];
+    const vertices = [new Point(0,0), p1, p2];
 
     return new Polygon(vertices, 0);
   }
@@ -117,62 +113,58 @@ export class RegularTesselation {
   //of the fundamental pattern
   buildCentralPattern() {
     //add the first two polygons to the central pattern
-    this.centralPattern = this.fundamentalPattern();
-
-    //NOTE: could do this more concisely using array indices and multiplying transforms
-    //but naming the regions for clarity
-    const upper = this.centralPattern[0];
-    const lower = this.centralPattern[1]
+    const centralPattern = this.fundamentalPattern();
 
     //created reflected versions of the two pattern pieces
-    const upperReflected = this.centralPattern[0].transform(this.transforms.edgeBisectorReflection);
-    const lowerReflected = this.centralPattern[1].transform(this.transforms.edgeBisectorReflection);
+    const upperReflected = centralPattern[0].transform(this.transforms.edgeBisectorReflection);
+    const lowerReflected = centralPattern[1].transform(this.transforms.edgeBisectorReflection);
 
     for (let i = 1; i < this.p; i++) {
       if(i % 2 === 1){
-        this.centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
-        this.centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
       }
       else{
-        this.centralPattern.push(upper.transform(this.transforms.rotatePolygonCW[i]));
-        this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
       }
     }
 
-    this.tiling[0] = this.centralPattern;
+    return centralPattern;
   }
 
   //TODO document this function
   generateTiling() {
+    const tiling = this.buildCentralPattern();
+
     for (let i = 0; i < this.p; i++) {
       let qTransform = this.transforms.edgeTransforms[i];
       for (let j = 0; j < this.q - 2; j++) {
         if ((this.p === 3) && (this.q - 3 === j)) {
-          this.tiling.push( this.transformPattern(this.centralPattern, qTransform) );
+          this.addTransformedPattern(tiling, qTransform);
         }
         else {
-          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
+          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform, tiling);
         }
         if ((-1 % this.p) !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
         }
       }
     }
+
+    return tiling;
   }
 
   //calculate the polygons in each layer and add them to this.tiling[]
   //TODO document this function
-  layerRecursion(exposure, layer, transform) {
-    this.tiling.push(this.transformPattern(this.centralPattern, transform));
+  layerRecursion(exposure, layer, transform, tiling) {
+    this.addTransformedPattern(tiling, transform);
 
     //stop if the current pattern has reached the minimum size
-    if(this.tiling[this.tiling.length-1][0].edges[0].arc.arcLength < this.minPolygonSize){
+    //TODO two step method for ending recursion using warning flag
+    if(tiling[tiling.length-1].edges[0].arc.arcLength < this.minPolygonSize){
       return;
     }
-
-    //if(layer > 2){
-    //  return;
-    //}
 
     let pSkip = this.params.pSkip(exposure);
     let verticesToDo = this.params.verticesToDo(exposure);
@@ -193,11 +185,10 @@ export class RegularTesselation {
 
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
-          this.tiling.push( this.transformPattern(this.centralPattern, qTransform) );
+          this.addTransformedPattern(tiling, qTransform);
         }
         else {
-
-          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform, tiling);
         }
         if ((-1 % this.p) !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
@@ -207,23 +198,17 @@ export class RegularTesselation {
     }
   }
 
-  transformPattern(pattern, transform) {
-    const newPattern = [];
-    for (let polygon of pattern) {
-      newPattern.push(polygon.transform(transform));
-    }
-    return newPattern;
-  }
-
-  drawPattern(pattern) {
-    for (let polygon of pattern) {
-      this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
+  //The first p*2 elements of the tiling hold the central pattern
+  //The transform will be applied to these
+  addTransformedPattern(tiling, transform) {
+    for (let i = 0; i < this.p * 2; i++) {
+      tiling.push(tiling[i].transform(transform));
     }
   }
 
-  drawTiling() {
-    for (let i = 0; i < this.tiling.length; i++) {
-      this.drawPattern(this.tiling[i]);
+  drawTiling( tiling ) {
+    for (let i = 0; i < tiling.length; i++) {
+      this.disk.drawPolygon(tiling[i], 0xffffff, this.textures, this.wireframe);
     }
   }
 

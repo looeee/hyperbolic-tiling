@@ -1278,7 +1278,7 @@ var RegularTesselation = function () {
     this.p = spec.p || 4;
     this.q = spec.q || 6;
 
-    //a value of about 0.01 seems to be the minimum that webgl can handle easily.
+    //a value of about 0.02 seems to be the minimum that webgl can handle easily.
     //TODO test different tilings and work out value needed for each if different
     this.minPolygonSize = spec.minPolygonSize || 0.1;
 
@@ -1296,17 +1296,13 @@ var RegularTesselation = function () {
   }
 
   RegularTesselation.prototype.init = function init(p, q) {
-    this.tiling = [];
-
-    this.buildCentralPattern();
-
     var t0 = performance.now();
-    this.generateTiling();
+    var tiling = this.generateTiling();
     var t1 = performance.now();
     console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
 
     t0 = performance.now();
-    this.drawTiling();
+    this.drawTiling(tiling);
     t1 = performance.now();
     console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
   };
@@ -1334,7 +1330,7 @@ var RegularTesselation = function () {
     var p1 = new Point(xqpt, yqpt);
     var p2 = new Point(x2pt, 0);
     var p3 = p1.transform(this.transforms.edgeBisectorReflection);
-    var vertices = [this.disk.centre, p1, p2];
+    var vertices = [new Point(0, 0), p1, p2];
 
     return new Polygon(vertices, 0);
   };
@@ -1355,62 +1351,58 @@ var RegularTesselation = function () {
 
   RegularTesselation.prototype.buildCentralPattern = function buildCentralPattern() {
     //add the first two polygons to the central pattern
-    this.centralPattern = this.fundamentalPattern();
-
-    //NOTE: could do this more concisely using array indices and multiplying transforms
-    //but naming the regions for clarity
-    var upper = this.centralPattern[0];
-    var lower = this.centralPattern[1];
+    var centralPattern = this.fundamentalPattern();
 
     //created reflected versions of the two pattern pieces
-    var upperReflected = this.centralPattern[0].transform(this.transforms.edgeBisectorReflection);
-    var lowerReflected = this.centralPattern[1].transform(this.transforms.edgeBisectorReflection);
+    var upperReflected = centralPattern[0].transform(this.transforms.edgeBisectorReflection);
+    var lowerReflected = centralPattern[1].transform(this.transforms.edgeBisectorReflection);
 
     for (var i = 1; i < this.p; i++) {
       if (i % 2 === 1) {
-        this.centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
-        this.centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
       } else {
-        this.centralPattern.push(upper.transform(this.transforms.rotatePolygonCW[i]));
-        this.centralPattern.push(lower.transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
+        centralPattern.push(centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
       }
     }
 
-    this.tiling[0] = this.centralPattern;
+    return centralPattern;
   };
 
   //TODO document this function
 
   RegularTesselation.prototype.generateTiling = function generateTiling() {
+    var tiling = this.buildCentralPattern();
+
     for (var i = 0; i < this.p; i++) {
       var qTransform = this.transforms.edgeTransforms[i];
       for (var j = 0; j < this.q - 2; j++) {
         if (this.p === 3 && this.q - 3 === j) {
-          this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
+          this.addTransformedPattern(tiling, qTransform);
         } else {
-          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform);
+          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform, tiling);
         }
         if (-1 % this.p !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
         }
       }
     }
+
+    return tiling;
   };
 
   //calculate the polygons in each layer and add them to this.tiling[]
   //TODO document this function
 
-  RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform) {
-    this.tiling.push(this.transformPattern(this.centralPattern, transform));
+  RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {
+    this.addTransformedPattern(tiling, transform);
 
     //stop if the current pattern has reached the minimum size
-    if (this.tiling[this.tiling.length - 1][0].edges[0].arc.arcLength < this.minPolygonSize) {
+    //TODO two step method for ending recursion using warning flag
+    if (tiling[tiling.length - 1].edges[0].arc.arcLength < this.minPolygonSize) {
       return;
     }
-
-    //if(layer > 2){
-    //  return;
-    //}
 
     var pSkip = this.params.pSkip(exposure);
     var verticesToDo = this.params.verticesToDo(exposure);
@@ -1430,10 +1422,9 @@ var RegularTesselation = function () {
 
       for (var j = 0; j < pgonsToDo; j++) {
         if (this.p === 3 && j === pgonsToDo - 1) {
-          this.tiling.push(this.transformPattern(this.centralPattern, qTransform));
+          this.addTransformedPattern(tiling, qTransform);
         } else {
-
-          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform);
+          this.layerRecursion(this.params.exposure(layer, i, j), layer + 1, qTransform, tiling);
         }
         if (-1 % this.p !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
@@ -1443,49 +1434,18 @@ var RegularTesselation = function () {
     }
   };
 
-  RegularTesselation.prototype.transformPattern = function transformPattern(pattern, transform) {
-    var newPattern = [];
-    for (var _iterator = pattern, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
+  //The first p*2 elements of the tiling hold the central pattern
+  //The transform will be applied to these
 
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var polygon = _ref;
-
-      newPattern.push(polygon.transform(transform));
-    }
-    return newPattern;
-  };
-
-  RegularTesselation.prototype.drawPattern = function drawPattern(pattern) {
-    for (var _iterator2 = pattern, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-      var _ref2;
-
-      if (_isArray2) {
-        if (_i2 >= _iterator2.length) break;
-        _ref2 = _iterator2[_i2++];
-      } else {
-        _i2 = _iterator2.next();
-        if (_i2.done) break;
-        _ref2 = _i2.value;
-      }
-
-      var polygon = _ref2;
-
-      this.disk.drawPolygon(polygon, 0xffffff, this.textures, this.wireframe);
+  RegularTesselation.prototype.addTransformedPattern = function addTransformedPattern(tiling, transform) {
+    for (var i = 0; i < this.p * 2; i++) {
+      tiling.push(tiling[i].transform(transform));
     }
   };
 
-  RegularTesselation.prototype.drawTiling = function drawTiling() {
-    for (var i = 0; i < this.tiling.length; i++) {
-      this.drawPattern(this.tiling[i]);
+  RegularTesselation.prototype.drawTiling = function drawTiling(tiling) {
+    for (var i = 0; i < tiling.length; i++) {
+      this.disk.drawPolygon(tiling[i], 0xffffff, this.textures, this.wireframe);
     }
   };
 
@@ -1561,7 +1521,7 @@ var circleLimit1Spec = {
   5 //edge_0 adjacency (range p - 1)
   ], [1, 4], //edge_1 orientation, adjacency
   [1, 3], [1, 2], [1, 1], [1, 0]],
-  minPolygonSize: 0.02
+  minPolygonSize: 0.05
 };
 
 var Controller = function () {
@@ -1570,6 +1530,7 @@ var Controller = function () {
 
     this.tilingSpec = circleLimit1Spec;
     this.setupButtons();
+    //this.draw = new ThreeJS();
   }
 
   Controller.prototype.setupButtons = function setupButtons() {
