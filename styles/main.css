@@ -109,10 +109,17 @@ button:hover {
 #left-controls {
   position: absolute;
   margin-top: 2%;
-  margin-right: 0;
-  left: 2%;
-  width: auto;
-  color: #7F7F7F; }
+  margin-left: 2%;
+  left: 0;
+  width: 450px;
+  color: #7F7F7F;
+  /*
+  background-color: #fff;
+  border-radius: 15px;
+  border: 1px solid #7F7F7F;
+  border: 1px solid #7F7F7F;
+  box-shadow: 2px 5px 5px #888888;
+  */ }
 
 #selected-radius {
   width: 30px;
@@ -122,11 +129,18 @@ button:hover {
 #right-controls {
   position: absolute;
   margin-top: 2%;
-  margin-right: 0;
-  right: 2%;
-  width: 45%;
+  margin-right: 2%;
+  right: 0;
+  width: auto;
   color: #7F7F7F;
-  text-align: right; }
+  text-align: right;
+  /*
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #7F7F7F;
+  border: 1px solid #7F7F7F;
+  box-shadow: 2px 5px 5px #888888;
+  */ }
 
 #buttonLeft {
   position: absolute;
