@@ -3,9 +3,9 @@ import {
 }
 from './regularTesselation';
 import {
-  ThreeJS
+  Drawing
 }
-from './threejs';
+from './drawing';
 // * ***********************************************************************
 // *
 // *  CONTROLLER CLASS
@@ -13,9 +13,8 @@ from './threejs';
 // *************************************************************************
 export class Controller {
   constructor() {
-    this.maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
     this.getElements();
-    this.draw = new ThreeJS(this.maxRadius);
+    this.draw = new Drawing();
     this.setupControls();
     this.regularHyperbolicTiling( );
 
@@ -44,7 +43,8 @@ export class Controller {
   }
 
   setupRadiusSlider(){
-    this.radiusSlider.setAttribute('max', this.maxRadius);
+    const maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+    this.radiusSlider.setAttribute('max', maxRadius);
     this.radiusValue.innerHTML = this.radiusSlider.value;
     this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = () => {
@@ -57,6 +57,7 @@ export class Controller {
     this.generateTilingBtn.onclick = () => {
       //this.imageElem.setAttribute('src', '');
       //this.draw.init();
+
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation( spec );
 
@@ -68,9 +69,8 @@ export class Controller {
       this.draw.polygonArray( tiling, spec.textures);
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
-
       this.imageControlsDiv.classList.remove('hide');
-
+      console.log(this.draw.scene);
     }
   }
 

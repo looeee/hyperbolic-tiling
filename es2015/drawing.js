@@ -2,7 +2,7 @@ import * as E from './euclid';
 import { Point } from './elements';
 // * ***********************************************************************
 // *
-// *  THREE JS CLASS
+// *  DRAWING CLASS
 // *
 // *  All operations involved in drawing to the screen occur here.
 // *  All objects are assumed to be on the unit Disk when passed here and
@@ -10,7 +10,7 @@ import { Point } from './elements';
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
 //TODO refactor create materials based on passed in textures array
-export class ThreeJS {
+export class Drawing {
   constructor(radius) {
     this._radius = radius || 100;
     this.init();
@@ -33,9 +33,11 @@ export class ThreeJS {
   }
 
   clearScene() {
-    for (let i = this.scene.children.length - 1; i >= 0; i--) {
-      this.scene.remove(this.scene.children[i]);
-    }
+    //for (let i = this.scene.children.length - 1; i >= 0; i--) {
+    //  this.scene.remove(this.scene.children[i]);
+    //}
+    while (this.scene.children.lastChild)
+      this.scene.children.removeChild(this.scene.children.lastChild);
   }
 
   initCamera() {
