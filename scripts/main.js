@@ -1114,12 +1114,17 @@ var Drawing = function () {
     this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
+    console.log(this.camera);
   };
 
   Drawing.prototype.reset = function reset() {
-    this.pattern = null;
     this.clearScene();
+    this.pattern = null; //reset materials;
+    this.setCamera();
+    this.setRenderer();
   };
+
+  Drawing.prototype.onresize = function onresize() {};
 
   Drawing.prototype.clearScene = function clearScene() {
     for (var i = this.scene.children.length - 1; i >= 0; i--) {
@@ -1133,20 +1138,32 @@ var Drawing = function () {
   };
 
   Drawing.prototype.initCamera = function initCamera() {
-    this.camera = new THREE.OrthographicCamera(-window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -2, 1);
-    this.camera.frustumCulled = false;
+    this.camera = new THREE.OrthographicCamera();
+    this.setCamera();
     this.scene.add(this.camera);
   };
 
+  Drawing.prototype.setCamera = function setCamera() {
+    this.camera.left = -window.innerWidth / 2;
+    this.camera.right = window.innerWidth / 2;
+    this.camera.top = window.innerHeight / 2;
+    this.camera.bottom = -window.innerHeight / 2;
+    this.camera.near = -2;
+    this.camera.far = 1;
+    this.camera.frustumCulled = false;
+    this.camera.updateProjectionMatrix();
+  };
+
   Drawing.prototype.initRenderer = function initRenderer() {
-    if (this.renderer === undefined) {
-      this.renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        preserveDrawingBuffer: true
-      });
-      this.renderer.setClearColor(0xffffff, 1.0);
-      //document.body.appendChild(this.renderer.domElement);
-    }
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true
+    });
+    this.setRenderer();
+  };
+
+  Drawing.prototype.setRenderer = function setRenderer() {
+    this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   };
 
@@ -1257,10 +1274,8 @@ var Drawing = function () {
   //TODO doesn't update when calling generate a second time
 
   Drawing.prototype.appendImageToDom = function appendImageToDom() {
-    var imageElem = document.querySelector('#tiling-image');
-    imageElem.style.height = window.innerHeight + 'px';
-    imageElem.style.width = window.innerWidth + 'px';
-    imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
+    var tilingImage = document.querySelector('#tiling-image');
+    tilingImage.setAttribute('src', this.renderer.domElement.toDataURL());
   };
 
   //Download the canvas as a png image
@@ -1305,8 +1320,16 @@ var Controller = function () {
     this.getElements();
     this.draw = new Drawing();
     this.setupControls();
+    this.setupLayout();
     this.regularHyperbolicTiling();
   }
+
+  Controller.prototype.onResize = function onResize() {
+    this.setRadius();
+    this.radiusSlider.setAttribute('max', this.maxRadius);
+    if (this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
+    this.centreTilingImage();
+  };
 
   //any calls to document.querySelector() go here
 
@@ -1321,7 +1344,7 @@ var Controller = function () {
     this.qValueDropdown = document.querySelector('#q');
     this.generateTilingBtn = document.querySelector('#generate-tiling');
     this.showControlsCheckbox = document.querySelector('#show-controls');
-    this.imageElem = document.querySelector('#tiling-image');
+    this.tilingImage = document.querySelector('#tiling-image');
     this.radiusSlider = document.querySelector('#tiling-radius');
     this.radiusValue = document.querySelector('#selected-radius');
   };
@@ -1333,19 +1356,32 @@ var Controller = function () {
     this.setupTestBtn();
   };
 
+  Controller.prototype.setupLayout = function setupLayout() {};
+
   Controller.prototype.setupTestBtn = function setupTestBtn() {
     this.testBtn.onclick = function () {
-      //this.draw.reset();
-      //this.imageElem.setAttribute('src', '');
+      //TESTING
     };
+  };
+
+  Controller.prototype.setTilingImageSize = function setTilingImageSize() {
+    this.tilingImage.style.height = window.innerHeight + 'px';
+    this.tilingImage.style.width = window.innerWidth + 'px';
+  };
+
+  Controller.prototype.centreTilingImage = function centreTilingImage() {
+    var top = (window.innerHeight - this.tilingImage.height) / 2;
+    var left = (window.innerWidth - this.tilingImage.width) / 2;
+    this.tilingImage.style.top = top + 'px';
+    this.tilingImage.style.left = left + 'px';
   };
 
   Controller.prototype.setupRadiusSlider = function setupRadiusSlider() {
     var _this = this;
 
-    var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-    this.radiusSlider.setAttribute('max', maxRadius);
-    this.radiusSlider.value = maxRadius;
+    this.setRadius();
+    this.radiusSlider.setAttribute('max', this.maxRadius);
+    this.radiusSlider.value = this.maxRadius;
     this.radiusValue.innerHTML = this.radiusSlider.value;
     this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = function () {
@@ -1354,10 +1390,15 @@ var Controller = function () {
     };
   };
 
+  Controller.prototype.setRadius = function setRadius() {
+    this.maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+  };
+
   Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
     var _this2 = this;
 
     this.generateTilingBtn.onclick = function () {
+      _this2.setTilingImageSize();
       _this2.draw.reset();
       var spec = _this2.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
@@ -1386,7 +1427,6 @@ var Controller = function () {
       [1, 3], [1, 2], [1, 1], [1, 0]],
       minPolygonSize: 0.05
     };
-
     return spec;
   };
 
@@ -1445,4 +1485,6 @@ var controller = new Controller();
 
 //window.onload = () => {}
 
-//window.onresize = () => {}
+window.onresize = function () {
+  controller.onResize();
+};

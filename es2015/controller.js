@@ -16,8 +16,16 @@ export class Controller {
     this.getElements();
     this.draw = new Drawing();
     this.setupControls();
+    this.setupLayout();
     this.regularHyperbolicTiling( );
 
+  }
+
+  onResize(){
+    this.setRadius();
+    this.radiusSlider.setAttribute('max', this.maxRadius);
+    if(this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
+    this.centreTilingImage();
   }
 
   //any calls to document.querySelector() go here
@@ -32,7 +40,7 @@ export class Controller {
     this.qValueDropdown = document.querySelector('#q');
     this.generateTilingBtn = document.querySelector('#generate-tiling');
     this.showControlsCheckbox = document.querySelector('#show-controls');
-    this.imageElem = document.querySelector('#tiling-image');
+    this.tilingImage = document.querySelector('#tiling-image');
     this.radiusSlider = document.querySelector('#tiling-radius');
     this.radiusValue = document.querySelector('#selected-radius');
   }
@@ -44,17 +52,32 @@ export class Controller {
     this.setupTestBtn()
   }
 
+  setupLayout(){
+
+  }
+
   setupTestBtn(){
     this.testBtn.onclick = () => {
-      //this.draw.reset();
-      //this.imageElem.setAttribute('src', '');
+      //TESTING
     }
   }
 
+  setTilingImageSize(){
+    this.tilingImage.style.height = window.innerHeight + 'px';
+    this.tilingImage.style.width = window.innerWidth + 'px';
+  }
+
+  centreTilingImage(){
+    const top = (window.innerHeight - this.tilingImage.height) / 2;
+    const left = (window.innerWidth - this.tilingImage.width) / 2;
+    this.tilingImage.style.top = top + 'px';
+    this.tilingImage.style.left = left + 'px';
+  }
+
   setupRadiusSlider(){
-    const maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-    this.radiusSlider.setAttribute('max', maxRadius);
-    this.radiusSlider.value = maxRadius;
+    this.setRadius();
+    this.radiusSlider.setAttribute('max', this.maxRadius);
+    this.radiusSlider.value = this.maxRadius;
     this.radiusValue.innerHTML = this.radiusSlider.value;
     this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = () => {
@@ -63,8 +86,13 @@ export class Controller {
     }
   }
 
+  setRadius(){
+    this.maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+  }
+
   regularHyperbolicTiling(  ){
     this.generateTilingBtn.onclick = () => {
+      this.setTilingImageSize();
       this.draw.reset();
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation( spec );
@@ -94,7 +122,6 @@ export class Controller {
                       [1, 3], [1, 2], [1, 1], [1, 0]],
       minPolygonSize: 0.05,
     }
-
     return spec;
   }
 

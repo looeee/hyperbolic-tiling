@@ -21,14 +21,21 @@ export class Drawing {
     this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
+    console.log(this.camera);
   }
 
   set radius(newRadius){this._radius = newRadius;}
   get radius(){return this._radius;}
 
   reset() {
-    this.pattern = null;
-    this.clearScene()
+    this.clearScene();
+    this.pattern = null; //reset materials;
+    this.setCamera();
+    this.setRenderer();
+  }
+
+  onresize(){
+
   }
 
   clearScene() {
@@ -43,21 +50,32 @@ export class Drawing {
   }
 
   initCamera() {
-    this.camera = new THREE.OrthographicCamera(-window.innerWidth / 2,
-      window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -2, 1);
-    this.camera.frustumCulled = false;
+    this.camera = new THREE.OrthographicCamera();
+    this.setCamera();
     this.scene.add(this.camera);
   }
 
+  setCamera(){
+    this.camera.left = -window.innerWidth / 2;
+    this.camera.right = window.innerWidth / 2;
+    this.camera.top = window.innerHeight / 2;
+    this.camera.bottom = -window.innerHeight / 2;
+    this.camera.near = -2;
+    this.camera.far = 1;
+    this.camera.frustumCulled = false;
+    this.camera.updateProjectionMatrix();
+  }
+
   initRenderer() {
-    if (this.renderer === undefined) {
-      this.renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        preserveDrawingBuffer: true,
-      });
-      this.renderer.setClearColor(0xffffff, 1.0);
-      //document.body.appendChild(this.renderer.domElement);
-    }
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true,
+    });
+    this.setRenderer();
+  }
+
+  setRenderer(){
+    this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -191,10 +209,8 @@ export class Drawing {
 
   //TODO doesn't update when calling generate a second time
   appendImageToDom(){
-    const imageElem = document.querySelector('#tiling-image');
-    imageElem.style.height = window.innerHeight + 'px';
-    imageElem.style.width = window.innerWidth + 'px';
-    imageElem.setAttribute('src', this.renderer.domElement.toDataURL());
+    const tilingImage = document.querySelector('#tiling-image');
+    tilingImage.setAttribute('src', this.renderer.domElement.toDataURL());
   }
 
   //Download the canvas as a png image

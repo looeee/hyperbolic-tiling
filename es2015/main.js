@@ -37,4 +37,6 @@ const controller = new Controller();
 
 //window.onload = () => {}
 
-//window.onresize = () => {}
+window.onresize = () => {
+  controller.onResize();
+}
