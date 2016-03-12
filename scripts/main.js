@@ -1110,24 +1110,25 @@ var Drawing = function () {
   }
 
   Drawing.prototype.init = function init() {
-    if (this.scene === undefined) this.scene = new THREE.Scene();
+    //if (this.scene === undefined)
+    this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
   };
 
   Drawing.prototype.reset = function reset() {
+    this.pattern = null;
     this.clearScene();
-    this.projector = null;
-    this.camera = null;
-    this.init();
   };
 
   Drawing.prototype.clearScene = function clearScene() {
-    //for (let i = this.scene.children.length - 1; i >= 0; i--) {
-    //  this.scene.remove(this.scene.children[i]);
-    //}
-    while (this.scene.children.lastChild) {
-      this.scene.children.removeChild(this.scene.children.lastChild);
+    for (var i = this.scene.children.length - 1; i >= 0; i--) {
+      var object = this.scene.children[i];
+      if (object.type === 'Mesh') {
+        object.geometry.dispose();
+        object.material.dispose();
+        this.scene.remove(object);
+      }
     }
   };
 
@@ -1171,7 +1172,7 @@ var Drawing = function () {
 
   //Note: polygons assumed to be triangular!
 
-  Drawing.prototype.polygon = function polygon(_polygon, color, texture, wireframe) {
+  Drawing.prototype.polygon = function polygon(_polygon, color, textures, wireframe) {
     var p = 1 / _polygon.numDivisions;
     var divisions = _polygon.numDivisions;
     var geometry = new THREE.Geometry();
@@ -1180,11 +1181,6 @@ var Drawing = function () {
     for (var i = 0; i < _polygon.mesh.length; i++) {
       geometry.vertices.push(new Point(_polygon.mesh[i].x * this.radius, _polygon.mesh[i].y * this.radius));
     }
-
-    //const radius = this.radius;
-    //geometry.vertices = polygon.expandedMesh;
-    //console.log(geometry.vertices, polygon.expandedMesh);
-    //geometry.vertices = polygon.expandedSubdivisionMesh();
 
     var edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh
@@ -1205,7 +1201,7 @@ var Drawing = function () {
       edgeStartingVertex += m;
     }
 
-    var mesh = this.createMesh(geometry, color, texture, _polygon.materialIndex, wireframe);
+    var mesh = this.createMesh(geometry, color, textures, _polygon.materialIndex, wireframe);
     this.scene.add(mesh);
   };
 
@@ -1320,6 +1316,7 @@ var Controller = function () {
     this.imageControlsDiv = document.querySelector('#image-controls');
     this.saveImageBtn = document.querySelector('#save-image');
     this.downloadImageBtn = document.querySelector('#download-image');
+    this.testBtn = document.querySelector('#test');
     this.pValueDropdown = document.querySelector('#p');
     this.qValueDropdown = document.querySelector('#q');
     this.generateTilingBtn = document.querySelector('#generate-tiling');
@@ -1333,6 +1330,14 @@ var Controller = function () {
     this.saveImageButtons();
     this.hideControls();
     this.setupRadiusSlider();
+    this.setupTestBtn();
+  };
+
+  Controller.prototype.setupTestBtn = function setupTestBtn() {
+    this.testBtn.onclick = function () {
+      //this.draw.reset();
+      //this.imageElem.setAttribute('src', '');
+    };
   };
 
   Controller.prototype.setupRadiusSlider = function setupRadiusSlider() {
@@ -1340,6 +1345,7 @@ var Controller = function () {
 
     var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
     this.radiusSlider.setAttribute('max', maxRadius);
+    this.radiusSlider.value = maxRadius;
     this.radiusValue.innerHTML = this.radiusSlider.value;
     this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = function () {
@@ -1352,12 +1358,9 @@ var Controller = function () {
     var _this2 = this;
 
     this.generateTilingBtn.onclick = function () {
-      //this.imageElem.setAttribute('src', '');
-      //this.draw.init();
-
+      _this2.draw.reset();
       var spec = _this2.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
-
       var t0 = performance.now();
       var tiling = regularTesselation.generateTiling();
       var t1 = performance.now();
@@ -1367,7 +1370,6 @@ var Controller = function () {
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
       _this2.imageControlsDiv.classList.remove('hide');
-      console.log(_this2.draw.scene);
     };
   };
 

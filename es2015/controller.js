@@ -27,6 +27,7 @@ export class Controller {
     this.imageControlsDiv = document.querySelector('#image-controls');
     this.saveImageBtn = document.querySelector('#save-image');
     this.downloadImageBtn = document.querySelector('#download-image');
+    this.testBtn = document.querySelector('#test');
     this.pValueDropdown = document.querySelector('#p');
     this.qValueDropdown = document.querySelector('#q');
     this.generateTilingBtn = document.querySelector('#generate-tiling');
@@ -40,11 +41,20 @@ export class Controller {
     this.saveImageButtons();
     this.hideControls();
     this.setupRadiusSlider();
+    this.setupTestBtn()
+  }
+
+  setupTestBtn(){
+    this.testBtn.onclick = () => {
+      //this.draw.reset();
+      //this.imageElem.setAttribute('src', '');
+    }
   }
 
   setupRadiusSlider(){
     const maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
     this.radiusSlider.setAttribute('max', maxRadius);
+    this.radiusSlider.value = maxRadius;
     this.radiusValue.innerHTML = this.radiusSlider.value;
     this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = () => {
@@ -55,12 +65,9 @@ export class Controller {
 
   regularHyperbolicTiling(  ){
     this.generateTilingBtn.onclick = () => {
-      //this.imageElem.setAttribute('src', '');
-      //this.draw.init();
-
+      this.draw.reset();
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation( spec );
-
       let t0 = performance.now();
       const tiling = regularTesselation.generateTiling();
       let t1 = performance.now();
@@ -70,7 +77,6 @@ export class Controller {
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
       this.imageControlsDiv.classList.remove('hide');
-      console.log(this.draw.scene);
     }
   }
 

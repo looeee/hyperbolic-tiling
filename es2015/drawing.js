@@ -17,7 +17,8 @@ export class Drawing {
   }
 
   init() {
-    if (this.scene === undefined) this.scene = new THREE.Scene();
+    //if (this.scene === undefined)
+    this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
   }
@@ -26,18 +27,19 @@ export class Drawing {
   get radius(){return this._radius;}
 
   reset() {
-    this.clearScene();
-    this.projector = null;
-    this.camera = null;
-    this.init();
+    this.pattern = null;
+    this.clearScene()
   }
 
   clearScene() {
-    //for (let i = this.scene.children.length - 1; i >= 0; i--) {
-    //  this.scene.remove(this.scene.children[i]);
-    //}
-    while (this.scene.children.lastChild)
-      this.scene.children.removeChild(this.scene.children.lastChild);
+    for (let i = this.scene.children.length - 1; i >= 0; i--) {
+      const object = this.scene.children[i];
+      if(object.type === 'Mesh'){
+        object.geometry.dispose();
+        object.material.dispose();
+        this.scene.remove(object);
+      }
+    }
   }
 
   initCamera() {
@@ -80,7 +82,7 @@ export class Drawing {
   }
 
   //Note: polygons assumed to be triangular!
-  polygon(polygon, color, texture, wireframe){
+  polygon(polygon, color, textures, wireframe){
     const p = 1/polygon.numDivisions;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
@@ -89,11 +91,6 @@ export class Drawing {
     for(let i = 0; i < polygon.mesh.length; i++){
       geometry.vertices.push(new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius));
     }
-
-    //const radius = this.radius;
-    //geometry.vertices = polygon.expandedMesh;
-    //console.log(geometry.vertices, polygon.expandedMesh);
-    //geometry.vertices = polygon.expandedSubdivisionMesh();
 
     let edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh
@@ -144,7 +141,7 @@ export class Drawing {
       edgeStartingVertex += m;
     }
 
-    const mesh = this.createMesh(geometry, color, texture, polygon.materialIndex, wireframe);
+    const mesh = this.createMesh(geometry, color, textures, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
 
   }
