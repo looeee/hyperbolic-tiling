@@ -11,54 +11,25 @@ import { Point } from './elements';
 // *************************************************************************
 //TODO refactor create materials based on passed in textures array
 export class ThreeJS {
-  constructor() {
+  constructor(radius) {
+    this._radius = radius || 100;
     this.init();
   }
 
   init() {
-    this.radius = (window.innerWidth < window.innerHeight)
-                  ? (window.innerWidth / 2) - 5
-                  : (window.innerHeight / 2) - 5;
-    this.radiusSetByWidth = (window.innerWidth < window.innerHeight)
-                  ? true
-                  : false;
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
   }
 
+  set radius(newRadius){this._radius = newRadius;}
+  get radius(){return this._radius;}
+
   reset() {
-    cancelAnimationFrame(this.id);
     this.clearScene();
     this.projector = null;
     this.camera = null;
     this.init();
-  }
-
-  //TODO: sometimes messes up ratio
-  resize(){
-    const w = (window.innerWidth / 2) - 5;
-    const h = (window.innerHeight / 2) - 5;
-    if(this.radiusSetByWidth && w < h){
-      this.radius = w;
-    }
-    else if(! w < h){
-      this.radius = h;
-    }
-
-    /*
-    this.camera.aspect = this.radius * -1,
-                    this.radius ,
-                    this.radius ,
-                    this.radius * -1,
-                    -2,
-                    1;
-    */
-    //this.camera.updateProjectionMatrix();
-    this.renderer.setSize(
-      (this.radius + 5) * 2,
-      (this.radius + 5) * 2 );
-
   }
 
   clearScene() {
@@ -68,8 +39,8 @@ export class ThreeJS {
   }
 
   initCamera() {
-    this.camera = new THREE.OrthographicCamera(window.innerWidth / -2,
-      window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+    this.camera = new THREE.OrthographicCamera(-window.innerWidth / 2,
+      window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -2, 1);
     this.camera.frustumCulled = false;
     this.scene.add(this.camera);
   }
@@ -101,7 +72,6 @@ export class ThreeJS {
   polygonArray( array, textureArray, color, wireframe ){
     color = color || 0xffffff;
     wireframe = wireframe || false;
-
     for(let i = 0; i< array.length; i++){
       this.polygon(array[i], color, textureArray, wireframe);
     }
@@ -115,7 +85,7 @@ export class ThreeJS {
     geometry.faceVertexUvs[0] = [];
 
     for(let i = 0; i < polygon.mesh.length; i++){
-      geometry.vertices.push(new Point(polygon.mesh[i].x * radius, polygon.mesh[i].y * this.radius));
+      geometry.vertices.push(new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius));
     }
 
     //const radius = this.radius;

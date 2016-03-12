@@ -13,9 +13,10 @@ from './threejs';
 // *************************************************************************
 export class Controller {
   constructor() {
+    this.maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
     this.getElements();
+    this.draw = new ThreeJS(this.maxRadius);
     this.setupControls();
-    this.draw = new ThreeJS();
     this.regularHyperbolicTiling( );
 
   }
@@ -43,16 +44,19 @@ export class Controller {
   }
 
   setupRadiusSlider(){
-    const maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-    this.radiusSlider.setAttribute('max', maxRadius);
+    this.radiusSlider.setAttribute('max', this.maxRadius);
     this.radiusValue.innerHTML = this.radiusSlider.value;
+    this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = () => {
       this.radiusValue.innerHTML = this.radiusSlider.value;
+      this.draw.radius = this.radiusSlider.value;
     }
   }
 
   regularHyperbolicTiling(  ){
     this.generateTilingBtn.onclick = () => {
+      //this.imageElem.setAttribute('src', '');
+      //this.draw.init();
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation( spec );
 

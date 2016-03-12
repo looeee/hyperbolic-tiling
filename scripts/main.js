@@ -6,6 +6,24 @@ babelHelpers.classCallCheck = function (instance, Constructor) {
   }
 };
 
+babelHelpers.createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
+
 babelHelpers;
 
 // * ***********************************************************************
@@ -615,49 +633,24 @@ var Polygon = function () {
 //TODO refactor create materials based on passed in textures array
 
 var ThreeJS = function () {
-  function ThreeJS() {
+  function ThreeJS(radius) {
     babelHelpers.classCallCheck(this, ThreeJS);
 
+    this._radius = radius || 100;
     this.init();
   }
 
   ThreeJS.prototype.init = function init() {
-    this.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-    this.radiusSetByWidth = window.innerWidth < window.innerHeight ? true : false;
     if (this.scene === undefined) this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
   };
 
   ThreeJS.prototype.reset = function reset() {
-    cancelAnimationFrame(this.id);
     this.clearScene();
     this.projector = null;
     this.camera = null;
     this.init();
-  };
-
-  //TODO: sometimes messes up ratio
-
-  ThreeJS.prototype.resize = function resize() {
-    var w = window.innerWidth / 2 - 5;
-    var h = window.innerHeight / 2 - 5;
-    if (this.radiusSetByWidth && w < h) {
-      this.radius = w;
-    } else if (!w < h) {
-      this.radius = h;
-    }
-
-    /*
-    this.camera.aspect = this.radius * -1,
-                    this.radius ,
-                    this.radius ,
-                    this.radius * -1,
-                    -2,
-                    1;
-    */
-    //this.camera.updateProjectionMatrix();
-    this.renderer.setSize((this.radius + 5) * 2, (this.radius + 5) * 2);
   };
 
   ThreeJS.prototype.clearScene = function clearScene() {
@@ -667,7 +660,7 @@ var ThreeJS = function () {
   };
 
   ThreeJS.prototype.initCamera = function initCamera() {
-    this.camera = new THREE.OrthographicCamera(window.innerWidth / -2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / -2, -2, 1);
+    this.camera = new THREE.OrthographicCamera(-window.innerWidth / 2, window.innerWidth / 2, window.innerHeight / 2, -window.innerHeight / 2, -2, 1);
     this.camera.frustumCulled = false;
     this.scene.add(this.camera);
   };
@@ -699,7 +692,6 @@ var ThreeJS = function () {
   ThreeJS.prototype.polygonArray = function polygonArray(array, textureArray, color, wireframe) {
     color = color || 0xffffff;
     wireframe = wireframe || false;
-
     for (var i = 0; i < array.length; i++) {
       this.polygon(array[i], color, textureArray, wireframe);
     }
@@ -714,7 +706,7 @@ var ThreeJS = function () {
     geometry.faceVertexUvs[0] = [];
 
     for (var i = 0; i < _polygon.mesh.length; i++) {
-      geometry.vertices.push(new Point(_polygon.mesh[i].x * radius, _polygon.mesh[i].y * this.radius));
+      geometry.vertices.push(new Point(_polygon.mesh[i].x * this.radius, _polygon.mesh[i].y * this.radius));
     }
 
     //const radius = this.radius;
@@ -821,6 +813,15 @@ var ThreeJS = function () {
     xhttp.send('img=' + data);
   };
 
+  babelHelpers.createClass(ThreeJS, [{
+    key: 'radius',
+    set: function (newRadius) {
+      this._radius = newRadius;
+    },
+    get: function () {
+      return this._radius;
+    }
+  }]);
   return ThreeJS;
 }();
 
@@ -1302,9 +1303,10 @@ var Controller = function () {
   function Controller() {
     babelHelpers.classCallCheck(this, Controller);
 
+    this.maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
     this.getElements();
+    this.draw = new ThreeJS(this.maxRadius);
     this.setupControls();
-    this.draw = new ThreeJS();
     this.regularHyperbolicTiling();
   }
 
@@ -1334,11 +1336,12 @@ var Controller = function () {
   Controller.prototype.setupRadiusSlider = function setupRadiusSlider() {
     var _this = this;
 
-    var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-    this.radiusSlider.setAttribute('max', maxRadius);
+    this.radiusSlider.setAttribute('max', this.maxRadius);
     this.radiusValue.innerHTML = this.radiusSlider.value;
+    this.draw.radius = this.radiusSlider.value;
     this.radiusSlider.oninput = function () {
       _this.radiusValue.innerHTML = _this.radiusSlider.value;
+      _this.draw.radius = _this.radiusSlider.value;
     };
   };
 
@@ -1346,6 +1349,8 @@ var Controller = function () {
     var _this2 = this;
 
     this.generateTilingBtn.onclick = function () {
+      //this.imageElem.setAttribute('src', '');
+      //this.draw.init();
       var spec = _this2.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
 
@@ -1428,7 +1433,7 @@ Math.cot = Math.cot || function (x) {
 // *************************************************************************
 
 //Global radius
-window.radius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+//window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
 
 var controller = new Controller();
 
