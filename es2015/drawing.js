@@ -17,11 +17,9 @@ export class Drawing {
   }
 
   init() {
-    //if (this.scene === undefined)
     this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
-    console.log(this.camera);
   }
 
   set radius(newRadius){this._radius = newRadius;}

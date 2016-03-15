@@ -11,38 +11,44 @@
     <link rel="icon" type="image/x-icon" href="./favicon.ico" />
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,700,900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="styles/main.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-dom.js"></script>
     <script src="scripts/vendor/three.js"></script>
   </head>
 
   <body>
-    <div id="left-controls">
-      <select id="p">
-        <option value="4">4</option>
-        <option value="6" selected="selected">6</option>
-        <option value="8">8</option>
-      </select><span>-sided polygons.</span>
-      <select id="q">
-        <option value="4">4</option>
-        <option value="6" selected="selected">6</option>
-        <option value="8">8</option>
-      </select><span> polygons meeting at each vertex.</span>
-      <br>
-      <span>Radius of Tiling: </span><div id="selected-radius"></div><input type="range" id="tiling-radius"  min="50" max="800"/>
-    </div>
+    <div id="root"></div
 
-    <div id="right-controls">
-
-      <div id="image-controls" class="hide">
-        <button id="test">Test</button>
-        <button id="save-image">Save to Server</button>
-        <a id="download-image"><button>Download Image</button></a>
+    <div id="controls">
+      <div id="left-controls">
+        <select id="p">
+          <option value="4">4</option>
+          <option value="6" selected="selected">6</option>
+          <option value="8">8</option>
+        </select><span>-sided polygons.</span>
+        <select id="q">
+          <option value="4">4</option>
+          <option value="6" selected="selected">6</option>
+          <option value="8">8</option>
+        </select><span> polygons meeting at each vertex.</span>
+        <br>
+        <span>Radius of Tiling: </span><div id="selected-radius"></div><input type="range" id="tiling-radius"  min="50" max="800"/>
       </div>
 
-      <button id="generate-tiling">Generate Tiling</button>
-      <br>
-      <span>Show Tiling Controls</span><input type="checkbox" id="show-controls" checked/>
-    </div>
+      <div id="right-controls">
 
+        <div id="image-controls" class="hide">
+          <button id="test">Test</button>
+          <button id="save-image">Save to Server</button>
+          <a id="download-image"><button>Download Image</button></a>
+        </div>
+
+        <button id="generate-tiling">Generate Tiling</button>
+        <br>
+        <span>Show Tiling Controls</span><input type="checkbox" id="show-controls" checked/>
+      </div>
+    </div>
 
     <img id="tiling-image"></img>
 

@@ -37,7 +37,7 @@ gulp.task('js', function() {
       babel({
         exclude: 'node_modules/**',
         babelrc: false,
-        presets: ['es2015-loose-rollup'],
+        presets: ['es2015-loose-rollup', 'react'],
         //plugins: ['transform-class-properties'],
       })
     ]
@@ -58,5 +58,6 @@ gulp.task('default', ['css', 'js'], function() {
   livereload.listen();
   gulp.watch(scss_path, ['css']);
   gulp.watch(es2015_path + '/**/*.js', ['js']);
+  gulp.watch(es2015_path + '/**/*.jsx', ['js']);
   gulp.watch('**/*.html', ['reload']);
 });

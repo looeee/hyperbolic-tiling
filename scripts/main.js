@@ -1110,11 +1110,9 @@ var Drawing = function () {
   }
 
   Drawing.prototype.init = function init() {
-    //if (this.scene === undefined)
     this.scene = new THREE.Scene();
     this.initCamera();
     this.initRenderer();
-    console.log(this.camera);
   };
 
   Drawing.prototype.reset = function reset() {
@@ -1369,7 +1367,7 @@ var Controller = function () {
     this.tilingImage.style.width = window.innerWidth + 'px';
   };
 
-  Controller.prototype.centreTilingImage = function centreTilingImage() {
+  Controller.prototype.tilingImagePosition = function tilingImagePosition() {
     var top = (window.innerHeight - this.tilingImage.height) / 2;
     var left = (window.innerWidth - this.tilingImage.width) / 2;
     this.tilingImage.style.top = top + 'px';

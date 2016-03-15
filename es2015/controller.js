@@ -67,7 +67,7 @@ export class Controller {
     this.tilingImage.style.width = window.innerWidth + 'px';
   }
 
-  centreTilingImage(){
+  tilingImagePosition(){
     const top = (window.innerHeight - this.tilingImage.height) / 2;
     const left = (window.innerWidth - this.tilingImage.width) / 2;
     this.tilingImage.style.top = top + 'px';
