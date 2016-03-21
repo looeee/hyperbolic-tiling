@@ -1,0 +1,51 @@
+#container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  margin: 0;
+}
+
+#title {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  width: 100%;
+  height: 7%;
+  margin: 0;
+  padding-top: 2%;
+  background-color: black;
+  text-align: center;
+}
+
+#controls{
+  position: absolute;
+  top: 10%;
+  left: 2%;
+}
+
+#controls-old{
+  position: absolute;
+  top:  40%;
+}
+
+#left-controls {
+  position: absolute;
+  margin-top: 2%;
+  margin-left: 2%;
+  left: 0;
+  width: 450px;
+  color: #7F7F7F;
+}
+
+#right-controls {
+  position: absolute;
+  margin-top: 2%;
+  margin-right: 2%;
+  left: 500px;
+  width: 50%;
+  color: #7F7F7F;
+  text-align: right;
+}

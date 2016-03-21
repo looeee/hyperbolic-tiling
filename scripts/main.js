@@ -24,6 +24,30 @@ babelHelpers.createClass = function () {
   };
 }();
 
+babelHelpers.inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
+babelHelpers.possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
 babelHelpers;
 
 // * ***********************************************************************
@@ -1090,6 +1114,73 @@ var RegularTesselation = function () {
   return RegularTesselation;
 }();
 
+var Container = function () {
+  return React.createElement(
+    'div',
+    { id: 'container' },
+    React.createElement(Title, null),
+    React.createElement(Controls, null)
+  );
+};
+
+var Title = function () {
+  return React.createElement(
+    'h1',
+    { id: 'title' },
+    'Hyperbolic Tiling'
+  );
+};
+
+var Controls = function (_React$Component) {
+  babelHelpers.inherits(Controls, _React$Component);
+
+  function Controls() {
+    babelHelpers.classCallCheck(this, Controls);
+    return babelHelpers.possibleConstructorReturn(this, _React$Component.apply(this, arguments));
+  }
+
+  Controls.prototype.clickTest = function clickTest() {
+    console.log('click!');
+  };
+
+  Controls.prototype.render = function render() {
+    return React.createElement(
+      'div',
+      { id: 'controls' },
+      React.createElement(
+        Button,
+        { id: 'test', click: this.clickTest },
+        'Test'
+      )
+    );
+  };
+
+  return Controls;
+}(React.Component);
+
+var Button = function (_React$Component2) {
+  babelHelpers.inherits(Button, _React$Component2);
+
+  function Button() {
+    babelHelpers.classCallCheck(this, Button);
+    return babelHelpers.possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
+  }
+
+  Button.prototype.render = function render() {
+    return React.createElement(
+      'button',
+      { className: 'button', id: this.props.id, onClick: this.props.click },
+      this.props.children
+    );
+  };
+
+  return Button;
+}(React.Component);
+
+var render = function () {
+  ReactDOM.render(React.createElement(Container, null), document.querySelector('#root'));
+};
+
 // * ***********************************************************************
 // *
 // *  DRAWING CLASS
@@ -1320,6 +1411,7 @@ var Controller = function () {
     this.setupControls();
     this.setupLayout();
     this.regularHyperbolicTiling();
+    //render();
   }
 
   Controller.prototype.onResize = function onResize() {
@@ -1327,6 +1419,10 @@ var Controller = function () {
     this.radiusSlider.setAttribute('max', this.maxRadius);
     if (this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
     this.centreTilingImage();
+  };
+
+  Controller.prototype.render = function render$$() {
+    render();
   };
 
   //any calls to document.querySelector() go here
@@ -1476,12 +1572,11 @@ Math.cot = Math.cot || function (x) {
 // *
 // *************************************************************************
 
-//Global radius
-//window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-
 var controller = new Controller();
 
-//window.onload = () => {}
+window.onload = function () {
+  controller.render();
+};
 
 window.onresize = function () {
   controller.onResize();

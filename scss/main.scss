@@ -1,4 +1,6 @@
 @import 'universal';
+@import 'layout';
+
 .hide {
   display: none !important;
 }
@@ -8,78 +10,4 @@
   left: 0;
   margin: auto;
   z-index: -1;
-}
-#loading {
-  position: absolute;
-  top: 25%;
-  left: 25%;
-  z-index: -2;
-}
-#title {
-  position: absolute;
-  top: 3%;
-  left: 5%;
-  width: 90%;
-  height: auto;
-  background-color: black;
-  text-align: center;
-}
-#container {
-  position: absolute;
-  top: 20%;
-  left: 3%;
-  width: 94%;
-  height: auto;
-  min-height: 77%;
-  background-color: black;
-  border: solid #7F7F7F 1px;
-  border-radius: 4px;
-  background-color: Transparent;
-}
-#content {
-  position: relative;
-  top: 0;
-  left: 0;
-  width: inherit;
-  height: inherit;
-}
-#left-controls {
-  position: absolute;
-  margin-top: 2%;
-  margin-left: 2%;
-  left: 0;
-  width: 450px;
-  color: #7F7F7F;
-  /*
-  background-color: #fff;
-  border-radius: 15px;
-  border: 1px solid #7F7F7F;
-  border: 1px solid #7F7F7F;
-  box-shadow: 2px 5px 5px #888888;
-  */
-}
-#selected-radius {
-  width: 30px;
-  display: inline;
-  position: relative;
-}
-#right-controls {
-  position: absolute;
-  margin-top: 2%;
-  margin-right: 2%;
-  right: 0;
-  width: auto;
-  color: #7F7F7F;
-  text-align: right;
-  /*
-  background-color: #fff;
-  border-radius: 8px;
-  border: 1px solid #7F7F7F;
-  border: 1px solid #7F7F7F;
-  box-shadow: 2px 5px 5px #888888;
-  */
-}
-#buttonLeft {
-  position: absolute;
-  left: 2%;
 }

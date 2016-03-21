@@ -6,6 +6,9 @@ import {
   Drawing
 }
 from './drawing';
+
+import {render} from './layout.jsx';
+
 // * ***********************************************************************
 // *
 // *  CONTROLLER CLASS
@@ -18,7 +21,7 @@ export class Controller {
     this.setupControls();
     this.setupLayout();
     this.regularHyperbolicTiling( );
-
+    //render();
   }
 
   onResize(){
@@ -26,6 +29,10 @@ export class Controller {
     this.radiusSlider.setAttribute('max', this.maxRadius);
     if(this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
     this.centreTilingImage();
+  }
+
+  render(){
+    render();
   }
 
   //any calls to document.querySelector() go here

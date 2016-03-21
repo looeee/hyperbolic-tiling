@@ -30,12 +30,11 @@ Math.cot = Math.cot || function(x) {
 // *
 // *************************************************************************
 
-//Global radius
-//window.radius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
-
 const controller = new Controller();
 
-//window.onload = () => {}
+window.onload = () => {
+  controller.render();
+}
 
 window.onresize = () => {
   controller.onResize();
