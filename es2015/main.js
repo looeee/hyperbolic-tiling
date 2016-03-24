@@ -1,5 +1,5 @@
 import {
-  Controller
+  Controller,
 }
 from './controller';
 
@@ -9,17 +9,17 @@ from './controller';
 // *
 // *************************************************************************
 
-Math.sinh = Math.sinh || function(x) {
-  var y = Math.exp(x);
+Math.sinh = Math.sinh || function (x) {
+  const y = Math.exp(x);
   return (y - 1 / y) / 2;
-}
+};
 
-Math.cosh = Math.cosh || function(x) {
-  var y = Math.exp(x);
+Math.cosh = Math.cosh || function (x) {
+  const y = Math.exp(x);
   return (y + 1 / y) / 2;
 };
 
-Math.cot = Math.cot || function(x) {
+Math.cot = Math.cot || function (x) {
   return 1 / Math.tan(x);
 };
 
@@ -33,9 +33,9 @@ Math.cot = Math.cot || function(x) {
 const controller = new Controller();
 
 window.onload = () => {
-  controller.render();
-}
+  //controller.render();
+};
 
 window.onresize = () => {
   controller.onResize();
-}
+};

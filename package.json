@@ -7,16 +7,16 @@
   "devDependencies": {
     "babel-preset-es2015-loose-rollup": "^7.0.0",
     "babel-preset-es2015-rollup": "^1.1.1",
-    "babel-preset-react": "^6.5.0",
     "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "eslint": "^2.2.0",
+    "eslint-config-airbnb": "^6.2.0",
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "^3.1.0",
     "gulp-livereload": "^3.8.1",
     "gulp-rollup": "^1.7.0",
     "gulp-sass": "^2.1.1",
     "gulp-watch": "^4.3.5",
-    "react": "^15.0.0-rc.1",
-    "react-dom": "^15.0.0-rc.1",
     "rollup-plugin-babel": "^2.3.9"
   },
   "scripts": {

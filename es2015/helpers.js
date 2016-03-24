@@ -15,7 +15,7 @@ export class Transform {
 
   multiply(transform) {
     if (!transform instanceof Transform) {
-      console.error('Error: ' + transform + 'is not a Transform');
+      console.error('Error: ${transform} is not a Transform');
       return false;
     }
     const mat = E.multiplyMatrices(transform.matrix, this.matrix);
@@ -150,7 +150,7 @@ export class Transformations {
   shiftTrans(transform, shift) {
     const newEdge = (transform.position + transform.orientation * shift + 2 * this.p) % this.p;
     if (newEdge < 0 || newEdge > (this.p - 1)) {
-      console.error('Error: shiftTran newEdge out of range.')
+      console.error('Error: shiftTran newEdge out of range.');
     }
     return transform.multiply(this.edgeTransforms[newEdge]);
   }
@@ -176,96 +176,84 @@ export class Parameters {
     if (layer === 0) {
       if (pgonNum === 0) { //layer 0, pgon 0
         if (this.q === 3) return this.maxExposure;
-        else return this.minExposure;
-      }
-      else return this.maxExposure; //layer 0, pgon != 0
-    }
-    else { //layer != 0
-      if (vertexNum === 0 && pgonNum === 0) {
         return this.minExposure;
       }
-      else if (vertexNum === 0) {
-        if (this.q !== 3) return this.maxExposure;
-        else return this.minExposure;
-      }
-      else if (pgonNum === 0) {
-        if (this.q !== 3) return this.minExposure;
-        else return this.maxExposure;
-      }
-      else return this.maxExposure;
+      return this.maxExposure; //layer 0, pgon != 0
     }
+    if (vertexNum === 0 && pgonNum === 0) {
+      return this.minExposure;
+    }
+    else if (vertexNum === 0) {
+      if (this.q !== 3) return this.maxExposure;
+      return this.minExposure;
+    }
+    else if (pgonNum === 0) {
+      if (this.q !== 3) return this.minExposure;
+      return this.maxExposure;
+    }
+    return this.maxExposure;
   }
 
   pSkip(exposure) {
     if (exposure === this.minExposure) {
       if (this.q !== 3) return 1;
-      else return 3;
+      return 3;
     }
     else if (exposure === this.maxExposure) {
       if (this.p === 3) return 1;
       else if (this.q === 3) return 2;
-      else return 0;
+      return 0;
     }
-    else {
-      console.error('pSkip: wrong exposure value!')
-      return false;
-    }
+    console.error('pSkip: wrong exposure value!');
+    return false;
   }
 
   qSkip(exposure, vertexNum) {
     if (exposure === this.minExposure) {
       if (vertexNum === 0) {
         if (this.q !== 3) return -1;
-        else return 0;
+        return 0;
       }
-      else {
-        if (this.p === 3) return -1;
-        else return 0;
-      }
+      if (this.p === 3) return -1;
+      return 0;
     }
     else if (exposure === this.maxExposure) {
       if (vertexNum === 0) {
         if (this.p === 3 || this.q === 3) return 0;
-        else return -1;
+        return -1;
       }
-      else return 0;
+      return 0;
     }
-    else {
-      console.error('qSkip: wrong exposure value!')
-      return false;
-    }
+    console.error('qSkip: wrong exposure value!');
+    return false;
   }
 
   verticesToDo(exposure) {
     if (this.p === 3) return 1;
     else if (exposure === this.minExposure) {
       if (this.q === 3) return this.p - 5;
-      else return this.p - 3;
+      return this.p - 3;
     }
     else if (exposure === this.maxExposure) {
       if (this.q === 3) return this.p - 4;
-      else return this.p - 2;
+      return this.p - 2;
     }
-    else {
-      console.error('verticesToDo: wrong exposure value!')
-      return false;
-    }
+    console.error('verticesToDo: wrong exposure value!');
+    return false;
   }
 
   pgonsToDo(exposure, vertexNum) {
-    if(this.q === 3) return 1;
-    else if(vertexNum === 0) return this.q - 3;
+    if (this.q === 3) return 1;
+    else if (vertexNum === 0) return this.q - 3;
     else if (exposure === this.minExposure) {
       if (this.p === 3) return this.q - 4;
-      else return this.q - 2;
+      return this.q - 2;
     }
     else if (exposure === this.maxExposure) {
       if (this.p === 3) return this.q - 3;
-      else return this.q - 2;
+      return this.q - 2;
     }
-    else {
-      console.error('pgonsToDo: wrong exposure value!')
-      return false;
-    }
+    console.error('pgonsToDo: wrong exposure value!');
+    return false;
   }
 }

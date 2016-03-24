@@ -1,12 +1,12 @@
 import * as E from './euclid';
 
 import {
-  Polygon, Point
+  Polygon, Point,
 }
 from './elements';
 
 import {
-  Transform, Transformations, Parameters
+  Transform, Transformations, Parameters,
 }
 from './helpers';
 
@@ -47,7 +47,7 @@ export class RegularTesselation {
     //TODO test different tilings and work out value needed for each if different
     this.minPolygonSize = spec.minPolygonSize || 0.1;
 
-    console.log('{', this.p, ', ' , this.q, '} tiling.');
+    console.log('{', this.p, ', ', this.q, '} tiling.');
 
     //this.disk = new Disk();
     this.params = new Parameters(this.p, this.q);
@@ -56,6 +56,7 @@ export class RegularTesselation {
     if (this.checkParams()) {
       return false;
     }
+    return this;
   }
 
   //fundamentalRegion calculation using Dunham's method
@@ -80,7 +81,7 @@ export class RegularTesselation {
     const p1 = new Point(xqpt, yqpt);
     const p2 = new Point(x2pt, 0);
     const p3 = p1.transform(this.transforms.edgeBisectorReflection);
-    const vertices = [new Point(0,0), p1, p2];
+    const vertices = [new Point(0, 0), p1, p2];
 
     return new Polygon(vertices, 0);
   }
@@ -89,7 +90,7 @@ export class RegularTesselation {
   //region with different textures applied to create the basic pattern
   //NOTE: for the time being just using edge bisector reflection to recreate Circle
   //Limit I, other patterns will require different options
-  fundamentalPattern(){
+  fundamentalPattern() {
     const upper = this.fundamentalRegion();
     const lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
     return [upper, lower];
@@ -106,11 +107,11 @@ export class RegularTesselation {
     const lowerReflected = centralPattern[1].transform(this.transforms.edgeBisectorReflection);
 
     for (let i = 1; i < this.p; i++) {
-      if(i % 2 === 1){
+      if (i % 2 === 1) {
         centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
         centralPattern.push(lowerReflected.transform(this.transforms.rotatePolygonCW[i]));
       }
-      else{
+      else {
         centralPattern.push(centralPattern[0].transform(this.transforms.rotatePolygonCW[i]));
         centralPattern.push(centralPattern[1].transform(this.transforms.rotatePolygonCW[i]));
       }
@@ -147,18 +148,18 @@ export class RegularTesselation {
     this.addTransformedPattern(tiling, transform);
     //stop if the current pattern has reached the minimum size
     //TODO two step method for ending recursion using warning flag
-    if(tiling[tiling.length-1].edges[0].arc.arcLength < this.minPolygonSize){
-      return
+    if (tiling[tiling.length - 1].edges[0].arc.arcLength < this.minPolygonSize) {
+      return;
     }
 
     let pSkip = this.params.pSkip(exposure);
-    let verticesToDo = this.params.verticesToDo(exposure);
+    const verticesToDo = this.params.verticesToDo(exposure);
 
     for (let i = 0; i < verticesToDo; i++) {
-      let pTransform = this.transforms.shiftTrans(transform, pSkip);
+      const pTransform = this.transforms.shiftTrans(transform, pSkip);
       let qTransform;
 
-      let qSkip = this.params.qSkip(exposure, i);
+      const qSkip = this.params.qSkip(exposure, i);
       if (qSkip % this.p !== 0) {
         qTransform = this.transforms.shiftTrans(pTransform, qSkip);
       }
@@ -166,7 +167,7 @@ export class RegularTesselation {
         qTransform = pTransform;
       }
 
-      let pgonsToDo = this.params.pgonsToDo(exposure, i);
+      const pgonsToDo = this.params.pgonsToDo(exposure, i);
 
       for (let j = 0; j < pgonsToDo; j++) {
         if ((this.p === 3) && (j === pgonsToDo - 1)) {
@@ -191,7 +192,7 @@ export class RegularTesselation {
     }
   }
 
-  drawTiling( tiling ) {
+  drawTiling(tiling) {
     this.disk.draw.polygonArray(tiling, this.textures);
     //for (let i = 0; i < tiling.length; i++) {
     //  this.disk.drawPolygon(tiling[i], 0xffffff, this.textures, this.wireframe);
@@ -206,16 +207,13 @@ export class RegularTesselation {
       return true;
     }
     else if (this.q < 3 || isNaN(this.q)) {
-      console.error('Tesselation error: at least 3 p-gons must meet \
-                    at each vertex!');
+      console.error('Tesselation error: at least 3 p-gons must meet at each vertex!');
       return true;
     }
     else if (this.p < 3 || isNaN(this.p)) {
       console.error('Tesselation error: polygon needs at least 3 sides!');
       return true;
     }
-    else {
-      return false;
-    }
+    return false;
   }
 }

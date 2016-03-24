@@ -1,5 +1,5 @@
 import {
-  Arc, Circle, Point
+  Arc, Circle, Point,
 }
 from './elements';
 // * ***********************************************************************
@@ -10,6 +10,10 @@ from './elements';
 // *   All functions are 2D unless otherwise specified!
 // *
 // *************************************************************************
+
+//.toFixed returns a string for some no doubt very good reason.
+//apply to fixed with default value of 10 and return as a float
+export const toFixed = (number, places = 10) => parseFloat(number.toFixed(places));
 
 export const distance = (point1, point2) =>
   Math.sqrt(Math.pow((point2.x - point1.x), 2) + Math.pow((point2.y - point1.y), 2));
@@ -23,8 +27,8 @@ export const throughOrigin = (point1, point2) => {
   const test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
 
   if (toFixed(test) == 0) return true;
-  else return false;
-}
+  return false;
+};
 
 export const circleLineIntersect = (circle, point1, point2) => {
   const cx = circle.centre.x;
@@ -53,23 +57,22 @@ export const circleLineIntersect = (circle, point1, point2) => {
 
     return {
       p1: q1,
-      p2: q2
+      p2: q2,
     };
   }
   else if (d2 === r) { //line is tangent to circle
     return p;
   }
-  else {
-    console.warn('Warning: line does not intersect circle!');
-    return false;
-  }
-}
+  console.warn('Warning: line does not intersect circle!');
+  return false;
+};
 
 //Find the length of the smaller arc between two angles on a given circle
-export const arcLength = (circle, startAngle, endAngle) =>
-  (Math.abs(startAngle - endAngle) > Math.PI)
-    ? circle.radius * (2*Math.PI - Math.abs(startAngle - endAngle))
+export const arcLength = (circle, startAngle, endAngle) => {
+  return (Math.abs(startAngle - endAngle) > Math.PI)
+    ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle))
     : circle.radius * (Math.abs(startAngle - endAngle));
+};
 
 //find the two points a distance from a point on the circumference of a circle
 //in the direction of point2
@@ -78,10 +81,18 @@ export const directedSpacedPointOnArc = (circle, point1, point2, spacing) => {
   const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   const sinThetaNeg = -sinThetaPos;
 
-  const xPos = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaPos * (point1.y - circle.centre.y);
-  const xNeg = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaNeg * (point1.y - circle.centre.y);
-  const yPos = circle.centre.y + sinThetaPos * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
-  const yNeg = circle.centre.y + sinThetaNeg * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
+  const xPos = circle.centre.x + cosTheta
+    * (point1.x - circle.centre.x) - sinThetaPos
+    * (point1.y - circle.centre.y);
+  const xNeg = circle.centre.x + cosTheta
+    * (point1.x - circle.centre.x) - sinThetaNeg
+    * (point1.y - circle.centre.y);
+  const yPos = circle.centre.y + sinThetaPos
+    * (point1.x - circle.centre.x) + cosTheta
+    * (point1.y - circle.centre.y);
+  const yNeg = circle.centre.y + sinThetaNeg
+    * (point1.x - circle.centre.x) + cosTheta
+    * (point1.y - circle.centre.y);
 
   const p1 = new Point(xPos, yPos);
   const p2 = new Point(xNeg, yNeg);
@@ -89,22 +100,24 @@ export const directedSpacedPointOnArc = (circle, point1, point2, spacing) => {
   const a = distance(p1, point2);
   const b = distance(p2, point2);
   return (a < b) ? p1 : p2;
-}
+};
+
+//calculate the normal vector given 2 points
+export const normalVector = (p1, p2) => {
+  const d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  return new Point((p2.x - p1.x) / d, (p2.y - p1.y) / d);
+};
 
 //find the point at a distance from point1 along line defined by point1, point2,
 //in the direction of point2
 export const directedSpacedPointOnLine = (point1, point2, spacing) => {
   const dv = normalVector(point1, point2);
-  return new Point(point1.x + spacing*dv.x, point1.y + spacing*dv.y);
-}
+  return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
+};
 
 export const randomFloat = (min, max) => Math.random() * (max - min) + min;
 
 export const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
-
-//.toFixed returns a string for some no doubt very good reason.
-//apply to fixed with default value of 10 and return as a float
-export const toFixed = (number, places = 10) => parseFloat(number.toFixed(places));
 
 //are the angles alpha, beta in clockwise order on unit disk?
 export const clockwise = (alpha, beta) => {
@@ -115,8 +128,9 @@ export const clockwise = (alpha, beta) => {
   //if (a || b || c) {
     //cw = false;
   //}
-  return (a || b || c) ? false : true;
-}
+  //return (a || b || c) ? false : true;
+  return !(a || b || c);
+};
 
 export const multiplyMatrices = (m1, m2) => {
   const result = [];
@@ -131,22 +145,18 @@ export const multiplyMatrices = (m1, m2) => {
     }
   }
   return result;
-}
+};
 
 //create nxn identityMatrix
 export const identityMatrix = (n) =>
   Array.apply(null, new Array(n)).map((x, i, a) =>
-    a.map( (y, k) => i === k ? 1 : 0) );
+    a.map((y, k) => {
+      return (i === k) ? 1 : 0;
+    })
+  );
 
 //midpoint of the line segment connecting two points
 export const midpoint = (p1, p2) => new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-
-//calculate the normal vector given 2 points
-export const normalVector = (p1, p2) => {
-  const d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d,(p2.y - p1.y) / d);
-}
-
 
 /* OLD/UNUSED FUNCTIONS
 //find the two points a distance from a point on the circumference of a circle
@@ -155,10 +165,18 @@ export const spacedPointOnArc = (circle, point, spacing) => {
   const sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
   const sinThetaNeg = -sinThetaPos;
 
-  const xPos = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaPos * (point.y - circle.centre.y);
-  const xNeg = circle.centre.x + cosTheta * (point.x - circle.centre.x) - sinThetaNeg * (point.y - circle.centre.y);
-  const yPos = circle.centre.y + sinThetaPos * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
-  const yNeg = circle.centre.y + sinThetaNeg * (point.x - circle.centre.x) + cosTheta * (point.y - circle.centre.y);
+  const xPos = circle.centre.x + cosTheta
+    * (point.x - circle.centre.x) - sinThetaPos
+    * (point.y - circle.centre.y);
+  const xNeg = circle.centre.x + cosTheta
+    * (point.x - circle.centre.x) - sinThetaNeg
+    * (point.y - circle.centre.y);
+  const yPos = circle.centre.y + sinThetaPos
+    * (point.x - circle.centre.x) + cosTheta
+    * (point.y - circle.centre.y);
+  const yNeg = circle.centre.y + sinThetaNeg
+    * (point.x - circle.centre.x) + cosTheta
+    * (point.y - circle.centre.y);
 
   return {
     p1: new Point(xPos, yPos),
@@ -190,7 +208,9 @@ export const circleIntersect = (circle0, circle1) => {
 
   const dist = Math.sqrt((c - a) * (c - a) + (d - b) * (d - b));
 
-  const del = Math.sqrt((dist + r0 + r1) * (dist + r0 - r1) * (dist - r0 + r1) * (-dist + r0 + r1)) / 4;
+  const del = Math.sqrt((dist + r0 + r1)
+    * (dist + r0 - r1) * (dist - r0 + r1)
+    * (-dist + r0 + r1)) / 4;
 
   const xPartial = (a + c) / 2 + ((c - a) * (r0 * r0 - r1 * r1)) / (2 * dist * dist);
   const x1 = xPartial - 2 * del * (b - d) / (dist * dist);

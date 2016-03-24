@@ -1,6 +1,6 @@
 import * as E from './euclid';
 import {
-  Polygon, Arc, Circle, Point
+  Polygon, Arc, Circle, Point,
 }
 from './elements';
 

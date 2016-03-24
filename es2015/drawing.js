@@ -22,8 +22,8 @@ export class Drawing {
     this.initRenderer();
   }
 
-  set radius(newRadius){this._radius = newRadius;}
-  get radius(){return this._radius;}
+  set radius(newRadius) {this._radius = newRadius;}
+  get radius() {return this._radius;}
 
   reset() {
     this.clearScene();
@@ -32,14 +32,14 @@ export class Drawing {
     this.setRenderer();
   }
 
-  onresize(){
+  onresize() {
 
   }
 
   clearScene() {
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const object = this.scene.children[i];
-      if(object.type === 'Mesh'){
+      if (object.type === 'Mesh'){
         object.geometry.dispose();
         object.material.dispose();
         this.scene.remove(object);
@@ -53,7 +53,7 @@ export class Drawing {
     this.scene.add(this.camera);
   }
 
-  setCamera(){
+  setCamera() {
     this.camera.left = -window.innerWidth / 2;
     this.camera.right = window.innerWidth / 2;
     this.camera.top = window.innerHeight / 2;
@@ -72,7 +72,7 @@ export class Drawing {
     this.setRenderer();
   }
 
-  setRenderer(){
+  setRenderer() {
     this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
@@ -80,7 +80,7 @@ export class Drawing {
   disk(centre, radius, color) {
     if (color === undefined) color = 0xffffff;
     const geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-    const material = new THREE.MeshBasicMaterial({color: color});
+    const material = new THREE.MeshBasicMaterial({ color: color });
 
     const circle = new THREE.Mesh(geometry, material);
     circle.position.x = centre.x * this.radius;
@@ -89,28 +89,28 @@ export class Drawing {
     this.scene.add(circle);
   }
 
-  polygonArray( array, textureArray, color, wireframe ){
+  polygonArray(array, textureArray, color, wireframe) {
     color = color || 0xffffff;
     wireframe = wireframe || false;
-    for(let i = 0; i< array.length; i++){
+    for (let i = 0; i< array.length; i++) {
       this.polygon(array[i], color, textureArray, wireframe);
     }
   }
 
   //Note: polygons assumed to be triangular!
   polygon(polygon, color, textures, wireframe){
-    const p = 1/polygon.numDivisions;
+    const p = 1 / polygon.numDivisions;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
-    for(let i = 0; i < polygon.mesh.length; i++){
+    for (let i = 0; i < polygon.mesh.length; i++) {
       geometry.vertices.push(new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius));
     }
 
     let edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh
-    for(let i = 0; i < divisions; i++){
+    for (let i = 0; i < divisions; i++) {
       //edge divisions reduce by one for each interior edge
       const m = divisions - i + 1;
       geometry.faces.push(
@@ -122,13 +122,14 @@ export class Drawing {
 
       geometry.faceVertexUvs[0].push(
         [
-          new Point(i*p, 0),
-          new Point((i+1)*p, 0),
-          new Point((i+1)*p, p),
+          new Point(i * p, 0),
+          new Point((i + 1) * p, 0),
+          new Point((i + 1) * p, p),
         ]);
 
-      //range m-2 because we are ignoring the edges first vertex which was used in the previous faces.push
-      for(let j = 0; j < m - 2; j++){
+      //range m-2 because we are ignoring the edges first vertex which was
+      //used in the previous faces.push
+      for (let j = 0; j < m - 2; j++) {
         geometry.faces.push(
           new THREE.Face3(
             edgeStartingVertex + j + 1,
@@ -137,9 +138,9 @@ export class Drawing {
           ));
         geometry.faceVertexUvs[0].push(
           [
-            new Point((i+1+j)*p, (1+j)*p),
-            new Point((i+1+j)*p, j*p),
-            new Point((i+j+2)*p, (j+1)*p),
+            new Point((i + 1 + j) * p, (1 + j) * p),
+            new Point((i + 1 + j) * p, j * p),
+            new Point((i + j + 2) * p, (j + 1) * p),
           ]);
         geometry.faces.push(
           new THREE.Face3(
@@ -149,9 +150,9 @@ export class Drawing {
           ));
         geometry.faceVertexUvs[0].push(
           [
-            new Point((i+1+j)*p, (1+j)*p),
-            new Point((i+2+j)*p, (j+1)*p),
-            new Point((i+j+2)*p, (j+2)*p),
+            new Point((i + 1 + j) * p, (1 + j) * p),
+            new Point((i + 2 + j) * p, (j + 1) * p),
+            new Point((i + j + 2) * p, (j + 2) * p),
           ]);
       }
       edgeStartingVertex += m;
@@ -159,7 +160,6 @@ export class Drawing {
 
     const mesh = this.createMesh(geometry, color, textures, polygon.materialIndex, wireframe);
     this.scene.add(mesh);
-
   }
 
   //NOTE: some polygons are inverted due to vertex order,
@@ -168,17 +168,17 @@ export class Drawing {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
-    if(!this.pattern){
+    if (!this.pattern) {
       this.createPattern(color, textures, wireframe);
     }
     return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
   }
 
-  createPattern(color, textures, wireframe){
+  createPattern(color, textures, wireframe) {
     this.pattern = new THREE.MultiMaterial();
     const texturesLoaded = [];
 
-    for( let i = 0; i < textures.length; i++){
+    for (let i = 0; i < textures.length; i++) {
       const material = new THREE.MeshBasicMaterial({
         color: color,
         wireframe: wireframe,
@@ -189,7 +189,7 @@ export class Drawing {
         () => {
           texturesLoaded.push(i);
           //call render when all textures are loaded
-          if(texturesLoaded.length === textures.length){
+          if (texturesLoaded.length === textures.length) {
             this.render();
           }
         });
@@ -206,13 +206,13 @@ export class Drawing {
   }
 
   //TODO doesn't update when calling generate a second time
-  appendImageToDom(){
+  appendImageToDom() {
     const tilingImage = document.querySelector('#tiling-image');
     tilingImage.setAttribute('src', this.renderer.domElement.toDataURL());
   }
 
   //Download the canvas as a png image
-  downloadImage(){
+  downloadImage() {
     const link = document.querySelector('#download-image');
     link.href = this.renderer.domElement.toDataURL();
     link.download = 'hyperbolic-tiling.png';

@@ -1,13 +1,11 @@
 import {
-  RegularTesselation
+  RegularTesselation,
 }
 from './regularTesselation';
 import {
-  Drawing
+  Drawing,
 }
 from './drawing';
-
-import {render} from './layout.jsx';
 
 // * ***********************************************************************
 // *
@@ -20,23 +18,18 @@ export class Controller {
     this.draw = new Drawing();
     this.setupControls();
     this.setupLayout();
-    this.regularHyperbolicTiling( );
-    //render();
+    this.regularHyperbolicTiling();
   }
 
-  onResize(){
+  onResize() {
     this.setRadius();
     this.radiusSlider.setAttribute('max', this.maxRadius);
-    if(this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
+    if (this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
     this.centreTilingImage();
   }
 
-  render(){
-    render();
-  }
-
   //any calls to document.querySelector() go here
-  getElements(){
+  getElements() {
     this.leftControlsDiv = document.querySelector('#left-controls');
     this.rightControlsDiv = document.querySelector('#right-controls');
     this.imageControlsDiv = document.querySelector('#image-controls');
@@ -52,36 +45,36 @@ export class Controller {
     this.radiusValue = document.querySelector('#selected-radius');
   }
 
-  setupControls(){
+  setupControls() {
     this.saveImageButtons();
     this.hideControls();
     this.setupRadiusSlider();
-    this.setupTestBtn()
+    this.setupTestBtn();
   }
 
-  setupLayout(){
+  setupLayout() {
 
   }
 
-  setupTestBtn(){
+  setupTestBtn() {
     this.testBtn.onclick = () => {
       //TESTING
-    }
+    };
   }
 
-  setTilingImageSize(){
-    this.tilingImage.style.height = window.innerHeight + 'px';
-    this.tilingImage.style.width = window.innerWidth + 'px';
+  setTilingImageSize() {
+    this.tilingImage.style.height = '${window.innerHeight}px';
+    this.tilingImage.style.width = '${window.innerWidth}px';
   }
 
-  tilingImagePosition(){
+  tilingImagePosition() {
     const top = (window.innerHeight - this.tilingImage.height) / 2;
     const left = (window.innerWidth - this.tilingImage.width) / 2;
-    this.tilingImage.style.top = top + 'px';
-    this.tilingImage.style.left = left + 'px';
+    this.tilingImage.style.top = '${top}px';
+    this.tilingImage.style.left = '${left}px';
   }
 
-  setupRadiusSlider(){
+  setupRadiusSlider() {
     this.setRadius();
     this.radiusSlider.setAttribute('max', this.maxRadius);
     this.radiusSlider.value = this.maxRadius;
@@ -90,32 +83,34 @@ export class Controller {
     this.radiusSlider.oninput = () => {
       this.radiusValue.innerHTML = this.radiusSlider.value;
       this.draw.radius = this.radiusSlider.value;
-    }
+    };
   }
 
-  setRadius(){
-    this.maxRadius = (window.innerWidth < window.innerHeight) ? (window.innerWidth / 2) - 5 : (window.innerHeight / 2) - 5;
+  setRadius() {
+    this.maxRadius = (window.innerWidth < window.innerHeight)
+      ? (window.innerWidth / 2) - 5
+      : (window.innerHeight / 2) - 5;
   }
 
-  regularHyperbolicTiling(  ){
+  regularHyperbolicTiling() {
     this.generateTilingBtn.onclick = () => {
       this.setTilingImageSize();
       this.draw.reset();
       const spec = this.tilingSpec();
-      const regularTesselation = new RegularTesselation( spec );
+      const regularTesselation = new RegularTesselation(spec);
       let t0 = performance.now();
       const tiling = regularTesselation.generateTiling();
       let t1 = performance.now();
-      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
+      console.log('generateTiling took ${(t1 - t0)} milliseconds.');
       t0 = performance.now();
-      this.draw.polygonArray( tiling, spec.textures);
+      this.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
-      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
+      console.log('DrawTiling took ${(t1 - t0)} milliseconds.');
       this.imageControlsDiv.classList.remove('hide');
-    }
+    };
   }
 
-  tilingSpec(){
+  tilingSpec() {
     const spec = {
       wireframe: false,
       p: this.pValueDropdown.value,
@@ -123,23 +118,23 @@ export class Controller {
       textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
       edgeAdjacency: [ //array of length p
                       [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
-                        5 //edge_0 adjacency (range p - 1)
+                        5, //edge_0 adjacency (range p - 1)
                       ],
                       [1, 4], //edge_1 orientation, adjacency
                       [1, 3], [1, 2], [1, 1], [1, 0]],
       minPolygonSize: 0.05,
-    }
+    };
     return spec;
   }
 
-  saveImageButtons(){
+  saveImageButtons() {
     this.saveImageBtn.onclick = () => this.draw.saveImage();
     this.downloadImageBtn.onclick = () => this.draw.downloadImage();
   }
 
-  hideControls(){
+  hideControls() {
     this.showControlsCheckbox.onclick = () => {
       this.leftControlsDiv.classList.toggle('hide');
-    }
+    };
   }
 }

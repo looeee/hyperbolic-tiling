@@ -30,13 +30,13 @@ export class Point {
   //compare two points taking rounding errors into account
   compare(otherPoint) {
     if (typeof otherPoint === 'undefined') {
-      console.warn('Compare Points: point not defined.')
+      console.warn('Compare Points: point not defined.');
       return false;
     }
     const a = E.toFixed(this.x) === E.toFixed(otherPoint.x);
     const b = E.toFixed(this.y) === E.toFixed(otherPoint.y);
     if (a && b) return true;
-    else return false;
+    return false;
   }
 
   //move the point to hyperboloid (Weierstrass) space, apply the transform,
@@ -69,7 +69,7 @@ export class Point {
     return new Point(x, y);
   }
 
-  clone(){
+  clone() {
     return new Point(this.x, this.y);
   }
 }
@@ -101,20 +101,20 @@ export class Arc {
     this.startPoint = startPoint;
     this.endPoint = endPoint;
 
-    if ( E.throughOrigin(startPoint, endPoint) ) {
+    if (E.throughOrigin(startPoint, endPoint)) {
       this.straightLine = true;
       this.arcLength = E.distance(startPoint, endPoint);
       this.curvature = 0;
     }
-    else{
+    else {
       this.calculateArc();
       this.arcLength = E.arcLength(this.circle, this.startAngle, this.endAngle);
-      this.curvature = (this.arcLength ) / (this.circle.radius);
+      this.curvature = (this.arcLength) / (this.circle.radius);
     }
   }
 
   //Calculate the arc using Dunham's method
-  calculateArc(){
+  calculateArc() {
     //calculate centre of arcCircle relative to unit disk
     const hp = this.hyperboloidCrossProduct(
       this.startPoint.poincareToHyperboloid(),
@@ -148,11 +148,11 @@ export class Arc {
     this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
   }
 
-  hyperboloidCrossProduct(point3D_1, point3D_2){
+  hyperboloidCrossProduct(point3D_1, point3D_2) {
     return {
       x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
       y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-      z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+      z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x,
     };
   }
 }
@@ -173,7 +173,7 @@ class Edge {
   //then for the rest of the edges it will be calculated based on the number of
   //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
-  calculateSpacing( numDivisions ){
+  calculateSpacing(numDivisions) {
     //subdivision spacing for edges
     this.spacing = (this.arc.arcLength > 0.03)
                   ? this.arc.arcLength / 5 //approx maximum that hides all gaps
@@ -182,7 +182,7 @@ class Edge {
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces (or 1 in case of tiny polygons)
     const subdivisions = (this.arc.arcLength > 0.01)
-                    ? 2* Math.ceil( (this.arc.arcLength / this.spacing) / 2 )
+                    ? 2 * Math.ceil((this.arc.arcLength / this.spacing) / 2)
                     : 1;
 
     this.numDivisions = numDivisions || subdivisions;
@@ -196,7 +196,7 @@ class Edge {
   //then for the rest of the edges it will be calculated based on the number of
   //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
-  calculateExpandedSpacing( numDivisions ){
+  calculateExpandedSpacing(numDivisions) {
     //subdivision spacing for edges
     this.expandedSpacing = (this.arc.arcLength > 0.03 * radius)
                   ? this.arc.arcLength / 5 //approx maximum that hides all gaps
@@ -205,7 +205,7 @@ class Edge {
     //calculate the number of subdivisions required break the arc into an
     //even number of pieces (or 1 in case of tiny polygons)
     const subdivisions = (this.arc.arcLength > 0.01 * radius)
-                    ? 2* Math.ceil( (this.arc.arcLength / this.expandedSpacing) / 2 )
+                    ? 2 * Math.ceil((this.arc.arcLength / this.expandedSpacing) / 2)
                     : 1;
 
     this.numDivisions = numDivisions || subdivisions;
@@ -214,21 +214,21 @@ class Edge {
     this.expandedSpacing = this.arc.arcLength / this.numDivisions;
   }
 
-  subdivideExpandedEdge( numDivisions ) {
-    this.calculateExpandedSpacing( numDivisions );
+  subdivideExpandedEdge(numDivisions) {
+    this.calculateExpandedSpacing(numDivisions);
     this.points = [this.arc.startPoint];
 
     //tiny pgons near the edges of the disk don't need to be subdivided
-    if(this.arc.arcLength > this.expandedSpacing){
+    if (this.arc.arcLength > this.expandedSpacing) {
       let p = (!this.arc.straightLine)
-              ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing)
-              : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
+        ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing)
+        : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
       this.points.push(p);
 
-      for(let i = 0; i < this.numDivisions - 2; i++){
+      for (let i = 0; i < this.numDivisions - 2; i++) {
         p = (!this.arc.straightLine)
-            ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing)
-            : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
+          ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing)
+          : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
         this.points.push(p);
       }
     }
@@ -236,21 +236,21 @@ class Edge {
     this.points.push(this.arc.endPoint);
   }
 
-  subdivideEdge( numDivisions ) {
-    this.calculateSpacing( numDivisions );
+  subdivideEdge(numDivisions) {
+    this.calculateSpacing(numDivisions);
     this.points = [this.arc.startPoint];
 
     //tiny pgons near the edges of the disk don't need to be subdivided
-    if(this.arc.arcLength > this.spacing){
+    if (this.arc.arcLength > this.spacing) {
       let p = (!this.arc.straightLine)
-              ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing)
-              : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
+        ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing)
+        : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
       this.points.push(p);
 
-      for(let i = 0; i < this.numDivisions - 2; i++){
+      for (let i = 0; i < this.numDivisions - 2; i++) {
         p = (!this.arc.straightLine)
-            ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing)
-            : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
+          ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.spacing)
+          : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.spacing);
         this.points.push(p);
       }
     }
@@ -286,18 +286,18 @@ export class Polygon {
     */
   }
 
-  addEdges(){
+  addEdges() {
     this.edges = [];
     for (let i = 0; i < this.vertices.length; i++) {
       this.edges.push(
-        new Edge(this.vertices[i], this.vertices[(i+1) % this.vertices.length])
-      )
+        new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length])
+      );
     }
   }
 
   //The longest edge with radius > 0 should be used to calculate how the finely
   //the polygon gets subdivided
-  findSubdivisionEdge(){
+  findSubdivisionEdge() {
     const a = (this.edges[0].arc.curvature === 0)
               ? 0
               : this.edges[0].arc.arcLength;
@@ -307,26 +307,26 @@ export class Polygon {
     const c = (this.edges[2].arc.curvature === 0)
               ? 0
               : this.edges[2].arc.arcLength;
-    if( a > b && a > c) this.subdivisionEdge = 0;
-    else if( b > c) this.subdivisionEdge = 1;
+    if (a > b && a > c) this.subdivisionEdge = 0;
+    else if (b > c) this.subdivisionEdge = 1;
     else this.subdivisionEdge = 2;
   }
 
   //subdivide the subdivision edge, then subdivide the other two edges with the
   //same number of points as the subdivision
-  subdivideEdges(){
+  subdivideEdges() {
     this.edges[this.subdivisionEdge].subdivideEdge();
-    this.numDivisions = this.edges[this.subdivisionEdge].points.length -1;
+    this.numDivisions = this.edges[this.subdivisionEdge].points.length - 1;
 
     this.edges[(this.subdivisionEdge + 1) % 3].subdivideEdge(this.numDivisions);
     this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
   }
 
-  subdivideMesh(){
+  subdivideMesh() {
     this.subdivideEdges();
     this.mesh = [].concat(this.edges[0].points);
 
-    for(let i = 1; i < this.numDivisions; i++){
+    for (let i = 1; i < this.numDivisions; i++) {
       const startPoint = this.edges[2].points[(this.numDivisions - i)];
       const endPoint = this.edges[1].points[i];
       this.subdivideInteriorArc(startPoint, endPoint, i);
@@ -338,7 +338,7 @@ export class Polygon {
 
   //find the points along the arc between opposite subdivions of the second two
   //edges of the polygon
-  subdivideInteriorArc(startPoint, endPoint, arcIndex){
+  subdivideInteriorArc(startPoint, endPoint, arcIndex) {
     const circle = new Arc(startPoint, endPoint).circle;
     this.mesh.push(startPoint);
 
@@ -346,10 +346,10 @@ export class Polygon {
     const divisions = this.numDivisions - arcIndex;
 
     //if the line get divided add points along line to mesh
-    if(divisions > 1){
+    if (divisions > 1) {
       const spacing = E.distance(startPoint, endPoint) / (divisions);
       let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
-      for(let j = 0; j < divisions -1 ; j++){
+      for (let j = 0; j < divisions - 1; j++) {
         this.mesh.push(nextPoint);
         nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
       }
