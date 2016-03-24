@@ -63,15 +63,15 @@ export class Controller {
   }
 
   setTilingImageSize() {
-    this.tilingImage.style.height = '${window.innerHeight}px';
-    this.tilingImage.style.width = '${window.innerWidth}px';
+    this.tilingImage.style.height = `${window.innerHeight}px`;
+    this.tilingImage.style.width = `${window.innerWidth}px`;
   }
 
   tilingImagePosition() {
     const top = (window.innerHeight - this.tilingImage.height) / 2;
     const left = (window.innerWidth - this.tilingImage.width) / 2;
-    this.tilingImage.style.top = '${top}px';
-    this.tilingImage.style.left = '${left}px';
+    this.tilingImage.style.top = `${top}px`;
+    this.tilingImage.style.left = `${left}px`;
   }
 
   setupRadiusSlider() {
@@ -101,11 +101,11 @@ export class Controller {
       let t0 = performance.now();
       const tiling = regularTesselation.generateTiling();
       let t1 = performance.now();
-      console.log('generateTiling took ${(t1 - t0)} milliseconds.');
+      console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
       t0 = performance.now();
       this.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
-      console.log('DrawTiling took ${(t1 - t0)} milliseconds.');
+      console.log(`DrawTiling took ${(t1 - t0)} milliseconds.`);
       this.imageControlsDiv.classList.remove('hide');
     };
   }

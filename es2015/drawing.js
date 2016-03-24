@@ -39,7 +39,7 @@ export class Drawing {
   clearScene() {
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const object = this.scene.children[i];
-      if (object.type === 'Mesh'){
+      if (object.type === 'Mesh') {
         object.geometry.dispose();
         object.material.dispose();
         this.scene.remove(object);
@@ -80,7 +80,7 @@ export class Drawing {
   disk(centre, radius, color) {
     if (color === undefined) color = 0xffffff;
     const geometry = new THREE.CircleGeometry(radius * this.radius, 100, 0, 2 * Math.PI);
-    const material = new THREE.MeshBasicMaterial({ color: color });
+    const material = new THREE.MeshBasicMaterial({ color });
 
     const circle = new THREE.Mesh(geometry, material);
     circle.position.x = centre.x * this.radius;
@@ -92,20 +92,22 @@ export class Drawing {
   polygonArray(array, textureArray, color, wireframe) {
     color = color || 0xffffff;
     wireframe = wireframe || false;
-    for (let i = 0; i< array.length; i++) {
+    for (let i = 0; i < array.length; i++) {
       this.polygon(array[i], color, textureArray, wireframe);
     }
   }
 
   //Note: polygons assumed to be triangular!
-  polygon(polygon, color, textures, wireframe){
+  polygon(polygon, color, textures, wireframe) {
     const p = 1 / polygon.numDivisions;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
     for (let i = 0; i < polygon.mesh.length; i++) {
-      geometry.vertices.push(new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius));
+      geometry.vertices.push(
+        new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius)
+      );
     }
 
     let edgeStartingVertex = 0;
@@ -180,8 +182,8 @@ export class Drawing {
 
     for (let i = 0; i < textures.length; i++) {
       const material = new THREE.MeshBasicMaterial({
-        color: color,
-        wireframe: wireframe,
+        color,
+        wireframe,
         side: THREE.DoubleSide,
       });
 
@@ -224,7 +226,7 @@ export class Drawing {
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', 'saveImage.php', true);
     xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhttp.send('img=' + data);
+    xhttp.send(`img=${data}`);
   }
 }
 

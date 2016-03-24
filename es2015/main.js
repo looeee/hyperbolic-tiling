@@ -33,7 +33,7 @@ Math.cot = Math.cot || function (x) {
 const controller = new Controller();
 
 window.onload = () => {
-  //controller.render();
+  //console.log('obj');
 };
 
 window.onresize = () => {

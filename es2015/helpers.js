@@ -15,7 +15,7 @@ export class Transform {
 
   multiply(transform) {
     if (!transform instanceof Transform) {
-      console.error('Error: ${transform} is not a Transform');
+      console.error(`Error: ${transform} is not a Transform`);
       return false;
     }
     const mat = E.multiplyMatrices(transform.matrix, this.matrix);

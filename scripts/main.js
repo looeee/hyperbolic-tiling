@@ -151,6 +151,7 @@ var Point = function () {
 
   //compare two points taking rounding errors into account
 
+
   Point.prototype.compare = function compare(otherPoint) {
     if (typeof otherPoint === 'undefined') {
       console.warn('Compare Points: point not defined.');
@@ -164,6 +165,7 @@ var Point = function () {
 
   //move the point to hyperboloid (Weierstrass) space, apply the transform,
   //then move back
+
 
   Point.prototype.transform = function transform(_transform) {
     var mat = _transform.matrix;
@@ -235,6 +237,7 @@ var Arc = function () {
 
   //Calculate the arc using Dunham's method
 
+
   Arc.prototype.calculateArc = function calculateArc() {
     //calculate centre of arcCircle relative to unit disk
     var hp = this.hyperboloidCrossProduct(this.startPoint.poincareToHyperboloid(), this.endPoint.poincareToHyperboloid());
@@ -284,6 +287,7 @@ var Edge = function () {
   //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
 
+
   Edge.prototype.calculateSpacing = function calculateSpacing(numDivisions) {
     //subdivision spacing for edges
     this.spacing = this.arc.arcLength > 0.03 ? this.arc.arcLength / 5 //approx maximum that hides all gaps
@@ -304,6 +308,7 @@ var Edge = function () {
   //then for the rest of the edges it will be calculated based on the number of
   //subdivisions of the first edge ( so that all edges are divided into an equal
   // number of pieces)
+
 
   Edge.prototype.calculateExpandedSpacing = function calculateExpandedSpacing(numDivisions) {
     //subdivision spacing for edges
@@ -372,6 +377,7 @@ var Edge = function () {
 //by ThreeJS class. This is very inefficient. Better to do the multiplication as the mesh is
 //being generated
 
+
 var Polygon = function () {
   function Polygon(vertices) {
     var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
@@ -400,6 +406,7 @@ var Polygon = function () {
   //The longest edge with radius > 0 should be used to calculate how the finely
   //the polygon gets subdivided
 
+
   Polygon.prototype.findSubdivisionEdge = function findSubdivisionEdge() {
     var a = this.edges[0].arc.curvature === 0 ? 0 : this.edges[0].arc.arcLength;
     var b = this.edges[1].arc.curvature === 0 ? 0 : this.edges[1].arc.arcLength;
@@ -409,6 +416,7 @@ var Polygon = function () {
 
   //subdivide the subdivision edge, then subdivide the other two edges with the
   //same number of points as the subdivision
+
 
   Polygon.prototype.subdivideEdges = function subdivideEdges() {
     this.edges[this.subdivisionEdge].subdivideEdge();
@@ -435,6 +443,7 @@ var Polygon = function () {
   //find the points along the arc between opposite subdivions of the second two
   //edges of the polygon
 
+
   Polygon.prototype.subdivideInteriorArc = function subdivideInteriorArc(startPoint, endPoint, arcIndex) {
     var circle = new Arc(startPoint, endPoint).circle;
     this.mesh.push(startPoint);
@@ -456,6 +465,7 @@ var Polygon = function () {
   };
 
   //Apply a Transform to the polygon
+
 
   Polygon.prototype.transform = function transform(_transform2) {
     var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
@@ -487,7 +497,7 @@ var Transform = function () {
 
   Transform.prototype.multiply = function multiply(transform) {
     if (!transform instanceof Transform) {
-      console.error('Error: ${transform} is not a Transform');
+      console.error('Error: ' + transform + ' is not a Transform');
       return false;
     }
     var mat = multiplyMatrices(transform.matrix, this.matrix);
@@ -531,6 +541,7 @@ var Transformations = function () {
 
   //reflect across the hypotenuse of the fundamental region of a tesselation
 
+
   Transformations.prototype.initHypotenuseReflection = function initHypotenuseReflection() {
     this.hypReflection = new Transform(identityMatrix(3), -1);
     this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
@@ -542,6 +553,7 @@ var Transformations = function () {
   //reflect across the first edge of the polygon (which crosses the radius
   // (0,0) -> (0,1) on unit disk). Combined with rotations we can reflect
   //across any edge
+
 
   Transformations.prototype.initEdgeReflection = function initEdgeReflection() {
     var cosp = Math.cos(Math.PI / this.p);
@@ -571,6 +583,7 @@ var Transformations = function () {
   //set up clockwise and anticlockwise rotations which will rotate by
   // PI/(number of sides of central polygon)
 
+
   Transformations.prototype.initPgonRotations = function initPgonRotations() {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
@@ -590,6 +603,7 @@ var Transformations = function () {
   };
 
   //orientation: either reflection = -1 OR rotation = 1
+
 
   Transformations.prototype.initEdges = function initEdges() {
     this.edges = [];
@@ -788,6 +802,7 @@ var RegularTesselation = function () {
   //this is a right angle triangle above the radius on the line (0,0) -> (0,1)
   //of the central polygon
 
+
   RegularTesselation.prototype.fundamentalRegion = function fundamentalRegion() {
     var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
 
@@ -817,6 +832,7 @@ var RegularTesselation = function () {
   //NOTE: for the time being just using edge bisector reflection to recreate Circle
   //Limit I, other patterns will require different options
 
+
   RegularTesselation.prototype.fundamentalPattern = function fundamentalPattern() {
     var upper = this.fundamentalRegion();
     var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
@@ -825,6 +841,7 @@ var RegularTesselation = function () {
 
   //The pattern in the central polygon is made up of transformed copies
   //of the fundamental pattern
+
 
   RegularTesselation.prototype.buildCentralPattern = function buildCentralPattern() {
     //add the first two polygons to the central pattern
@@ -849,6 +866,7 @@ var RegularTesselation = function () {
 
   //TODO document this function
 
+
   RegularTesselation.prototype.generateTiling = function generateTiling() {
     var tiling = this.buildCentralPattern();
 
@@ -872,6 +890,7 @@ var RegularTesselation = function () {
   //calculate the polygons in each layer and add them to this.tiling[]
   //TODO document this function
 
+
   RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {
     this.addTransformedPattern(tiling, transform);
     //stop if the current pattern has reached the minimum size
@@ -885,7 +904,7 @@ var RegularTesselation = function () {
 
     for (var i = 0; i < verticesToDo; i++) {
       var pTransform = this.transforms.shiftTrans(transform, pSkip);
-      var qTransform = undefined;
+      var qTransform = void 0;
 
       var qSkip = this.params.qSkip(exposure, i);
       if (qSkip % this.p !== 0) {
@@ -913,6 +932,7 @@ var RegularTesselation = function () {
   //The first p*2 elements of the tiling hold the central pattern
   //The transform will be applied to these
 
+
   RegularTesselation.prototype.addTransformedPattern = function addTransformedPattern(tiling, transform) {
     for (var i = 0; i < this.p * 2; i++) {
       tiling.push(tiling[i].transform(transform));
@@ -928,6 +948,7 @@ var RegularTesselation = function () {
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
+
 
   RegularTesselation.prototype.checkParams = function checkParams() {
     if ((this.p - 2) * (this.q - 2) <= 4) {
@@ -1043,6 +1064,7 @@ var Drawing = function () {
 
   //Note: polygons assumed to be triangular!
 
+
   Drawing.prototype.polygon = function polygon(_polygon, color, textures, wireframe) {
     var p = 1 / _polygon.numDivisions;
     var divisions = _polygon.numDivisions;
@@ -1079,6 +1101,7 @@ var Drawing = function () {
 
   //NOTE: some polygons are inverted due to vertex order,
   //solved this by making material doubles sided but this might cause problems with textures
+
 
   Drawing.prototype.createMesh = function createMesh(geometry, color, textures, materialIndex, wireframe) {
     if (wireframe === undefined) wireframe = false;
@@ -1128,12 +1151,14 @@ var Drawing = function () {
 
   //TODO doesn't update when calling generate a second time
 
+
   Drawing.prototype.appendImageToDom = function appendImageToDom() {
     var tilingImage = document.querySelector('#tiling-image');
     tilingImage.setAttribute('src', this.renderer.domElement.toDataURL());
   };
 
   //Download the canvas as a png image
+
 
   Drawing.prototype.downloadImage = function downloadImage() {
     var link = document.querySelector('#download-image');
@@ -1142,6 +1167,7 @@ var Drawing = function () {
   };
 
   //convert the canvas to a base64URL and send to saveImage.php
+
 
   Drawing.prototype.saveImage = function saveImage() {
     var data = this.renderer.domElement.toDataURL();
@@ -1188,6 +1214,7 @@ var Controller = function () {
 
   //any calls to document.querySelector() go here
 
+
   Controller.prototype.getElements = function getElements() {
     this.leftControlsDiv = document.querySelector('#left-controls');
     this.rightControlsDiv = document.querySelector('#right-controls');
@@ -1220,15 +1247,15 @@ var Controller = function () {
   };
 
   Controller.prototype.setTilingImageSize = function setTilingImageSize() {
-    this.tilingImage.style.height = '${window.innerHeight}px';
-    this.tilingImage.style.width = '${window.innerWidth}px';
+    this.tilingImage.style.height = window.innerHeight + 'px';
+    this.tilingImage.style.width = window.innerWidth + 'px';
   };
 
   Controller.prototype.tilingImagePosition = function tilingImagePosition() {
     var top = (window.innerHeight - this.tilingImage.height) / 2;
     var left = (window.innerWidth - this.tilingImage.width) / 2;
-    this.tilingImage.style.top = '${top}px';
-    this.tilingImage.style.left = '${left}px';
+    this.tilingImage.style.top = top + 'px';
+    this.tilingImage.style.left = left + 'px';
   };
 
   Controller.prototype.setupRadiusSlider = function setupRadiusSlider() {
@@ -1260,11 +1287,11 @@ var Controller = function () {
       var t0 = performance.now();
       var tiling = regularTesselation.generateTiling();
       var t1 = performance.now();
-      console.log('generateTiling took ${(t1 - t0)} milliseconds.');
+      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
       _this2.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
-      console.log('DrawTiling took ${(t1 - t0)} milliseconds.');
+      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
       _this2.imageControlsDiv.classList.remove('hide');
     };
   };
@@ -1336,7 +1363,7 @@ Math.cot = Math.cot || function (x) {
 var controller = new Controller();
 
 window.onload = function () {
-  //controller.render();
+  //console.log('obj');
 };
 
 window.onresize = function () {
