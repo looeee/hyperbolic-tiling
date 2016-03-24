@@ -6,8 +6,10 @@ body{
 	top: 0;
 	left: 0;
   background-color: white;
+  overflow-x: hidden;
 }
 
+/*
 canvas{
 	position: absolute;
 	top: 0;
@@ -15,7 +17,7 @@ canvas{
 	margin: auto;
 	z-index: -1;
 }
-
+*/
 h1{
 	font-weight: 900;
   color: darkgrey;

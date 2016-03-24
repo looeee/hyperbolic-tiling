@@ -1,51 +1,60 @@
-#container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: auto;
-  min-height: 100%;
-  margin: 0;
+@mixin n-columns($min-width, $gutter, $last-equal: false, $max-cols: 5) {
+  .flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-content: stretch;
+    margin-left: -$gutter;
+    margin-top: -$gutter;
+
+    .flex-item {
+      flex: 1 0 $min-width;
+      margin-left: $gutter;
+      margin-top: $gutter;
+
+      @if $last-equal {
+        @for $i from 2 through $max-cols {
+          $screen-width: ($min-width*$i)+($gutter*$i);
+          $column-width: (100%/$i);
+          @media (min-width: $screen-width) {
+            max-width: calc(#{$column-width} - #{$gutter});
+          }
+        }
+
+        $column-width: (100%/$max-cols);
+        @media (min-width: $min-width*$max-cols) {
+            min-width: calc(#{$column-width} - #{$gutter});
+        }
+      }
+    }
+  }
 }
 
-#title {
-  position: absolute;
-  top: 0%;
-  left: 0%;
-  width: 100%;
-  height: 7%;
-  margin: 0;
-  padding-top: 2%;
-  background-color: black;
+@include n-columns(200px, 0, true, 2);
+
+.flex-container {
+  .flex-item {
+    background: #e0ddd5;
+    //color: #171e42;
+    //box-sizing: border-box;
+  }
+}
+
+#title{
+  min-width: 100%;
   text-align: center;
 }
 
-#controls{
-  position: absolute;
-  top: 10%;
-  left: 2%;
-}
-
-#controls-old{
-  position: absolute;
-  top:  40%;
-}
-
-#left-controls {
-  position: absolute;
-  margin-top: 2%;
-  margin-left: 2%;
-  left: 0;
-  width: 450px;
-  color: #7F7F7F;
-}
-
-#right-controls {
-  position: absolute;
-  margin-top: 2%;
+#left-controls{
+  //min-width: 48.5%;
   margin-right: 2%;
-  left: 500px;
-  width: 50%;
-  color: #7F7F7F;
-  text-align: right;
+}
+
+#right-controls{
+  //min-width: 48.5%;
+  margin-left: 2%;
+}
+
+#tiling-image{
+  //min-width: 100%;
 }

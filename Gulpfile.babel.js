@@ -1,5 +1,3 @@
-'use strict';
-
 const projectname = 'hyperbolic-tiling';
 const templatePath = '';
 const scssPath = `${templatePath}scss/**/*.scss`;
@@ -14,7 +12,7 @@ const rollup = require('gulp-rollup');
 const babel = require('rollup-plugin-babel');
 const livereload = require('gulp-livereload');
 const nodeResolve = require('rollup-plugin-node-resolve');
-const commonjs = require('rollup-plugin-commonjs');
+//const commonjs = require('rollup-plugin-commonjs');
 
 //Put all css/scss tasks here
 gulp.task('css', () => {
@@ -36,12 +34,12 @@ gulp.task('js', () => {
   })
   .pipe(rollup({
     plugins: [
-      commonjs({
-        include: 'node_modules/**',
-      }),
+      //commonjs({
+      //  include: 'node_modules/**',
+      //}),
       nodeResolve({
         jsnext: true,
-        main: true, //for commonJS modules
+        //main: true, //for commonJS modules
         extensions: ['.js', '.json'],
         preferBuiltins: false,
       }),
