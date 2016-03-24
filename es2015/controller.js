@@ -35,11 +35,11 @@ export class Controller {
     this.imageControlsDiv = document.querySelector('#image-controls');
     this.saveImageBtn = document.querySelector('#save-image');
     this.downloadImageBtn = document.querySelector('#download-image');
-    this.testBtn = document.querySelector('#test');
     this.pValueDropdown = document.querySelector('#p');
     this.qValueDropdown = document.querySelector('#q');
     this.generateTilingBtn = document.querySelector('#generate-tiling');
     this.showControlsCheckbox = document.querySelector('#show-controls');
+    this.designModeCheckbox = document.querySelector('#design-mode');
     this.tilingImage = document.querySelector('#tiling-image');
     this.radiusSlider = document.querySelector('#tiling-radius');
     this.radiusValue = document.querySelector('#selected-radius');
@@ -49,17 +49,10 @@ export class Controller {
     this.saveImageButtons();
     this.hideControls();
     this.setupRadiusSlider();
-    this.setupTestBtn();
   }
 
   setupLayout() {
 
-  }
-
-  setupTestBtn() {
-    this.testBtn.onclick = () => {
-      //TESTING
-    };
   }
 
   setTilingImageSize() {
@@ -99,7 +92,9 @@ export class Controller {
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation(spec);
       let t0 = performance.now();
-      const tiling = regularTesselation.generateTiling();
+      const tiling = regularTesselation.generateTiling(
+        this.designModeCheckbox.checked
+      );
       let t1 = performance.now();
       console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
       t0 = performance.now();

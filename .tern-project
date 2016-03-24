@@ -1,8 +1,7 @@
 {
   "ecmaVersion": 6,
   "libs": [
-    "browser",
-    "jquery"
+    "browser"
   ],
   "loadEagerly": [
     "var/www/html/es2015/**/*.js"

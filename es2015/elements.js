@@ -148,11 +148,11 @@ export class Arc {
     this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
   }
 
-  hyperboloidCrossProduct(point3D_1, point3D_2) {
+  hyperboloidCrossProduct(point3D1, point3D2) {
     return {
-      x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
-      y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-      z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x,
+      x: point3D1.y * point3D2.z - point3D1.z * point3D2.y,
+      y: point3D1.z * point3D2.x - point3D1.x * point3D2.z,
+      z: -point3D1.x * point3D2.y + point3D1.y * point3D2.x,
     };
   }
 }
@@ -221,7 +221,8 @@ class Edge {
     //tiny pgons near the edges of the disk don't need to be subdivided
     if (this.arc.arcLength > this.expandedSpacing) {
       let p = (!this.arc.straightLine)
-        ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing)
+        ? E.directedSpacedPointOnArc(
+          this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing)
         : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
       this.points.push(p);
 
@@ -243,7 +244,8 @@ class Edge {
     //tiny pgons near the edges of the disk don't need to be subdivided
     if (this.arc.arcLength > this.spacing) {
       let p = (!this.arc.straightLine)
-        ? E.directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing)
+        ? E.directedSpacedPointOnArc(
+          this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.spacing)
         : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.spacing);
       this.points.push(p);
 
@@ -278,12 +280,6 @@ export class Polygon {
     this.addEdges();
     this.findSubdivisionEdge();
     this.subdivideMesh();
-    /*
-    this.addExpandedVertices( radius );
-    this.addExpandedEdges();
-    this.findExpandedSubdivisionEdge();
-    this.subdivideExpandedMesh();
-    */
   }
 
   addEdges() {
@@ -367,87 +363,3 @@ export class Polygon {
     return new Polygon(newVertices, materialIndex);
   }
 }
-
-/*
-addExpandedVertices( newRadius){
-  this.expandedVertices = [
-    new Point(this.vertices[0].x * newRadius, this.vertices[0].y * newRadius),
-    new Point(this.vertices[1].x * newRadius, this.vertices[1].y * newRadius),
-    new Point(this.vertices[2].x * newRadius, this.vertices[2].y * newRadius)
-  ]
-}
-
-addExpandedEdges(){
-  this.expandedEdges = [
-    new Edge(this.expandedVertices[0], this.expandedVertices[1]),
-    new Edge(this.expandedVertices[1], this.expandedVertices[2]),
-    new Edge(this.expandedVertices[2], this.expandedVertices[0]),
-  ];
-}
-
-//The longest edge with radius > 0 should be used to calculate how the finely
-//the polygon gets subdivided
-findExpandedSubdivisionEdge(){
-  const a = (this.expandedEdges[0].arc.curvature === 0)
-            ? 0
-            : this.expandedEdges[0].arc.arcLength;
-  const b = (this.expandedEdges[1].arc.curvature === 0)
-            ? 0
-            : this.expandedEdges[1].arc.arcLength;
-  const c = (this.expandedEdges[2].arc.curvature === 0)
-            ? 0
-            : this.expandedEdges[2].arc.arcLength;
-  if( a > b && a > c) this.expandedSubdivisionEdge = 0;
-  else if( b > c) this.expandedSubdivisionEdge = 1;
-  else this.expandedSubdivisionEdge = 2;
-}
-
-//subdivide the subdivision edge, then subdivide the other two edges with the
-//same number of points as the subdivision
-subdivideExpandedEdges(){
-  this.expandedEdges[this.expandedSubdivisionEdge].subdivideExpandedEdge();
-  this.expandedNumDivisions = this.expandedEdges[this.expandedSubdivisionEdge].points.length -1;
-
-  this.expandedEdges[(this.expandedSubdivisionEdge + 1) % 3].subdivideExpandedEdge(this.numDivisions);
-  this.expandedEdges[(this.expandedSubdivisionEdge + 2) % 3].subdivideExpandedEdge(this.numDivisions);
-}
-
-subdivideExpandedMesh(){
-  this.subdivideExpandedEdges();
-  this.expandedMesh = [].concat(this.expandedEdges[0].points);
-
-  for(let i = 1; i < this.expandedNumDivisions; i++){
-    const startPoint = this.expandedEdges[2].points[(this.expandedNumDivisions - i)];
-    const endPoint = this.expandedEdges[1].points[i];
-    //console.log(startPoint, endPoint);
-    this.subdivideInteriorExpandedArc(startPoint, endPoint, i);
-  }
-
-  //push the final vertex
-  this.expandedMesh.push(this.expandedEdges[2].points[0]);
-}
-
-//find the points along the arc between opposite subdivions of the second two
-//edges of the polygon
-subdivideInteriorExpandedArc(startPoint, endPoint, arcIndex){
-  const circle = new Arc(startPoint, endPoint).circle;
-  this.expandedMesh.push(startPoint);
-
-  //for each arc, the number of divisions will be reduced by one
-  const divisions = this.expandedNumDivisions - arcIndex;
-
-  //if the line get divided add points along line to mesh
-  if(divisions > 1){
-    const spacing = E.distance(startPoint, endPoint) / (divisions);
-    //let nextPoint = E.directedSpacedPointOnArc(circle, startPoint, endPoint, spacing);
-    let nextPoint = E.directedSpacedPointOnLine(startPoint, endPoint, spacing);
-    for(let j = 0; j < divisions -1 ; j++){
-      this.expandedMesh.push(nextPoint);
-      //nextPoint = E.directedSpacedPointOnArc(circle, nextPoint, endPoint, spacing);
-      nextPoint = E.directedSpacedPointOnLine(nextPoint, endPoint, spacing);
-    }
-  }
-
-  this.expandedMesh.push(endPoint);
-}
-*/

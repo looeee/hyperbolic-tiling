@@ -30,7 +30,7 @@
   }
 }
 
-@include n-columns(200px, 0, true, 2);
+@include n-columns(0, 0, false, 2);
 
 .flex-container {
   .flex-item {
@@ -46,15 +46,13 @@
 }
 
 #left-controls{
-  //min-width: 48.5%;
   margin-right: 2%;
 }
 
 #right-controls{
-  //min-width: 48.5%;
   margin-left: 2%;
 }
 
 #tiling-image{
-  //min-width: 100%;
+  min-width: 100%;
 }

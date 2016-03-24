@@ -81,17 +81,11 @@ button:hover {
   margin-left: 0;
   margin-top: 0; }
   .flex-container .flex-item {
-    -webkit-flex: 1 0 200px;
-        -ms-flex: 1 0 200px;
-            flex: 1 0 200px;
+    -webkit-flex: 1 0 0;
+        -ms-flex: 1 0 0;
+            flex: 1 0 0;
     margin-left: 0;
     margin-top: 0; }
-    @media (min-width: 400px) {
-      .flex-container .flex-item {
-        max-width: calc(50% - 0); } }
-    @media (min-width: 400px) {
-      .flex-container .flex-item {
-        min-width: calc(50% - 0); } }
 
 .flex-container .flex-item {
   background: #e0ddd5; }
@@ -105,6 +99,9 @@ button:hover {
 
 #right-controls {
   margin-left: 2%; }
+
+#tiling-image {
+  min-width: 100%; }
 
 .hide {
   display: none !important; }

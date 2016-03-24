@@ -162,11 +162,11 @@ var Arc = function () {
     this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
   };
 
-  Arc.prototype.hyperboloidCrossProduct = function hyperboloidCrossProduct(point3D_1, point3D_2) {
+  Arc.prototype.hyperboloidCrossProduct = function hyperboloidCrossProduct(point3D1, point3D2) {
     return {
-      x: point3D_1.y * point3D_2.z - point3D_1.z * point3D_2.y,
-      y: point3D_1.z * point3D_2.x - point3D_1.x * point3D_2.z,
-      z: -point3D_1.x * point3D_2.y + point3D_1.y * point3D_2.x
+      x: point3D1.y * point3D2.z - point3D1.z * point3D2.y,
+      y: point3D1.z * point3D2.x - point3D1.x * point3D2.z,
+      z: -point3D1.x * point3D2.y + point3D1.y * point3D2.x
     };
   };
 
@@ -294,12 +294,6 @@ var Polygon = function () {
     this.addEdges();
     this.findSubdivisionEdge();
     this.subdivideMesh();
-    /*
-    this.addExpandedVertices( radius );
-    this.addExpandedEdges();
-    this.findExpandedSubdivisionEdge();
-    this.subdivideExpandedMesh();
-    */
   }
 
   Polygon.prototype.addEdges = function addEdges() {
@@ -766,7 +760,7 @@ var Parameters = function () {
 // *                    ...
 // *                      [edge_p orientation, edge_p adjacency]
 // *                    ],
-// *      minPolygonSize: stop at polygons below this size
+// *      minPolygonSize: stop at polygons below this size,
 // *    }
 // *
 // *
@@ -788,7 +782,6 @@ var RegularTesselation = function () {
 
     console.log('{', this.p, ', ', this.q, '} tiling.');
 
-    //this.disk = new Disk();
     this.params = new Parameters(this.p, this.q);
     this.transforms = new Transformations(this.p, this.q);
 
@@ -851,6 +844,7 @@ var RegularTesselation = function () {
     var upperReflected = centralPattern[0].transform(this.transforms.edgeBisectorReflection);
     var lowerReflected = centralPattern[1].transform(this.transforms.edgeBisectorReflection);
 
+    //add the rest of the pattern pieces to the central pattern
     for (var i = 1; i < this.p; i++) {
       if (i % 2 === 1) {
         centralPattern.push(upperReflected.transform(this.transforms.rotatePolygonCW[i]));
@@ -868,15 +862,20 @@ var RegularTesselation = function () {
 
 
   RegularTesselation.prototype.generateTiling = function generateTiling() {
+    var designMode = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
     var tiling = this.buildCentralPattern();
 
-    for (var i = 0; i < this.p; i++) {
+    var pRange = designMode ? 1 : this.p; //if we are in design mode only do one loop
+    for (var i = 0; i < pRange; i++) {
       var qTransform = this.transforms.edgeTransforms[i];
-      for (var j = 0; j < this.q - 2; j++) {
+
+      var qRange = designMode ? 1 : this.q - 2; //if we are in design mode only do one loop
+      for (var j = 0; j < qRange; j++) {
         if (this.p === 3 && this.q - 3 === j) {
           this.addTransformedPattern(tiling, qTransform);
         } else {
-          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform, tiling);
+          this.layerRecursion(this.params.exposure(0, i, j), 1, qTransform, tiling, designMode);
         }
         if (-1 % this.p !== 0) {
           qTransform = this.transforms.shiftTrans(qTransform, -1); // -1 means clockwise
@@ -892,9 +891,11 @@ var RegularTesselation = function () {
 
 
   RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {
+    var designMode = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+
     this.addTransformedPattern(tiling, transform);
     //stop if the current pattern has reached the minimum size
-    //TODO two step method for ending recursion using warning flag
+    //TODO better method as this leaves holes at the edges
     if (tiling[tiling.length - 1].edges[0].arc.arcLength < this.minPolygonSize) {
       return;
     }
@@ -902,7 +903,8 @@ var RegularTesselation = function () {
     var pSkip = this.params.pSkip(exposure);
     var verticesToDo = this.params.verticesToDo(exposure);
 
-    for (var i = 0; i < verticesToDo; i++) {
+    var verticesRange = designMode ? 1 : verticesToDo; //if we are in design mode only do one loop
+    for (var i = 0; i < verticesRange; i++) {
       var pTransform = this.transforms.shiftTrans(transform, pSkip);
       var qTransform = void 0;
 
@@ -915,7 +917,8 @@ var RegularTesselation = function () {
 
       var pgonsToDo = this.params.pgonsToDo(exposure, i);
 
-      for (var j = 0; j < pgonsToDo; j++) {
+      var pgonsRange = designMode ? 1 : pgonsToDo; //if we are in design mode only do one loop
+      for (var j = 0; j < pgonsRange; j++) {
         if (this.p === 3 && j === pgonsToDo - 1) {
           this.addTransformedPattern(tiling, qTransform);
         } else {
@@ -939,11 +942,12 @@ var RegularTesselation = function () {
     }
   };
 
+  //pass the generated array of polygons (which lie on the unit disk)
+  //to the drawing class for expansion, texturing and rendering
+
+
   RegularTesselation.prototype.drawTiling = function drawTiling(tiling) {
     this.disk.draw.polygonArray(tiling, this.textures);
-    //for (let i = 0; i < tiling.length; i++) {
-    //  this.disk.drawPolygon(tiling[i], 0xffffff, this.textures, this.wireframe);
-    //}
   };
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
@@ -1221,11 +1225,11 @@ var Controller = function () {
     this.imageControlsDiv = document.querySelector('#image-controls');
     this.saveImageBtn = document.querySelector('#save-image');
     this.downloadImageBtn = document.querySelector('#download-image');
-    this.testBtn = document.querySelector('#test');
     this.pValueDropdown = document.querySelector('#p');
     this.qValueDropdown = document.querySelector('#q');
     this.generateTilingBtn = document.querySelector('#generate-tiling');
     this.showControlsCheckbox = document.querySelector('#show-controls');
+    this.designModeCheckbox = document.querySelector('#design-mode');
     this.tilingImage = document.querySelector('#tiling-image');
     this.radiusSlider = document.querySelector('#tiling-radius');
     this.radiusValue = document.querySelector('#selected-radius');
@@ -1235,16 +1239,9 @@ var Controller = function () {
     this.saveImageButtons();
     this.hideControls();
     this.setupRadiusSlider();
-    this.setupTestBtn();
   };
 
   Controller.prototype.setupLayout = function setupLayout() {};
-
-  Controller.prototype.setupTestBtn = function setupTestBtn() {
-    this.testBtn.onclick = function () {
-      //TESTING
-    };
-  };
 
   Controller.prototype.setTilingImageSize = function setTilingImageSize() {
     this.tilingImage.style.height = window.innerHeight + 'px';
@@ -1285,7 +1282,7 @@ var Controller = function () {
       var spec = _this2.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
       var t0 = performance.now();
-      var tiling = regularTesselation.generateTiling();
+      var tiling = regularTesselation.generateTiling(_this2.designModeCheckbox.checked);
       var t1 = performance.now();
       console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
