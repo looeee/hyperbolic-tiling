@@ -6,7 +6,6 @@ import {
   Drawing,
 }
 from './drawing';
-
 // * ***********************************************************************
 // *
 // *  CONTROLLER CLASS
@@ -14,11 +13,9 @@ from './drawing';
 // *************************************************************************
 export class Controller {
   constructor() {
-    this.getElements();
     this.draw = new Drawing();
-    this.setupControls();
-    this.setupLayout();
     this.regularHyperbolicTiling();
+    this.setupControls();
   }
 
   onResize() {
@@ -28,72 +25,30 @@ export class Controller {
     this.centreTilingImage();
   }
 
-  //any calls to document.querySelector() go here
-  getElements() {
-    this.leftControlsDiv = document.querySelector('#left-controls');
-    this.rightControlsDiv = document.querySelector('#right-controls');
-    this.imageControlsDiv = document.querySelector('#image-controls');
-    this.saveImageBtn = document.querySelector('#save-image');
-    this.downloadImageBtn = document.querySelector('#download-image');
-    this.pValueDropdown = document.querySelector('#p');
-    this.qValueDropdown = document.querySelector('#q');
-    this.generateTilingBtn = document.querySelector('#generate-tiling');
-    this.showControlsCheckbox = document.querySelector('#show-controls');
-    this.designModeCheckbox = document.querySelector('#design-mode');
-    this.tilingImage = document.querySelector('#tiling-image');
-    this.radiusSlider = document.querySelector('#tiling-radius');
-    this.radiusValue = document.querySelector('#selected-radius');
-  }
-
   setupControls() {
     this.saveImageButtons();
     this.hideControls();
-    this.setupRadiusSlider();
+    this.radiusSlider();
   }
 
-  setupLayout() {
-
-  }
-
-  setTilingImageSize() {
-    this.tilingImage.style.height = `${window.innerHeight}px`;
-    this.tilingImage.style.width = `${window.innerWidth}px`;
-  }
-
-  tilingImagePosition() {
-    const top = (window.innerHeight - this.tilingImage.height) / 2;
-    const left = (window.innerWidth - this.tilingImage.width) / 2;
-    this.tilingImage.style.top = `${top}px`;
-    this.tilingImage.style.left = `${left}px`;
-  }
-
-  setupRadiusSlider() {
-    this.setRadius();
-    this.radiusSlider.setAttribute('max', this.maxRadius);
-    this.radiusSlider.value = this.maxRadius;
-    this.radiusValue.innerHTML = this.radiusSlider.value;
-    this.draw.radius = this.radiusSlider.value;
-    this.radiusSlider.oninput = () => {
-      this.radiusValue.innerHTML = this.radiusSlider.value;
-      this.draw.radius = this.radiusSlider.value;
+  radiusSlider() {
+    const slider = document.querySelector('#tiling-radius');
+    this.draw.radius = slider.value;
+    console.log(slider.value);
+    slider.oninput = () => {
+      document.querySelector('#selected-radius').innerHTML = slider.value;
+      this.draw.radius = slider.value;
     };
   }
 
-  setRadius() {
-    this.maxRadius = (window.innerWidth < window.innerHeight)
-      ? (window.innerWidth / 2) - 5
-      : (window.innerHeight / 2) - 5;
-  }
-
   regularHyperbolicTiling() {
-    this.generateTilingBtn.onclick = () => {
-      this.setTilingImageSize();
+    document.querySelector('#generate-tiling').onclick = () => {
       this.draw.reset();
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation(spec);
       let t0 = performance.now();
       const tiling = regularTesselation.generateTiling(
-        this.designModeCheckbox.checked
+        document.querySelector('#design-mode').checked
       );
       let t1 = performance.now();
       console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
@@ -101,15 +56,15 @@ export class Controller {
       this.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
       console.log(`DrawTiling took ${(t1 - t0)} milliseconds.`);
-      this.imageControlsDiv.classList.remove('hide');
+      document.querySelector('#image-controls').classList.remove('hide');
     };
   }
 
   tilingSpec() {
     const spec = {
       wireframe: false,
-      p: this.pValueDropdown.value,
-      q: this.qValueDropdown.value,
+      p: document.querySelector('#p').value,
+      q: document.querySelector('#q').value,
       textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
       edgeAdjacency: [ //array of length p
                       [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
@@ -123,13 +78,13 @@ export class Controller {
   }
 
   saveImageButtons() {
-    this.saveImageBtn.onclick = () => this.draw.saveImage();
-    this.downloadImageBtn.onclick = () => this.draw.downloadImage();
+    document.querySelector('#save-image').onclick = () => this.draw.saveImage();
+    document.querySelector('#download-image').onclick = () => this.draw.downloadImage();
   }
 
   hideControls() {
-    this.showControlsCheckbox.onclick = () => {
-      this.leftControlsDiv.classList.toggle('hide');
+    document.querySelector('#show-controls').onclick = () => {
+      document.querySelector('#left-controls').classList.toggle('hide');
     };
   }
 }

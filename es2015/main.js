@@ -1,5 +1,8 @@
 import { Controller } from './controller';
-
+import {
+  Layout,
+}
+from './layout';
 // * ***********************************************************************
 // *
 // *   POLYFILLS
@@ -27,12 +30,12 @@ Math.cot = Math.cot || function cot(x) {
 // *
 // *************************************************************************
 
-const controller = new Controller();
 
 window.onload = () => {
-  //console.log('obj');
+  const layout = new Layout();
+  const controller = new Controller();
 };
 
 window.onresize = () => {
-  controller.onResize();
+  //controller.onResize();
 };

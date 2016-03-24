@@ -1202,11 +1202,9 @@ var Controller = function () {
   function Controller() {
     babelHelpers.classCallCheck(this, Controller);
 
-    this.getElements();
     this.draw = new Drawing();
-    this.setupControls();
-    this.setupLayout();
     this.regularHyperbolicTiling();
+    this.setupControls();
   }
 
   Controller.prototype.onResize = function onResize() {
@@ -1216,88 +1214,48 @@ var Controller = function () {
     this.centreTilingImage();
   };
 
-  //any calls to document.querySelector() go here
-
-
-  Controller.prototype.getElements = function getElements() {
-    this.leftControlsDiv = document.querySelector('#left-controls');
-    this.rightControlsDiv = document.querySelector('#right-controls');
-    this.imageControlsDiv = document.querySelector('#image-controls');
-    this.saveImageBtn = document.querySelector('#save-image');
-    this.downloadImageBtn = document.querySelector('#download-image');
-    this.pValueDropdown = document.querySelector('#p');
-    this.qValueDropdown = document.querySelector('#q');
-    this.generateTilingBtn = document.querySelector('#generate-tiling');
-    this.showControlsCheckbox = document.querySelector('#show-controls');
-    this.designModeCheckbox = document.querySelector('#design-mode');
-    this.tilingImage = document.querySelector('#tiling-image');
-    this.radiusSlider = document.querySelector('#tiling-radius');
-    this.radiusValue = document.querySelector('#selected-radius');
-  };
-
   Controller.prototype.setupControls = function setupControls() {
     this.saveImageButtons();
     this.hideControls();
-    this.setupRadiusSlider();
+    this.radiusSlider();
   };
 
-  Controller.prototype.setupLayout = function setupLayout() {};
-
-  Controller.prototype.setTilingImageSize = function setTilingImageSize() {
-    this.tilingImage.style.height = window.innerHeight + 'px';
-    this.tilingImage.style.width = window.innerWidth + 'px';
-  };
-
-  Controller.prototype.tilingImagePosition = function tilingImagePosition() {
-    var top = (window.innerHeight - this.tilingImage.height) / 2;
-    var left = (window.innerWidth - this.tilingImage.width) / 2;
-    this.tilingImage.style.top = top + 'px';
-    this.tilingImage.style.left = left + 'px';
-  };
-
-  Controller.prototype.setupRadiusSlider = function setupRadiusSlider() {
+  Controller.prototype.radiusSlider = function radiusSlider() {
     var _this = this;
 
-    this.setRadius();
-    this.radiusSlider.setAttribute('max', this.maxRadius);
-    this.radiusSlider.value = this.maxRadius;
-    this.radiusValue.innerHTML = this.radiusSlider.value;
-    this.draw.radius = this.radiusSlider.value;
-    this.radiusSlider.oninput = function () {
-      _this.radiusValue.innerHTML = _this.radiusSlider.value;
-      _this.draw.radius = _this.radiusSlider.value;
+    var slider = document.querySelector('#tiling-radius');
+    this.draw.radius = slider.value;
+    console.log(slider.value);
+    slider.oninput = function () {
+      document.querySelector('#selected-radius').innerHTML = slider.value;
+      _this.draw.radius = slider.value;
     };
-  };
-
-  Controller.prototype.setRadius = function setRadius() {
-    this.maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
   };
 
   Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
     var _this2 = this;
 
-    this.generateTilingBtn.onclick = function () {
-      _this2.setTilingImageSize();
+    document.querySelector('#generate-tiling').onclick = function () {
       _this2.draw.reset();
       var spec = _this2.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
       var t0 = performance.now();
-      var tiling = regularTesselation.generateTiling(_this2.designModeCheckbox.checked);
+      var tiling = regularTesselation.generateTiling(document.querySelector('#design-mode').checked);
       var t1 = performance.now();
       console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
       _this2.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
-      _this2.imageControlsDiv.classList.remove('hide');
+      document.querySelector('#image-controls').classList.remove('hide');
     };
   };
 
   Controller.prototype.tilingSpec = function tilingSpec() {
     var spec = {
       wireframe: false,
-      p: this.pValueDropdown.value,
-      q: this.qValueDropdown.value,
+      p: document.querySelector('#p').value,
+      q: document.querySelector('#q').value,
       textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
       edgeAdjacency: [//array of length p
       [1, //edge_0 orientation (-1 = reflection, 1 = rotation)
@@ -1312,23 +1270,76 @@ var Controller = function () {
   Controller.prototype.saveImageButtons = function saveImageButtons() {
     var _this3 = this;
 
-    this.saveImageBtn.onclick = function () {
+    document.querySelector('#save-image').onclick = function () {
       return _this3.draw.saveImage();
     };
-    this.downloadImageBtn.onclick = function () {
+    document.querySelector('#download-image').onclick = function () {
       return _this3.draw.downloadImage();
     };
   };
 
   Controller.prototype.hideControls = function hideControls() {
-    var _this4 = this;
-
-    this.showControlsCheckbox.onclick = function () {
-      _this4.leftControlsDiv.classList.toggle('hide');
+    document.querySelector('#show-controls').onclick = function () {
+      document.querySelector('#left-controls').classList.toggle('hide');
     };
   };
 
   return Controller;
+}();
+
+// * ***********************************************************************
+// *
+// *  LAYOUT CLASS
+// *
+// *  controls position/loading/hiding etc but NOT functionality
+// *  of screen elements
+// *************************************************************************
+
+var Layout = function () {
+  function Layout() {
+    babelHelpers.classCallCheck(this, Layout);
+
+    this.getElements();
+    this.setupLayout();
+  }
+
+  //any calls to document.querySelector() go here
+
+
+  Layout.prototype.getElements = function getElements() {
+    this.leftControlsDiv = document.querySelector('#left-controls');
+    this.rightControlsDiv = document.querySelector('#right-controls');
+    this.imageControlsDiv = document.querySelector('#image-controls');
+    this.saveImageBtn = document.querySelector('#save-image');
+    this.downloadImageBtn = document.querySelector('#download-image');
+    this.pValueDropdown = document.querySelector('#p');
+    this.qValueDropdown = document.querySelector('#q');
+    this.generateTilingBtn = document.querySelector('#generate-tiling');
+    this.showControlsCheckbox = document.querySelector('#show-controls');
+    this.designModeCheckbox = document.querySelector('#design-mode');
+  };
+
+  Layout.prototype.setupLayout = function setupLayout() {
+    this.tilingImage();
+    this.radiusSlider();
+  };
+
+  Layout.prototype.radiusSlider = function radiusSlider() {
+    var slider = document.querySelector('#tiling-radius');
+    var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+
+    slider.setAttribute('max', maxRadius);
+    slider.value = maxRadius;
+    document.querySelector('#selected-radius').innerHTML = slider.value;
+  };
+
+  Layout.prototype.tilingImage = function tilingImage() {
+    var image = document.querySelector('#tiling-image');
+    image.style.height = window.innerHeight + 'px';
+    image.style.width = window.innerWidth + 'px';
+  };
+
+  return Layout;
 }();
 
 // * ***********************************************************************
@@ -1357,12 +1368,11 @@ Math.cot = Math.cot || function cot(x) {
 // *
 // *************************************************************************
 
-var controller = new Controller();
-
 window.onload = function () {
-  //console.log('obj');
+  var layout = new Layout();
+  var controller = new Controller();
 };
 
 window.onresize = function () {
-  controller.onResize();
+  //controller.onResize();
 };
