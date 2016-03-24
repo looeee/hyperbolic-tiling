@@ -27,100 +27,6 @@ babelHelpers.createClass = function () {
 babelHelpers;
 
 // * ***********************************************************************
-// *
-// *   EUCLIDEAN FUNCTIONS
-// *   a place to stash all the functions that are euclidean geometrical
-// *   operations
-// *   All functions are 2D unless otherwise specified!
-// *
-// *************************************************************************
-
-//.toFixed returns a string for some no doubt very good reason.
-//apply to fixed with default value of 10 and return as a float
-var toFixed = function (number) {
-  var places = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
-  return parseFloat(number.toFixed(places));
-};
-
-var distance = function (point1, point2) {
-  return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
-};
-
-//does the line connecting p1, p2 go through the point (0,0)?
-var throughOrigin = function (point1, point2) {
-  //vertical line through centre
-  if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
-    return true;
-  }
-  var test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
-
-  if (toFixed(test) == 0) return true;
-  return false;
-};
-
-//Find the length of the smaller arc between two angles on a given circle
-var arcLength = function (circle, startAngle, endAngle) {
-  return Math.abs(startAngle - endAngle) > Math.PI ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle)) : circle.radius * Math.abs(startAngle - endAngle);
-};
-
-//find the two points a distance from a point on the circumference of a circle
-//in the direction of point2
-var directedSpacedPointOnArc = function (circle, point1, point2, spacing) {
-  var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
-  var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
-  var sinThetaNeg = -sinThetaPos;
-
-  var xPos = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaPos * (point1.y - circle.centre.y);
-  var xNeg = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaNeg * (point1.y - circle.centre.y);
-  var yPos = circle.centre.y + sinThetaPos * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
-  var yNeg = circle.centre.y + sinThetaNeg * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
-
-  var p1 = new Point(xPos, yPos);
-  var p2 = new Point(xNeg, yNeg);
-
-  var a = distance(p1, point2);
-  var b = distance(p2, point2);
-  return a < b ? p1 : p2;
-};
-
-//calculate the normal vector given 2 points
-var normalVector = function (p1, p2) {
-  var d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d, (p2.y - p1.y) / d);
-};
-
-//find the point at a distance from point1 along line defined by point1, point2,
-//in the direction of point2
-var directedSpacedPointOnLine = function (point1, point2, spacing) {
-  var dv = normalVector(point1, point2);
-  return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
-};
-
-var multiplyMatrices = function (m1, m2) {
-  var result = [];
-  for (var i = 0; i < m1.length; i++) {
-    result[i] = [];
-    for (var j = 0; j < m2[0].length; j++) {
-      var sum = 0;
-      for (var k = 0; k < m1[0].length; k++) {
-        sum += m1[i][k] * m2[k][j];
-      }
-      result[i][j] = sum;
-    }
-  }
-  return result;
-};
-
-//create nxn identityMatrix
-var identityMatrix = function (n) {
-  return Array.apply(null, new Array(n)).map(function (x, i, a) {
-    return a.map(function (y, k) {
-      return i === k ? 1 : 0;
-    });
-  });
-};
-
-// * ***********************************************************************
 // * ***********************************************************************
 // * ***********************************************************************
 // *
@@ -480,6 +386,100 @@ var Polygon = function () {
   return Polygon;
 }();
 
+// * ***********************************************************************
+// *
+// *   EUCLIDEAN FUNCTIONS
+// *   a place to stash all the functions that are euclidean geometrical
+// *   operations
+// *   All functions are 2D unless otherwise specified!
+// *
+// *************************************************************************
+
+//.toFixed returns a string for some no doubt very good reason.
+//apply to fixed with default value of 10 and return as a float
+var toFixed = function (number) {
+  var places = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
+  return parseFloat(number.toFixed(places));
+};
+
+var distance = function (point1, point2) {
+  return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+};
+
+//does the line connecting p1, p2 go through the point (0,0)?
+var throughOrigin = function (point1, point2) {
+  //vertical line through centre
+  if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
+    return true;
+  }
+  var test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
+
+  if (toFixed(test) == 0) return true;
+  return false;
+};
+
+//Find the length of the smaller arc between two angles on a given circle
+var arcLength = function (circle, startAngle, endAngle) {
+  return Math.abs(startAngle - endAngle) > Math.PI ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle)) : circle.radius * Math.abs(startAngle - endAngle);
+};
+
+//find the two points a distance from a point on the circumference of a circle
+//in the direction of point2
+var directedSpacedPointOnArc = function (circle, point1, point2, spacing) {
+  var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
+  var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
+  var sinThetaNeg = -sinThetaPos;
+
+  var xPos = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaPos * (point1.y - circle.centre.y);
+  var xNeg = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaNeg * (point1.y - circle.centre.y);
+  var yPos = circle.centre.y + sinThetaPos * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
+  var yNeg = circle.centre.y + sinThetaNeg * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
+
+  var p1 = new Point(xPos, yPos);
+  var p2 = new Point(xNeg, yNeg);
+
+  var a = distance(p1, point2);
+  var b = distance(p2, point2);
+  return a < b ? p1 : p2;
+};
+
+//calculate the normal vector given 2 points
+var normalVector = function (p1, p2) {
+  var d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  return new Point((p2.x - p1.x) / d, (p2.y - p1.y) / d);
+};
+
+//find the point at a distance from point1 along line defined by point1, point2,
+//in the direction of point2
+var directedSpacedPointOnLine = function (point1, point2, spacing) {
+  var dv = normalVector(point1, point2);
+  return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
+};
+
+var multiplyMatrices = function (m1, m2) {
+  var result = [];
+  for (var i = 0; i < m1.length; i++) {
+    result[i] = [];
+    for (var j = 0; j < m2[0].length; j++) {
+      var sum = 0;
+      for (var k = 0; k < m1[0].length; k++) {
+        sum += m1[i][k] * m2[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+};
+
+//create nxn identityMatrix
+var identityMatrix = function (n) {
+  return Array.apply(null, new Array(n)).map(function (x, i, a) {
+    return a.map(function (y, k) {
+      return i === k ? 1 : 0;
+    });
+  });
+};
+
 //TODO Document these classes
 // * ***********************************************************************
 // *
@@ -628,9 +628,9 @@ var Transformations = function () {
       }
       //Case 2: rotation
       else if (this.edges[i].orientation === 1) {
-          var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
-          mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-          this.edgeTransforms[i] = new Transform(mat);
+          var _mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
+          _mat = multiplyMatrices(_mat, this.rotatePolygonCCW[adj].matrix);
+          this.edgeTransforms[i] = new Transform(_mat);
         } else {
           console.error('initEdgeTransforms(): invalid orientation value');
           console.error(this.edges[i]);
@@ -1077,20 +1077,20 @@ var Drawing = function () {
 
     var edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh
-    for (var i = 0; i < divisions; i++) {
+    for (var _i = 0; _i < divisions; _i++) {
       //edge divisions reduce by one for each interior edge
-      var m = divisions - i + 1;
+      var m = divisions - _i + 1;
       geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
 
-      geometry.faceVertexUvs[0].push([new Point(i * p, 0), new Point((i + 1) * p, 0), new Point((i + 1) * p, p)]);
+      geometry.faceVertexUvs[0].push([new Point(_i * p, 0), new Point((_i + 1) * p, 0), new Point((_i + 1) * p, p)]);
 
       //range m-2 because we are ignoring the edges first vertex which was
       //used in the previous faces.push
       for (var j = 0; j < m - 2; j++) {
         geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + j, edgeStartingVertex + m + 1 + j));
-        geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 1 + j) * p, j * p), new Point((i + j + 2) * p, (j + 1) * p)]);
+        geometry.faceVertexUvs[0].push([new Point((_i + 1 + j) * p, (1 + j) * p), new Point((_i + 1 + j) * p, j * p), new Point((_i + j + 2) * p, (j + 1) * p)]);
         geometry.faces.push(new THREE.Face3(edgeStartingVertex + j + 1, edgeStartingVertex + m + 1 + j, edgeStartingVertex + j + 2));
-        geometry.faceVertexUvs[0].push([new Point((i + 1 + j) * p, (1 + j) * p), new Point((i + 2 + j) * p, (j + 1) * p), new Point((i + j + 2) * p, (j + 2) * p)]);
+        geometry.faceVertexUvs[0].push([new Point((_i + 1 + j) * p, (1 + j) * p), new Point((_i + 2 + j) * p, (j + 1) * p), new Point((_i + j + 2) * p, (j + 2) * p)]);
       }
       edgeStartingVertex += m;
     }
@@ -1340,17 +1340,17 @@ var Controller = function () {
 // *
 // *************************************************************************
 
-Math.sinh = Math.sinh || function (x) {
+Math.sinh = Math.sinh || function sinh(x) {
   var y = Math.exp(x);
   return (y - 1 / y) / 2;
 };
 
-Math.cosh = Math.cosh || function (x) {
+Math.cosh = Math.cosh || function cosh(x) {
   var y = Math.exp(x);
   return (y + 1 / y) / 2;
 };
 
-Math.cot = Math.cot || function (x) {
+Math.cot = Math.cot || function cot(x) {
   return 1 / Math.tan(x);
 };
 

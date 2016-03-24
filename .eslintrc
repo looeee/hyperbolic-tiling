@@ -7,5 +7,6 @@
     "spaced-comment": 0,
     "no-unused-vars": 0,
     "brace-style": [2, "stroustrup", { "allowSingleLine": true }],
+    "arrow-body-style": [0, "as-needed"]
   }
 }

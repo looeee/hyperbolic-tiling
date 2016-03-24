@@ -1,3 +1,7 @@
+# Deprecated
+
+With Tiny-lr being updated again and [adding more contributors](https://github.com/mklabs/tiny-lr/issues/96), I'm putting mini-lr back on the shelf for now, with the hope that we can keep the main project alive instead. Please move back to Tiny-lr if you've switched to mini-lr. Sorry for the inconvenience!
+
 # mini-lr [![Build Status](https://travis-ci.org/elwayman02/mini-lr.svg?branch=master)](https://travis-ci.org/elwayman02/mini-lr)
 
 This script manages a tiny [LiveReload](http://livereload.com/) server

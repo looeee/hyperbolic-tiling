@@ -13,6 +13,8 @@ const autoprefixer = require('gulp-autoprefixer');
 const rollup = require('gulp-rollup');
 const babel = require('rollup-plugin-babel');
 const livereload = require('gulp-livereload');
+const nodeResolve = require('rollup-plugin-node-resolve');
+const commonjs = require('rollup-plugin-commonjs');
 
 //Put all css/scss tasks here
 gulp.task('css', () => {
@@ -34,11 +36,19 @@ gulp.task('js', () => {
   })
   .pipe(rollup({
     plugins: [
+      commonjs({
+        include: 'node_modules/**',
+      }),
+      nodeResolve({
+        jsnext: true,
+        main: true, //for commonJS modules
+        extensions: ['.js', '.json'],
+        preferBuiltins: false,
+      }),
       babel({
         exclude: 'node_modules/**',
         babelrc: false,
         presets: ['es2015-loose-rollup'],
-        //plugins: ['transform-class-properties'],
       }),
     ],
   })

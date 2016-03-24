@@ -1,7 +1,4 @@
-import {
-  Controller,
-}
-from './controller';
+import { Controller } from './controller';
 
 // * ***********************************************************************
 // *
@@ -9,17 +6,17 @@ from './controller';
 // *
 // *************************************************************************
 
-Math.sinh = Math.sinh || function (x) {
+Math.sinh = Math.sinh || function sinh(x) {
   const y = Math.exp(x);
   return (y - 1 / y) / 2;
 };
 
-Math.cosh = Math.cosh || function (x) {
+Math.cosh = Math.cosh || function cosh(x) {
   const y = Math.exp(x);
   return (y + 1 / y) / 2;
 };
 
-Math.cot = Math.cot || function (x) {
+Math.cot = Math.cot || function cot(x) {
   return 1 / Math.tan(x);
 };
 
