@@ -57,6 +57,7 @@ export class Controller {
       t1 = performance.now();
       console.log(`DrawTiling took ${(t1 - t0)} milliseconds.`);
       document.querySelector('#image-controls').classList.remove('hide');
+      //document.querySelector('#tiling-image').scrollIntoView();
     };
   }
 
@@ -80,11 +81,5 @@ export class Controller {
   saveImageButtons() {
     document.querySelector('#save-image').onclick = () => this.draw.saveImage();
     document.querySelector('#download-image').onclick = () => this.draw.downloadImage();
-  }
-
-  hideControls() {
-    document.querySelector('#show-controls').onclick = () => {
-      document.querySelector('#left-controls').classList.toggle('hide');
-    };
   }
 }

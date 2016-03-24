@@ -8,26 +8,16 @@
 
 export class Layout {
   constructor() {
-    this.getElements();
     this.setupLayout();
-  }
-
-  //any calls to document.querySelector() go here
-  getElements() {
-    this.leftControlsDiv = document.querySelector('#left-controls');
-    this.rightControlsDiv = document.querySelector('#right-controls');
-    this.imageControlsDiv = document.querySelector('#image-controls');
-    this.saveImageBtn = document.querySelector('#save-image');
-    this.downloadImageBtn = document.querySelector('#download-image');
-    this.pValueDropdown = document.querySelector('#p');
-    this.qValueDropdown = document.querySelector('#q');
-    this.generateTilingBtn = document.querySelector('#generate-tiling');
-    this.showControlsCheckbox = document.querySelector('#show-controls');
-    this.designModeCheckbox = document.querySelector('#design-mode');
   }
 
   setupLayout() {
     this.tilingImage();
+    this.radiusSlider();
+  }
+
+  resize() {
+    //this.tilingImage();
     this.radiusSlider();
   }
 
@@ -44,8 +34,8 @@ export class Layout {
 
   tilingImage() {
     const image = document.querySelector('#tiling-image');
-    image.style.height = `${window.innerHeight}px`;
-    image.style.width = `${window.innerWidth}px`;
+    //image.style.height = `${window.innerHeight}px`;
+    //image.style.width = `${window.innerWidth}px`;
   }
 
 

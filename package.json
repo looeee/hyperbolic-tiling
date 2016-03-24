@@ -4,7 +4,8 @@
   "description": "hyperbolic-tiling",
   "main": "Gulpfile.js",
   "dependencies": {
-    "three": "^0.75.0"
+    "three": "^0.75.0",
+    "zenscroll": "^3.0.1"
   },
   "devDependencies": {
     "babel-core": "^6.7.4",

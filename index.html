@@ -39,18 +39,23 @@
       <div id="right-controls" class="flex-item">
 
         <div id="image-controls" class="hide">
-          <button id="test">Test</button>
           <button id="save-image">Save to Server</button>
           <a id="download-image"><button>Download Image</button></a>
         </div>
 
         <button id="generate-tiling">Generate Tiling</button>
         <br>
-        <span>Show Tiling Controls</span><input type="checkbox" id="show-controls" checked/><br>
-        <span>Design Mode</span><input type="checkbox" id="design-mode" checked/>
+        <span>Design Mode</span><input type="checkbox" id="design-mode" />
       </div>
 
-      <img id="tiling-image" class="flex-item"></img>
+      <div id="textures" class="flex-item">
+        <h3>Textures</h3>
+        <img id="texture1" class="texture" src="./images/textures/fish-black1.png" />
+        <img id="texture1" class="texture" src="./images/textures/fish-white1-flipped.png" />
+      </div>
+      <div class="flex-item">
+        <img id="tiling-image" ></img>
+      </div>
     </div>
   </body>
 

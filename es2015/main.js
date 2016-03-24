@@ -30,12 +30,12 @@ Math.cot = Math.cot || function cot(x) {
 // *
 // *************************************************************************
 
-
+let layout;
 window.onload = () => {
-  const layout = new Layout();
+  layout = new Layout();
   const controller = new Controller();
 };
 
 window.onresize = () => {
-  //controller.onResize();
+  layout.resize();
 };

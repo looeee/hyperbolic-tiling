@@ -1248,6 +1248,7 @@ var Controller = function () {
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
       document.querySelector('#image-controls').classList.remove('hide');
+      //document.querySelector('#tiling-image').scrollIntoView();
     };
   };
 
@@ -1278,12 +1279,6 @@ var Controller = function () {
     };
   };
 
-  Controller.prototype.hideControls = function hideControls() {
-    document.querySelector('#show-controls').onclick = function () {
-      document.querySelector('#left-controls').classList.toggle('hide');
-    };
-  };
-
   return Controller;
 }();
 
@@ -1299,28 +1294,16 @@ var Layout = function () {
   function Layout() {
     babelHelpers.classCallCheck(this, Layout);
 
-    this.getElements();
     this.setupLayout();
   }
 
-  //any calls to document.querySelector() go here
-
-
-  Layout.prototype.getElements = function getElements() {
-    this.leftControlsDiv = document.querySelector('#left-controls');
-    this.rightControlsDiv = document.querySelector('#right-controls');
-    this.imageControlsDiv = document.querySelector('#image-controls');
-    this.saveImageBtn = document.querySelector('#save-image');
-    this.downloadImageBtn = document.querySelector('#download-image');
-    this.pValueDropdown = document.querySelector('#p');
-    this.qValueDropdown = document.querySelector('#q');
-    this.generateTilingBtn = document.querySelector('#generate-tiling');
-    this.showControlsCheckbox = document.querySelector('#show-controls');
-    this.designModeCheckbox = document.querySelector('#design-mode');
-  };
-
   Layout.prototype.setupLayout = function setupLayout() {
     this.tilingImage();
+    this.radiusSlider();
+  };
+
+  Layout.prototype.resize = function resize() {
+    //this.tilingImage();
     this.radiusSlider();
   };
 
@@ -1335,8 +1318,8 @@ var Layout = function () {
 
   Layout.prototype.tilingImage = function tilingImage() {
     var image = document.querySelector('#tiling-image');
-    image.style.height = window.innerHeight + 'px';
-    image.style.width = window.innerWidth + 'px';
+    //image.style.height = `${window.innerHeight}px`;
+    //image.style.width = `${window.innerWidth}px`;
   };
 
   return Layout;
@@ -1368,11 +1351,12 @@ Math.cot = Math.cot || function cot(x) {
 // *
 // *************************************************************************
 
+var layout = void 0;
 window.onload = function () {
-  var layout = new Layout();
+  layout = new Layout();
   var controller = new Controller();
 };
 
 window.onresize = function () {
-  //controller.onResize();
+  layout.resize();
 };

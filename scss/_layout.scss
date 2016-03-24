@@ -2,8 +2,8 @@
   .flex-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    align-content: stretch;
+    //justify-content: space-between;
+    //align-content: stretch;
     margin-left: -$gutter;
     margin-top: -$gutter;
 
@@ -30,13 +30,11 @@
   }
 }
 
-@include n-columns(0, 0, false, 2);
+@include n-columns(300px, 0, false, 2);
 
 .flex-container {
   .flex-item {
     background: #e0ddd5;
-    //color: #171e42;
-    //box-sizing: border-box;
   }
 }
 
@@ -54,5 +52,14 @@
 }
 
 #tiling-image{
+  width: 100%;
+}
+
+#textures{
+  margin-top: 2%;
   min-width: 100%;
+}
+
+.texture{
+  max-width: 300px;
 }

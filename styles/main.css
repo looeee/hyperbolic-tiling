@@ -72,18 +72,12 @@ button:hover {
   -webkit-flex-wrap: wrap;
       -ms-flex-wrap: wrap;
           flex-wrap: wrap;
-  -webkit-justify-content: space-between;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
-  -webkit-align-content: stretch;
-      -ms-flex-line-pack: stretch;
-          align-content: stretch;
   margin-left: 0;
   margin-top: 0; }
   .flex-container .flex-item {
-    -webkit-flex: 1 0 0;
-        -ms-flex: 1 0 0;
-            flex: 1 0 0;
+    -webkit-flex: 1 0 300px;
+        -ms-flex: 1 0 300px;
+            flex: 1 0 300px;
     margin-left: 0;
     margin-top: 0; }
 
@@ -101,7 +95,14 @@ button:hover {
   margin-left: 2%; }
 
 #tiling-image {
+  width: 100%; }
+
+#textures {
+  margin-top: 2%;
   min-width: 100%; }
+
+.texture {
+  max-width: 300px; }
 
 .hide {
   display: none !important; }
