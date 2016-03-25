@@ -19,7 +19,7 @@ export class Controller {
   constructor() {
     this.layout = new Layout();
     this.draw = new Drawing();
-    this.regularHyperbolicTiling();
+    //this.regularHyperbolicTiling();
     this.setupControls();
     this.layout = new Layout();
   }
@@ -33,24 +33,27 @@ export class Controller {
   }
 
   setupControls() {
-    this.saveImageButtons();
-    this.radiusSlider();
+    //this.saveImageButtons();
+    //this.radiusSlider();
     this.tesselationTypeSelectButtons();
   }
 
   tesselationTypeSelectButtons() {
-    let selected;
     const euclidean = document.querySelector('#euclidean');
     const hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = () => {
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      selected = 'euclidean';
+      this.layout.destroyHyperbolicControls();
+      this.layout.loadEuclideanControls();
+      this.layout.loadUniversalControls();
     };
     hyperbolic.onclick = () => {
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      selected = 'hyperbolic';
+      this.layout.destroyEuclideanControls();
+      this.layout.loadHyperbolicControls();
+      this.layout.loadUniversalControls();
     };
   }
 

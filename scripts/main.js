@@ -1193,6 +1193,16 @@ var Drawing = function () {
   return Drawing;
 }();
 
+fetchAndAppendHTMLToElement = function (url, elem) {
+  fetch(url).then(function (response) {
+    return response.text();
+  }).then(function (returnedValue) {
+    elem.innerHTML = returnedValue;
+  }).catch(function (err) {
+    console.error(err);
+  });
+};
+
 // * ***********************************************************************
 // *
 // *  LAYOUT CLASS
@@ -1207,9 +1217,7 @@ var Layout = function () {
     this.setupLayout();
   }
 
-  Layout.prototype.setupLayout = function setupLayout() {
-    this.radiusSlider();
-  };
+  Layout.prototype.setupLayout = function setupLayout() {};
 
   Layout.prototype.onResize = function onResize() {
     this.radiusSlider();
@@ -1222,6 +1230,40 @@ var Layout = function () {
     slider.setAttribute('max', maxRadius);
     slider.value = maxRadius;
     document.querySelector('#selected-radius').innerHTML = slider.value;
+  };
+
+  Layout.prototype.loadEuclideanControls = function loadEuclideanControls() {
+    var controls = document.querySelector('#euclidean-controls');
+    if (controls.innerHTML === '') {
+      fetchAndAppendHTMLToElement('./ajax_components/euclidean_controls.html', controls);
+    }
+  };
+
+  Layout.prototype.destroyEuclideanControls = function destroyEuclideanControls() {
+    document.querySelector('#euclidean-controls').innerHTML = '';
+  };
+
+  Layout.prototype.loadHyperbolicControls = function loadHyperbolicControls() {
+    var controls = document.querySelector('#hyperbolic-controls');
+    if (controls.innerHTML === '') {
+      fetchAndAppendHTMLToElement('./ajax_components/hyperbolic_controls.html', controls);
+    }
+  };
+
+  Layout.prototype.destroyHyperbolicControls = function destroyHyperbolicControls() {
+    document.querySelector('#hyperbolic-controls').innerHTML = '';
+  };
+
+  Layout.prototype.loadUniversalControls = function loadUniversalControls() {
+    var controls = document.querySelector('#universal-controls');
+    if (controls.innerHTML === '') {
+      fetchAndAppendHTMLToElement('./ajax_components/universal_controls.html', controls);
+    }
+    //this.radiusSlider();
+  };
+
+  Layout.prototype.destroyUniversalControls = function destroyUniversalControls() {
+    document.querySelector('#universal-controls').innerHTML = '';
   };
 
   return Layout;
@@ -1238,7 +1280,7 @@ var Controller = function () {
 
     this.layout = new Layout();
     this.draw = new Drawing();
-    this.regularHyperbolicTiling();
+    //this.regularHyperbolicTiling();
     this.setupControls();
     this.layout = new Layout();
   }
@@ -1252,51 +1294,56 @@ var Controller = function () {
   };
 
   Controller.prototype.setupControls = function setupControls() {
-    this.saveImageButtons();
-    this.radiusSlider();
+    //this.saveImageButtons();
+    //this.radiusSlider();
     this.tesselationTypeSelectButtons();
   };
 
   Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
-    var selected = void 0;
+    var _this = this;
+
     var euclidean = document.querySelector('#euclidean');
     var hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = function () {
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      selected = 'euclidean';
+      _this.layout.destroyHyperbolicControls();
+      _this.layout.loadEuclideanControls();
+      _this.layout.loadUniversalControls();
     };
     hyperbolic.onclick = function () {
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      selected = 'hyperbolic';
+      _this.layout.destroyEuclideanControls();
+      _this.layout.loadHyperbolicControls();
+      _this.layout.loadUniversalControls();
     };
   };
 
   Controller.prototype.radiusSlider = function radiusSlider() {
-    var _this = this;
+    var _this2 = this;
 
     var slider = document.querySelector('#tiling-radius');
     this.draw.radius = slider.value;
     slider.oninput = function () {
       document.querySelector('#selected-radius').innerHTML = slider.value;
-      _this.draw.radius = slider.value;
+      _this2.draw.radius = slider.value;
     };
   };
 
   Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
-    var _this2 = this;
+    var _this3 = this;
 
     document.querySelector('#generate-tiling').onclick = function () {
-      _this2.draw.reset();
-      var spec = _this2.tilingSpec();
+      _this3.draw.reset();
+      var spec = _this3.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);
       var t0 = performance.now();
       var tiling = regularTesselation.generateTiling(document.querySelector('#design-mode').checked);
       var t1 = performance.now();
       console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
       t0 = performance.now();
-      _this2.draw.polygonArray(tiling, spec.textures);
+      _this3.draw.polygonArray(tiling, spec.textures);
       t1 = performance.now();
       console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
       document.querySelector('#image-controls').classList.remove('hide');
@@ -1321,13 +1368,13 @@ var Controller = function () {
   };
 
   Controller.prototype.saveImageButtons = function saveImageButtons() {
-    var _this3 = this;
+    var _this4 = this;
 
     document.querySelector('#save-image').onclick = function () {
-      return _this3.draw.saveImage();
+      return _this4.draw.saveImage();
     };
     document.querySelector('#download-image').onclick = function () {
-      return _this3.draw.downloadImage();
+      return _this4.draw.downloadImage();
     };
   };
 

@@ -96,20 +96,10 @@ button.selected {
       -ms-flex-pack: distribute;
           justify-content: space-around; }
 
-#tesselation-selector {
-  margin-bottom: 2%; }
-
-#left-controls {
-  margin-right: 2%; }
-
-#right-controls {
-  margin-left: 2%; }
-
 #tiling-image {
   width: 100%; }
 
 #textures {
-  margin-top: 2%;
   width: 100%;
   -webkit-justify-content: space-around;
       -ms-flex-pack: distribute;

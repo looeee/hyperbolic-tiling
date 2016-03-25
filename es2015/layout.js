@@ -1,3 +1,13 @@
+fetchAndAppendHTMLToElement = (url, elem) => {
+  fetch(url).then((response) => {
+    return response.text();
+  }).then((returnedValue) => {
+    elem.innerHTML = returnedValue;
+  }).catch((err) => {
+    console.error(err);
+  });
+};
+
 // * ***********************************************************************
 // *
 // *  LAYOUT CLASS
@@ -10,9 +20,7 @@ export class Layout {
     this.setupLayout();
   }
 
-  setupLayout() {
-    this.radiusSlider();
-  }
+  setupLayout() {}
 
   onResize() {
     this.radiusSlider();
@@ -29,5 +37,38 @@ export class Layout {
     document.querySelector('#selected-radius').innerHTML = slider.value;
   }
 
+  loadEuclideanControls() {
+    const controls = document.querySelector('#euclidean-controls');
+    if (controls.innerHTML === '') {
+      fetchAndAppendHTMLToElement('./ajax_components/euclidean_controls.html', controls);
+    }
+  }
+
+  destroyEuclideanControls() {
+    document.querySelector('#euclidean-controls').innerHTML = '';
+  }
+
+  loadHyperbolicControls() {
+    const controls = document.querySelector('#hyperbolic-controls');
+    if (controls.innerHTML === '') {
+      fetchAndAppendHTMLToElement('./ajax_components/hyperbolic_controls.html', controls);
+    }
+  }
+
+  destroyHyperbolicControls() {
+    document.querySelector('#hyperbolic-controls').innerHTML = '';
+  }
+
+  loadUniversalControls() {
+    const controls = document.querySelector('#universal-controls');
+    if (controls.innerHTML === '') {
+      fetchAndAppendHTMLToElement('./ajax_components/universal_controls.html', controls);
+    }
+    //this.radiusSlider();
+  }
+
+  destroyUniversalControls() {
+    document.querySelector('#universal-controls').innerHTML = '';
+  }
 
 }
