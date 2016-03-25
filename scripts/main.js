@@ -1216,7 +1216,6 @@ var Controller = function () {
 
   Controller.prototype.setupControls = function setupControls() {
     this.saveImageButtons();
-    this.hideControls();
     this.radiusSlider();
   };
 

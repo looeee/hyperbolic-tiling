@@ -27,7 +27,6 @@ export class Controller {
 
   setupControls() {
     this.saveImageButtons();
-    this.hideControls();
     this.radiusSlider();
   }
 
