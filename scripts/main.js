@@ -1195,6 +1195,40 @@ var Drawing = function () {
 
 // * ***********************************************************************
 // *
+// *  LAYOUT CLASS
+// *
+// *  controls position/loading/hiding etc. Also controls ajax (fetch via polyfill)
+// *************************************************************************
+
+var Layout = function () {
+  function Layout() {
+    babelHelpers.classCallCheck(this, Layout);
+
+    this.setupLayout();
+  }
+
+  Layout.prototype.setupLayout = function setupLayout() {
+    this.radiusSlider();
+  };
+
+  Layout.prototype.onResize = function onResize() {
+    this.radiusSlider();
+  };
+
+  Layout.prototype.radiusSlider = function radiusSlider() {
+    var slider = document.querySelector('#tiling-radius');
+    var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
+
+    slider.setAttribute('max', maxRadius);
+    slider.value = maxRadius;
+    document.querySelector('#selected-radius').innerHTML = slider.value;
+  };
+
+  return Layout;
+}();
+
+// * ***********************************************************************
+// *
 // *  CONTROLLER CLASS
 // *
 // *************************************************************************
@@ -1202,21 +1236,41 @@ var Controller = function () {
   function Controller() {
     babelHelpers.classCallCheck(this, Controller);
 
+    this.layout = new Layout();
     this.draw = new Drawing();
     this.regularHyperbolicTiling();
     this.setupControls();
+    this.layout = new Layout();
   }
 
   Controller.prototype.onResize = function onResize() {
-    this.setRadius();
-    this.radiusSlider.setAttribute('max', this.maxRadius);
-    if (this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
-    this.centreTilingImage();
+    this.layout.onResize();
+    var sliderValue = document.querySelector('#tiling-radius').value;
+    if (this.draw.radius > sliderValue) {
+      this.draw.radius = sliderValue;
+    }
   };
 
   Controller.prototype.setupControls = function setupControls() {
     this.saveImageButtons();
     this.radiusSlider();
+    this.tesselationTypeSelectButtons();
+  };
+
+  Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
+    var selected = void 0;
+    var euclidean = document.querySelector('#euclidean');
+    var hyperbolic = document.querySelector('#hyperbolic');
+    euclidean.onclick = function () {
+      euclidean.classList.add('selected');
+      hyperbolic.classList.remove('selected');
+      selected = 'euclidean';
+    };
+    hyperbolic.onclick = function () {
+      hyperbolic.classList.add('selected');
+      euclidean.classList.remove('selected');
+      selected = 'hyperbolic';
+    };
   };
 
   Controller.prototype.radiusSlider = function radiusSlider() {
@@ -1224,7 +1278,6 @@ var Controller = function () {
 
     var slider = document.querySelector('#tiling-radius');
     this.draw.radius = slider.value;
-    console.log(slider.value);
     slider.oninput = function () {
       document.querySelector('#selected-radius').innerHTML = slider.value;
       _this.draw.radius = slider.value;
@@ -1283,49 +1336,6 @@ var Controller = function () {
 
 // * ***********************************************************************
 // *
-// *  LAYOUT CLASS
-// *
-// *  controls position/loading/hiding etc but NOT functionality
-// *  of screen elements
-// *************************************************************************
-
-var Layout = function () {
-  function Layout() {
-    babelHelpers.classCallCheck(this, Layout);
-
-    this.setupLayout();
-  }
-
-  Layout.prototype.setupLayout = function setupLayout() {
-    this.tilingImage();
-    this.radiusSlider();
-  };
-
-  Layout.prototype.resize = function resize() {
-    //this.tilingImage();
-    this.radiusSlider();
-  };
-
-  Layout.prototype.radiusSlider = function radiusSlider() {
-    var slider = document.querySelector('#tiling-radius');
-    var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
-
-    slider.setAttribute('max', maxRadius);
-    slider.value = maxRadius;
-    document.querySelector('#selected-radius').innerHTML = slider.value;
-  };
-
-  Layout.prototype.tilingImage = function tilingImage() {
-    var image = document.querySelector('#tiling-image');
-    //image.style.height = `${window.innerHeight}px`;
-    //image.style.width = `${window.innerWidth}px`;
-  };
-
-  return Layout;
-}();
-
-// * ***********************************************************************
-// *
 // *   POLYFILLS
 // *
 // *************************************************************************
@@ -1350,12 +1360,11 @@ Math.cot = Math.cot || function cot(x) {
 // *
 // *************************************************************************
 
-var layout = void 0;
+var controller = void 0;
 window.onload = function () {
-  layout = new Layout();
-  var controller = new Controller();
+  controller = new Controller();
 };
 
 window.onresize = function () {
-  layout.resize();
+  controller.onResize();
 };

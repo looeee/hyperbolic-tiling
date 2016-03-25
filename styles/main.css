@@ -19,7 +19,8 @@ canvas{
 */
 h1 {
   font-weight: 900;
-  color: darkgrey; }
+  color: darkgrey;
+  text-align: center; }
 
 h2, h3 {
   font-weight: 700;
@@ -46,6 +47,9 @@ input, option, select, button {
 
 button:hover {
   background-image: linear-gradient(to bottom, #252525, #000000); }
+
+button.selected {
+  background-image: linear-gradient(to bottom, #6fb3c6, #ffffff); }
 
 ::-webkit-scrollbar {
   width: 6px;
@@ -84,9 +88,16 @@ button:hover {
 .flex-container .flex-item {
   background: #e0ddd5; }
 
-#title {
-  min-width: 100%;
-  text-align: center; }
+.full-width {
+  min-width: 100%; }
+
+#controls {
+  -webkit-justify-content: space-around;
+      -ms-flex-pack: distribute;
+          justify-content: space-around; }
+
+#tesselation-selector {
+  margin-bottom: 2%; }
 
 #left-controls {
   margin-right: 2%; }
@@ -99,10 +110,14 @@ button:hover {
 
 #textures {
   margin-top: 2%;
-  min-width: 100%; }
+  width: 100%;
+  -webkit-justify-content: space-around;
+      -ms-flex-pack: distribute;
+          justify-content: space-around; }
 
 .texture {
-  max-width: 300px; }
+  max-width: 300px;
+  max-height: 300px; }
 
 .hide {
   display: none !important; }

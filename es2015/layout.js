@@ -2,8 +2,7 @@
 // *
 // *  LAYOUT CLASS
 // *
-// *  controls position/loading/hiding etc but NOT functionality
-// *  of screen elements
+// *  controls position/loading/hiding etc. Also controls ajax (fetch via polyfill)
 // *************************************************************************
 
 export class Layout {
@@ -12,12 +11,10 @@ export class Layout {
   }
 
   setupLayout() {
-    this.tilingImage();
     this.radiusSlider();
   }
 
-  resize() {
-    //this.tilingImage();
+  onResize() {
     this.radiusSlider();
   }
 
@@ -30,12 +27,6 @@ export class Layout {
     slider.setAttribute('max', maxRadius);
     slider.value = maxRadius;
     document.querySelector('#selected-radius').innerHTML = slider.value;
-  }
-
-  tilingImage() {
-    const image = document.querySelector('#tiling-image');
-    //image.style.height = `${window.innerHeight}px`;
-    //image.style.width = `${window.innerWidth}px`;
   }
 
 

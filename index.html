@@ -18,9 +18,16 @@
 
   <body>
 
-    <h1 id="title">Hyperbolic Tiling</h1>
+    <h1 id="title" class="full-width">Hyperbolic Tiling</h1>
 
-    <div class="flex-container">
+    <div id="controls" class="flex-container">
+
+      <div id="tesselation-selector" class="flex-item full-width">
+        <h3>Step 1: Select Tesselation Type</h3>
+        <button id="euclidean">Euclidean</button>
+        <button id="hyperbolic">Hyperbolic</button>
+      </div>
+
       <div id="left-controls" class="flex-item">
         <select id="p">
           <option value="4">4</option>
@@ -51,12 +58,13 @@
       </div>
     </div>
 
+    <div id="textures" class="flex-container">
+      <h3 id="texture-title" class="flex-item full-width">Textures</h3>
+      <img id="texture1" class="texture flex-item" src="./images/textures/fish-black1.png" />
+      <img id="texture2" class="texture flex-item" src="./images/textures/fish-white1-flipped.png" />
+    </div>
+
     <div class="flex-container">
-      <div id="textures">
-        <h3 id="texture-title">Textures</h3>
-        <img id="texture1" class="texture flex-item" src="./images/textures/fish-black1.png" />
-        <img id="texture2" class="texture flex-item" src="./images/textures/fish-white1-flipped.png" />
-      </div>
       <div class="flex-item">
         <img id="tiling-image" ></img>
       </div>

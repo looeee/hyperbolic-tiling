@@ -38,9 +38,19 @@
   }
 }
 
-#title{
+.full-width{
   min-width: 100%;
-  text-align: center;
+}
+
+#title{
+}
+
+#controls{
+  justify-content: space-around;
+}
+
+#tesselation-selector{
+  margin-bottom: 2%;
 }
 
 #left-controls{
@@ -57,9 +67,11 @@
 
 #textures{
   margin-top: 2%;
-  min-width: 100%;
+  width: 100%;
+  justify-content: space-around;
 }
 
 .texture{
   max-width: 300px;
+  max-height: 300px;
 }

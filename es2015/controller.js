@@ -6,6 +6,10 @@ import {
   Drawing,
 }
 from './drawing';
+import {
+  Layout,
+}
+from './layout';
 // * ***********************************************************************
 // *
 // *  CONTROLLER CLASS
@@ -13,27 +17,46 @@ from './drawing';
 // *************************************************************************
 export class Controller {
   constructor() {
+    this.layout = new Layout();
     this.draw = new Drawing();
     this.regularHyperbolicTiling();
     this.setupControls();
+    this.layout = new Layout();
   }
 
   onResize() {
-    this.setRadius();
-    this.radiusSlider.setAttribute('max', this.maxRadius);
-    if (this.draw.radius > this.maxRadius) this.draw.radius = this.maxRadius;
-    this.centreTilingImage();
+    this.layout.onResize();
+    const sliderValue = document.querySelector('#tiling-radius').value;
+    if (this.draw.radius > sliderValue) {
+      this.draw.radius = sliderValue;
+    }
   }
 
   setupControls() {
     this.saveImageButtons();
     this.radiusSlider();
+    this.tesselationTypeSelectButtons();
+  }
+
+  tesselationTypeSelectButtons() {
+    let selected;
+    const euclidean = document.querySelector('#euclidean');
+    const hyperbolic = document.querySelector('#hyperbolic');
+    euclidean.onclick = () => {
+      euclidean.classList.add('selected');
+      hyperbolic.classList.remove('selected');
+      selected = 'euclidean';
+    };
+    hyperbolic.onclick = () => {
+      hyperbolic.classList.add('selected');
+      euclidean.classList.remove('selected');
+      selected = 'hyperbolic';
+    };
   }
 
   radiusSlider() {
     const slider = document.querySelector('#tiling-radius');
     this.draw.radius = slider.value;
-    console.log(slider.value);
     slider.oninput = () => {
       document.querySelector('#selected-radius').innerHTML = slider.value;
       this.draw.radius = slider.value;
