@@ -13,12 +13,14 @@
     <link rel="stylesheet" type="text/css" href="styles/main.css" />
 
     <script src="node_modules/three/three.js"></script>
+    <script src="node_modules/whatwg-fetch/fetch.js"></script>
   </head>
 
   <body>
-    <div class="flex-container">
-      <h1 id="title" class="flex-item">Hyperbolic Tiling</h1>
 
+    <h1 id="title">Hyperbolic Tiling</h1>
+
+    <div class="flex-container">
       <div id="left-controls" class="flex-item">
         <select id="p">
           <option value="4">4</option>
@@ -47,11 +49,13 @@
         <br>
         <span>Design Mode</span><input type="checkbox" id="design-mode" />
       </div>
+    </div>
 
-      <div id="textures" class="flex-item">
-        <h3>Textures</h3>
-        <img id="texture1" class="texture" src="./images/textures/fish-black1.png" />
-        <img id="texture1" class="texture" src="./images/textures/fish-white1-flipped.png" />
+    <div class="flex-container">
+      <div id="textures">
+        <h3 id="texture-title">Textures</h3>
+        <img id="texture1" class="texture flex-item" src="./images/textures/fish-black1.png" />
+        <img id="texture2" class="texture flex-item" src="./images/textures/fish-white1-flipped.png" />
       </div>
       <div class="flex-item">
         <img id="tiling-image" ></img>
