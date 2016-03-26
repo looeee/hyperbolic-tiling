@@ -1,8 +1,12 @@
-fetchAndAppendHTMLToElement = (url, elem) => {
+fetchAndAppendHTMLToElement = (url, elem, promise) => {
   fetch(url).then((response) => {
     return response.text();
   }).then((returnedValue) => {
     elem.innerHTML = returnedValue;
+    if (promise) {
+      console.log(promise);
+      promise.resolve();
+    }
   }).catch((err) => {
     console.error(err);
   });
@@ -20,7 +24,9 @@ export class Layout {
     this.setupLayout();
   }
 
-  setupLayout() {}
+  setupLayout() {
+    this.radiusSlider();
+  }
 
   onResize() {
     this.radiusSlider();
@@ -37,38 +43,13 @@ export class Layout {
     document.querySelector('#selected-radius').innerHTML = slider.value;
   }
 
-  loadEuclideanControls() {
-    const controls = document.querySelector('#euclidean-controls');
-    if (controls.innerHTML === '') {
-      fetchAndAppendHTMLToElement('./ajax_components/euclidean_controls.html', controls);
-    }
+  hideElement(element) {
+    document.querySelector(element).classList.add('hide');
   }
 
-  destroyEuclideanControls() {
-    document.querySelector('#euclidean-controls').innerHTML = '';
+  showElement(element) {
+    document.querySelector(element).classList.remove('hide');
   }
 
-  loadHyperbolicControls() {
-    const controls = document.querySelector('#hyperbolic-controls');
-    if (controls.innerHTML === '') {
-      fetchAndAppendHTMLToElement('./ajax_components/hyperbolic_controls.html', controls);
-    }
-  }
-
-  destroyHyperbolicControls() {
-    document.querySelector('#hyperbolic-controls').innerHTML = '';
-  }
-
-  loadUniversalControls() {
-    const controls = document.querySelector('#universal-controls');
-    if (controls.innerHTML === '') {
-      fetchAndAppendHTMLToElement('./ajax_components/universal_controls.html', controls);
-    }
-    //this.radiusSlider();
-  }
-
-  destroyUniversalControls() {
-    document.querySelector('#universal-controls').innerHTML = '';
-  }
 
 }

@@ -67,4 +67,5 @@ gulp.task('default', ['css', 'js'], () => {
   gulp.watch(scssPath, ['css']);
   gulp.watch(`${es2015Path}/**/*.js`, ['js']);
   gulp.watch('**/*.html', ['reload']);
+  gulp.watch('**/*.php', ['reload']);
 });

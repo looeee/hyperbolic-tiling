@@ -33,9 +33,10 @@ export class Controller {
   }
 
   setupControls() {
-    //this.saveImageButtons();
-    //this.radiusSlider();
+    this.saveImageButtons();
+    this.radiusSlider();
     this.tesselationTypeSelectButtons();
+    this.generateTilingButton();
   }
 
   tesselationTypeSelectButtons() {
@@ -44,16 +45,16 @@ export class Controller {
     euclidean.onclick = () => {
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      this.layout.destroyHyperbolicControls();
-      this.layout.loadEuclideanControls();
-      this.layout.loadUniversalControls();
+      this.layout.showElement('#euclidean-controls');
+      this.layout.hideElement('#hyperbolic-controls');
+      this.layout.showElement('#universal-controls');
     };
     hyperbolic.onclick = () => {
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      this.layout.destroyEuclideanControls();
-      this.layout.loadHyperbolicControls();
-      this.layout.loadUniversalControls();
+      this.layout.showElement('#hyperbolic-controls');
+      this.layout.hideElement('#euclidean-controls');
+      this.layout.showElement('#universal-controls');
     };
   }
 
@@ -66,8 +67,9 @@ export class Controller {
     };
   }
 
-  regularHyperbolicTiling() {
+  generateTilingButton() {
     document.querySelector('#generate-tiling').onclick = () => {
+      console.log('obj');
       this.draw.reset();
       const spec = this.tilingSpec();
       const regularTesselation = new RegularTesselation(spec);

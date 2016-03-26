@@ -1193,11 +1193,15 @@ var Drawing = function () {
   return Drawing;
 }();
 
-fetchAndAppendHTMLToElement = function (url, elem) {
+fetchAndAppendHTMLToElement = function (url, elem, promise) {
   fetch(url).then(function (response) {
     return response.text();
   }).then(function (returnedValue) {
     elem.innerHTML = returnedValue;
+    if (promise) {
+      console.log(promise);
+      promise.resolve();
+    }
   }).catch(function (err) {
     console.error(err);
   });
@@ -1217,7 +1221,9 @@ var Layout = function () {
     this.setupLayout();
   }
 
-  Layout.prototype.setupLayout = function setupLayout() {};
+  Layout.prototype.setupLayout = function setupLayout() {
+    this.radiusSlider();
+  };
 
   Layout.prototype.onResize = function onResize() {
     this.radiusSlider();
@@ -1232,38 +1238,12 @@ var Layout = function () {
     document.querySelector('#selected-radius').innerHTML = slider.value;
   };
 
-  Layout.prototype.loadEuclideanControls = function loadEuclideanControls() {
-    var controls = document.querySelector('#euclidean-controls');
-    if (controls.innerHTML === '') {
-      fetchAndAppendHTMLToElement('./ajax_components/euclidean_controls.html', controls);
-    }
+  Layout.prototype.hideElement = function hideElement(element) {
+    document.querySelector(element).classList.add('hide');
   };
 
-  Layout.prototype.destroyEuclideanControls = function destroyEuclideanControls() {
-    document.querySelector('#euclidean-controls').innerHTML = '';
-  };
-
-  Layout.prototype.loadHyperbolicControls = function loadHyperbolicControls() {
-    var controls = document.querySelector('#hyperbolic-controls');
-    if (controls.innerHTML === '') {
-      fetchAndAppendHTMLToElement('./ajax_components/hyperbolic_controls.html', controls);
-    }
-  };
-
-  Layout.prototype.destroyHyperbolicControls = function destroyHyperbolicControls() {
-    document.querySelector('#hyperbolic-controls').innerHTML = '';
-  };
-
-  Layout.prototype.loadUniversalControls = function loadUniversalControls() {
-    var controls = document.querySelector('#universal-controls');
-    if (controls.innerHTML === '') {
-      fetchAndAppendHTMLToElement('./ajax_components/universal_controls.html', controls);
-    }
-    //this.radiusSlider();
-  };
-
-  Layout.prototype.destroyUniversalControls = function destroyUniversalControls() {
-    document.querySelector('#universal-controls').innerHTML = '';
+  Layout.prototype.showElement = function showElement(element) {
+    document.querySelector(element).classList.remove('hide');
   };
 
   return Layout;
@@ -1294,9 +1274,10 @@ var Controller = function () {
   };
 
   Controller.prototype.setupControls = function setupControls() {
-    //this.saveImageButtons();
-    //this.radiusSlider();
+    this.saveImageButtons();
+    this.radiusSlider();
     this.tesselationTypeSelectButtons();
+    this.generateTilingButton();
   };
 
   Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
@@ -1307,16 +1288,16 @@ var Controller = function () {
     euclidean.onclick = function () {
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      _this.layout.destroyHyperbolicControls();
-      _this.layout.loadEuclideanControls();
-      _this.layout.loadUniversalControls();
+      _this.layout.showElement('#euclidean-controls');
+      _this.layout.hideElement('#hyperbolic-controls');
+      _this.layout.showElement('#universal-controls');
     };
     hyperbolic.onclick = function () {
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      _this.layout.destroyEuclideanControls();
-      _this.layout.loadHyperbolicControls();
-      _this.layout.loadUniversalControls();
+      _this.layout.showElement('#hyperbolic-controls');
+      _this.layout.hideElement('#euclidean-controls');
+      _this.layout.showElement('#universal-controls');
     };
   };
 
@@ -1331,10 +1312,11 @@ var Controller = function () {
     };
   };
 
-  Controller.prototype.regularHyperbolicTiling = function regularHyperbolicTiling() {
+  Controller.prototype.generateTilingButton = function generateTilingButton() {
     var _this3 = this;
 
     document.querySelector('#generate-tiling').onclick = function () {
+      console.log('obj');
       _this3.draw.reset();
       var spec = _this3.tilingSpec();
       var regularTesselation = new RegularTesselation(spec);

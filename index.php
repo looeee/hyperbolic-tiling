@@ -29,9 +29,15 @@
         <span>Design Mode</span><input type="checkbox" id="design-mode" />
       </div>
 
-      <div id="hyperbolic-controls" class="flex-item full-width"></div>
-      <div id="euclidean-controls" class="flex-item full-width"></div>
-      <div id="universal-controls"></div>
+      <div id="hyperbolic-controls" class="flex-item full-width hide">
+        <?php require_once('html_components/hyperbolic_controls.html'); ?>
+      </div>
+      <div id="euclidean-controls" class="flex-item full-width hide">
+        <?php require_once('html_components/euclidean_controls.html'); ?>
+      </div>
+      <div id="universal-controls" class="flex-item full-width hide">
+        <?php require_once('html_components/universal_controls.html'); ?>
+      </div>
 
     </div>
 
