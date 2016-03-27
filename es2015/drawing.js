@@ -89,16 +89,18 @@ export class Drawing {
     this.scene.add(circle);
   }
 
-  polygonArray(array, textureArray, color, wireframe) {
+  //TODO: passing elem param through lots of function to eventually get to renderToImageElem
+  // which is called after final texture has loaded. There must be a better way!
+  polygonArray(array, textureArray, color, wireframe, elem) {
     color = color || 0xffffff;
     wireframe = wireframe || false;
     for (let i = 0; i < array.length; i++) {
-      this.polygon(array[i], color, textureArray, wireframe);
+      this.polygon(array[i], color, textureArray, wireframe, elem);
     }
   }
 
   //Note: polygons assumed to be triangular!
-  polygon(polygon, color, textures, wireframe) {
+  polygon(polygon, color, textures, wireframe, elem) {
     const p = 1 / polygon.numDivisions;
     const divisions = polygon.numDivisions;
     const geometry = new THREE.Geometry();
@@ -160,23 +162,23 @@ export class Drawing {
       edgeStartingVertex += m;
     }
 
-    const mesh = this.createMesh(geometry, color, textures, polygon.materialIndex, wireframe);
+    const mesh = this.createMesh(geometry, color, textures, polygon.materialIndex, wireframe, elem);
     this.scene.add(mesh);
   }
 
   //NOTE: some polygons are inverted due to vertex order,
   //solved this by making material doubles sided but this might cause problems with textures
-  createMesh(geometry, color, textures, materialIndex, wireframe) {
+  createMesh(geometry, color, textures, materialIndex, wireframe, elem) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
     if (!this.pattern) {
-      this.createPattern(color, textures, wireframe);
+      this.createPattern(color, textures, wireframe, elem);
     }
     return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
   }
 
-  createPattern(color, textures, wireframe) {
+  createPattern(color, textures, wireframe, elem) {
     this.pattern = new THREE.MultiMaterial();
     const texturesLoaded = [];
 
@@ -192,7 +194,7 @@ export class Drawing {
           texturesLoaded.push(i);
           //call render when all textures are loaded
           if (texturesLoaded.length === textures.length) {
-            this.render();
+            this.renderToImageElem(elem);
           }
         });
 
@@ -201,16 +203,15 @@ export class Drawing {
     }
   }
 
-  render() {
+  //render to image elem
+  renderToImageElem(elem) {
     this.renderer.render(this.scene, this.camera);
-    this.appendImageToDom();
+    this.appendImageToDom(elem);
     this.clearScene();
   }
 
-  //TODO doesn't update when calling generate a second time
-  appendImageToDom() {
-    const tilingImage = document.querySelector('#tiling-image');
-    tilingImage.setAttribute('src', this.renderer.domElement.toDataURL());
+  appendImageToDom(elem) {
+    document.querySelector(elem).setAttribute('src', this.renderer.domElement.toDataURL());
   }
 
   //Download the canvas as a png image

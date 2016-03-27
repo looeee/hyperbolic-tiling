@@ -11,9 +11,10 @@
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,700,900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="styles/main.css" />
-
+    <script src="//cdn.jsdelivr.net/lodash/4.6.1/lodash.min.js"></script>
     <script src="node_modules/three/three.js"></script>
     <script src="node_modules/whatwg-fetch/fetch.js"></script>
+
   </head>
 
   <body>
@@ -26,7 +27,6 @@
         <h3>Step 1: Select Tesselation Type</h3>
         <button id="euclidean">Euclidean</button>
         <button id="hyperbolic">Hyperbolic</button>
-        <span>Design Mode</span><input type="checkbox" id="design-mode" />
       </div>
 
       <div id="hyperbolic-controls" class="flex-item full-width hide">
@@ -35,6 +35,7 @@
       <div id="euclidean-controls" class="flex-item full-width hide">
         <?php require_once('html_components/euclidean_controls.html'); ?>
       </div>
+
       <div id="universal-controls" class="flex-item full-width hide">
         <?php require_once('html_components/universal_controls.html'); ?>
       </div>
@@ -43,7 +44,7 @@
 
     <div class="flex-container">
       <div class="flex-item">
-        <img id="tiling-image" ></img>
+        <img id="final-image" class="tiling-image" ></img>
       </div>
     </div>
   </body>

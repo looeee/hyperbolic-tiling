@@ -10,6 +10,7 @@ import {
   Layout,
 }
 from './layout';
+
 // * ***********************************************************************
 // *
 // *  CONTROLLER CLASS
@@ -22,6 +23,10 @@ export class Controller {
     //this.regularHyperbolicTiling();
     this.setupControls();
     this.layout = new Layout();
+    this.updateLowQualityTiling();
+    this.throttledUpdateLowQualityTiling = _.throttle(() => {
+      this.updateLowQualityTiling();
+    }, 100);
   }
 
   onResize() {
@@ -58,32 +63,51 @@ export class Controller {
     };
   }
 
+  polygonSidesDropdown() {
+    document.querySelector('#p').onchange = () => {
+      console.log('obj');
+      this.throttledUpdateLowQualityTiling();
+    };
+  }
+
   radiusSlider() {
+    const test = () => { console.log('test');};
     const slider = document.querySelector('#tiling-radius');
+    const selectedRadius = document.querySelector('#selected-radius');
     this.draw.radius = slider.value;
     slider.oninput = () => {
-      document.querySelector('#selected-radius').innerHTML = slider.value;
+      selectedRadius.innerHTML = slider.value;
       this.draw.radius = slider.value;
+      this.throttledUpdateLowQualityTiling();
     };
+  }
+
+  updateLowQualityTiling() {
+    this.generateTiling('#low-quality-image', true);
+  }
+
+  generateTiling(elem, designMode) {
+    this.draw.reset();
+    const spec = this.tilingSpec();
+    const regularTesselation = new RegularTesselation(spec);
+    const t0 = performance.now();
+    const tiling = regularTesselation.generateTiling(designMode);
+    const t1 = performance.now();
+    console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
+    this.addTilingImageToDom(spec, tiling, elem);
+    document.querySelector('#image-controls').classList.remove('hide');
+  }
+
+  addTilingImageToDom(spec, tiling, elem) {
+    const t0 = performance.now();
+    this.draw.polygonArray(tiling, spec.textures, 0xffffff, false, elem);
+    const t1 = performance.now();
+    console.log(`DrawTiling took ${(t1 - t0)} milliseconds.`);
   }
 
   generateTilingButton() {
     document.querySelector('#generate-tiling').onclick = () => {
-      console.log('obj');
-      this.draw.reset();
-      const spec = this.tilingSpec();
-      const regularTesselation = new RegularTesselation(spec);
-      let t0 = performance.now();
-      const tiling = regularTesselation.generateTiling(
-        document.querySelector('#design-mode').checked
-      );
-      let t1 = performance.now();
-      console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
-      t0 = performance.now();
-      this.draw.polygonArray(tiling, spec.textures);
-      t1 = performance.now();
-      console.log(`DrawTiling took ${(t1 - t0)} milliseconds.`);
-      document.querySelector('#image-controls').classList.remove('hide');
+      this.generateTiling('#final-image', false);
       //document.querySelector('#tiling-image').scrollIntoView();
     };
   }

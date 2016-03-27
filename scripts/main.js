@@ -1059,18 +1059,22 @@ var Drawing = function () {
     this.scene.add(circle);
   };
 
-  Drawing.prototype.polygonArray = function polygonArray(array, textureArray, color, wireframe) {
+  //TODO: passing elem param through lots of function to eventually get to renderToImageElem
+  // which is called after final texture has loaded. There must be a better way!
+
+
+  Drawing.prototype.polygonArray = function polygonArray(array, textureArray, color, wireframe, elem) {
     color = color || 0xffffff;
     wireframe = wireframe || false;
     for (var i = 0; i < array.length; i++) {
-      this.polygon(array[i], color, textureArray, wireframe);
+      this.polygon(array[i], color, textureArray, wireframe, elem);
     }
   };
 
   //Note: polygons assumed to be triangular!
 
 
-  Drawing.prototype.polygon = function polygon(_polygon, color, textures, wireframe) {
+  Drawing.prototype.polygon = function polygon(_polygon, color, textures, wireframe, elem) {
     var p = 1 / _polygon.numDivisions;
     var divisions = _polygon.numDivisions;
     var geometry = new THREE.Geometry();
@@ -1100,7 +1104,7 @@ var Drawing = function () {
       edgeStartingVertex += m;
     }
 
-    var mesh = this.createMesh(geometry, color, textures, _polygon.materialIndex, wireframe);
+    var mesh = this.createMesh(geometry, color, textures, _polygon.materialIndex, wireframe, elem);
     this.scene.add(mesh);
   };
 
@@ -1108,17 +1112,17 @@ var Drawing = function () {
   //solved this by making material doubles sided but this might cause problems with textures
 
 
-  Drawing.prototype.createMesh = function createMesh(geometry, color, textures, materialIndex, wireframe) {
+  Drawing.prototype.createMesh = function createMesh(geometry, color, textures, materialIndex, wireframe, elem) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;
 
     if (!this.pattern) {
-      this.createPattern(color, textures, wireframe);
+      this.createPattern(color, textures, wireframe, elem);
     }
     return new THREE.Mesh(geometry, this.pattern.materials[materialIndex]);
   };
 
-  Drawing.prototype.createPattern = function createPattern(color, textures, wireframe) {
+  Drawing.prototype.createPattern = function createPattern(color, textures, wireframe, elem) {
     var _this = this;
 
     this.pattern = new THREE.MultiMaterial();
@@ -1135,7 +1139,7 @@ var Drawing = function () {
         texturesLoaded.push(i);
         //call render when all textures are loaded
         if (texturesLoaded.length === textures.length) {
-          _this.render();
+          _this.renderToImageElem(elem);
         }
       });
 
@@ -1148,18 +1152,17 @@ var Drawing = function () {
     }
   };
 
-  Drawing.prototype.render = function render() {
+  //render to image elem
+
+
+  Drawing.prototype.renderToImageElem = function renderToImageElem(elem) {
     this.renderer.render(this.scene, this.camera);
-    this.appendImageToDom();
+    this.appendImageToDom(elem);
     this.clearScene();
   };
 
-  //TODO doesn't update when calling generate a second time
-
-
-  Drawing.prototype.appendImageToDom = function appendImageToDom() {
-    var tilingImage = document.querySelector('#tiling-image');
-    tilingImage.setAttribute('src', this.renderer.domElement.toDataURL());
+  Drawing.prototype.appendImageToDom = function appendImageToDom(elem) {
+    document.querySelector(elem).setAttribute('src', this.renderer.domElement.toDataURL());
   };
 
   //Download the canvas as a png image
@@ -1257,6 +1260,8 @@ var Layout = function () {
 // *************************************************************************
 var Controller = function () {
   function Controller() {
+    var _this = this;
+
     babelHelpers.classCallCheck(this, Controller);
 
     this.layout = new Layout();
@@ -1264,6 +1269,10 @@ var Controller = function () {
     //this.regularHyperbolicTiling();
     this.setupControls();
     this.layout = new Layout();
+    this.updateLowQualityTiling();
+    this.throttledUpdateLowQualityTiling = _.throttle(function () {
+      _this.updateLowQualityTiling();
+    }, 100);
   }
 
   Controller.prototype.onResize = function onResize() {
@@ -1282,54 +1291,79 @@ var Controller = function () {
   };
 
   Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
-    var _this = this;
+    var _this2 = this;
 
     var euclidean = document.querySelector('#euclidean');
     var hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = function () {
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      _this.layout.showElement('#euclidean-controls');
-      _this.layout.hideElement('#hyperbolic-controls');
-      _this.layout.showElement('#universal-controls');
+      _this2.layout.showElement('#euclidean-controls');
+      _this2.layout.hideElement('#hyperbolic-controls');
+      _this2.layout.showElement('#universal-controls');
     };
     hyperbolic.onclick = function () {
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      _this.layout.showElement('#hyperbolic-controls');
-      _this.layout.hideElement('#euclidean-controls');
-      _this.layout.showElement('#universal-controls');
+      _this2.layout.showElement('#hyperbolic-controls');
+      _this2.layout.hideElement('#euclidean-controls');
+      _this2.layout.showElement('#universal-controls');
+    };
+  };
+
+  Controller.prototype.polygonSidesDropdown = function polygonSidesDropdown() {
+    var _this3 = this;
+
+    document.querySelector('#p').onchange = function () {
+      console.log('obj');
+      _this3.throttledUpdateLowQualityTiling();
     };
   };
 
   Controller.prototype.radiusSlider = function radiusSlider() {
-    var _this2 = this;
+    var _this4 = this;
 
+    var test = function () {
+      console.log('test');
+    };
     var slider = document.querySelector('#tiling-radius');
+    var selectedRadius = document.querySelector('#selected-radius');
     this.draw.radius = slider.value;
     slider.oninput = function () {
-      document.querySelector('#selected-radius').innerHTML = slider.value;
-      _this2.draw.radius = slider.value;
+      selectedRadius.innerHTML = slider.value;
+      _this4.draw.radius = slider.value;
+      _this4.throttledUpdateLowQualityTiling();
     };
   };
 
+  Controller.prototype.updateLowQualityTiling = function updateLowQualityTiling() {
+    this.generateTiling('#low-quality-image', true);
+  };
+
+  Controller.prototype.generateTiling = function generateTiling(elem, designMode) {
+    this.draw.reset();
+    var spec = this.tilingSpec();
+    var regularTesselation = new RegularTesselation(spec);
+    var t0 = performance.now();
+    var tiling = regularTesselation.generateTiling(designMode);
+    var t1 = performance.now();
+    console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
+    this.addTilingImageToDom(spec, tiling, elem);
+    document.querySelector('#image-controls').classList.remove('hide');
+  };
+
+  Controller.prototype.addTilingImageToDom = function addTilingImageToDom(spec, tiling, elem) {
+    var t0 = performance.now();
+    this.draw.polygonArray(tiling, spec.textures, 0xffffff, false, elem);
+    var t1 = performance.now();
+    console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
+  };
+
   Controller.prototype.generateTilingButton = function generateTilingButton() {
-    var _this3 = this;
+    var _this5 = this;
 
     document.querySelector('#generate-tiling').onclick = function () {
-      console.log('obj');
-      _this3.draw.reset();
-      var spec = _this3.tilingSpec();
-      var regularTesselation = new RegularTesselation(spec);
-      var t0 = performance.now();
-      var tiling = regularTesselation.generateTiling(document.querySelector('#design-mode').checked);
-      var t1 = performance.now();
-      console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
-      t0 = performance.now();
-      _this3.draw.polygonArray(tiling, spec.textures);
-      t1 = performance.now();
-      console.log('DrawTiling took ' + (t1 - t0) + ' milliseconds.');
-      document.querySelector('#image-controls').classList.remove('hide');
+      _this5.generateTiling('#final-image', false);
       //document.querySelector('#tiling-image').scrollIntoView();
     };
   };
@@ -1351,13 +1385,13 @@ var Controller = function () {
   };
 
   Controller.prototype.saveImageButtons = function saveImageButtons() {
-    var _this4 = this;
+    var _this6 = this;
 
     document.querySelector('#save-image').onclick = function () {
-      return _this4.draw.saveImage();
+      return _this6.draw.saveImage();
     };
     document.querySelector('#download-image').onclick = function () {
-      return _this4.draw.downloadImage();
+      return _this6.draw.downloadImage();
     };
   };
 

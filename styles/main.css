@@ -96,7 +96,7 @@ button.selected {
       -ms-flex-pack: distribute;
           justify-content: space-around; }
 
-#tiling-image {
+.tiling-image {
   width: 100%; }
 
 #textures {
@@ -106,8 +106,8 @@ button.selected {
           justify-content: space-around; }
 
 .texture {
-  max-width: 300px;
-  max-height: 300px; }
+  max-width: 150px;
+  max-height: 150px; }
 
 .hide {
   display: none !important; }
