@@ -1,12 +1,14 @@
-import * as E from './euclid';
+import * as E from '../euclid';
 
 import {
   Polygon, Point,
 }
-from './elements';
+from '../elements';
 
 import {
-  Transform, Transformations, Parameters,
+  HyperbolicTransform as Transform,
+  HyperbolicTransformations as Transformations,
+  HyperbolicParameters as Parameters,
 }
 from './helpers';
 

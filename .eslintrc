@@ -6,6 +6,7 @@
     "no-console": 0,
     "spaced-comment": 0,
     "no-unused-vars": 0,
+    "no-trailing-spaces": 0,
     "brace-style": [2, "stroustrup", { "allowSingleLine": true }],
     "arrow-body-style": [0, "as-needed"]
   }

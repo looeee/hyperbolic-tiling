@@ -478,20 +478,21 @@ var identityMatrix = function (n) {
 // * ***********************************************************************
 // *
 // *  TRANSFORM CLASS
+// *  Represents a transformation of a point in hyperbolic space
 // *
 // *************************************************************************
-var Transform = function () {
-  function Transform(matrix, orientation, position) {
-    babelHelpers.classCallCheck(this, Transform);
+var HyperbolicTransform = function () {
+  function HyperbolicTransform(matrix, orientation, position) {
+    babelHelpers.classCallCheck(this, HyperbolicTransform);
 
     this.matrix = matrix || identityMatrix(3);
     this.orientation = orientation;
     this.position = position || false; //position not always required
   }
 
-  Transform.prototype.multiply = function multiply(transform) {
-    if (!transform instanceof Transform) {
-      console.error('Error: ' + transform + ' is not a Transform');
+  HyperbolicTransform.prototype.multiply = function multiply(transform) {
+    if (!transform instanceof HyperbolicTransform) {
+      console.error('Error: ' + transform + ' is not a HyperbolicTransform');
       return false;
     }
     var mat = multiplyMatrices(transform.matrix, this.matrix);
@@ -500,10 +501,10 @@ var Transform = function () {
     if (transform.orientation * this.orientation < 0) {
       orientation = -1;
     }
-    return new Transform(mat, orientation, position);
+    return new HyperbolicTransform(mat, orientation, position);
   };
 
-  return Transform;
+  return HyperbolicTransform;
 }();
 
 // * ***********************************************************************
@@ -513,9 +514,9 @@ var Transform = function () {
 // *
 // *************************************************************************
 
-var Transformations = function () {
-  function Transformations(p, q) {
-    babelHelpers.classCallCheck(this, Transformations);
+var HyperbolicTransformations = function () {
+  function HyperbolicTransformations(p, q) {
+    babelHelpers.classCallCheck(this, HyperbolicTransformations);
 
     this.p = p;
     this.q = q;
@@ -530,14 +531,14 @@ var Transformations = function () {
     this.initEdges();
     this.initEdgeTransforms();
 
-    this.identity = new Transform(identityMatrix(3));
+    this.identity = new HyperbolicTransform(identityMatrix(3));
   }
 
   //reflect across the hypotenuse of the fundamental region of a tesselation
 
 
-  Transformations.prototype.initHypotenuseReflection = function initHypotenuseReflection() {
-    this.hypReflection = new Transform(identityMatrix(3), -1);
+  HyperbolicTransformations.prototype.initHypotenuseReflection = function initHypotenuseReflection() {
+    this.hypReflection = new HyperbolicTransform(identityMatrix(3), -1);
     this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
     this.hypReflection.matrix[0][1] = Math.sin(2 * Math.PI / this.p);
     this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
@@ -549,7 +550,7 @@ var Transformations = function () {
   //across any edge
 
 
-  Transformations.prototype.initEdgeReflection = function initEdgeReflection() {
+  HyperbolicTransformations.prototype.initEdgeReflection = function initEdgeReflection() {
     var cosp = Math.cos(Math.PI / this.p);
     var sinp = Math.sin(Math.PI / this.p);
     var cos2p = Math.cos(2 * Math.PI / this.p);
@@ -562,15 +563,15 @@ var Transformations = function () {
     var sinh2q = 2 * sinhq * coshq;
     var num = 2;
     var den = 6;
-    this.edgeReflection = new Transform(identityMatrix(3), -1);
+    this.edgeReflection = new HyperbolicTransform(identityMatrix(3), -1);
     this.edgeReflection.matrix[0][0] = -cosh2q;
     this.edgeReflection.matrix[0][2] = sinh2q;
     this.edgeReflection.matrix[2][0] = -sinh2q;
     this.edgeReflection.matrix[2][2] = cosh2q;
   };
 
-  Transformations.prototype.initEdgeBisectorReflection = function initEdgeBisectorReflection() {
-    this.edgeBisectorReflection = new Transform(identityMatrix(3), -1);
+  HyperbolicTransformations.prototype.initEdgeBisectorReflection = function initEdgeBisectorReflection() {
+    this.edgeBisectorReflection = new HyperbolicTransform(identityMatrix(3), -1);
     this.edgeBisectorReflection.matrix[1][1] = -1;
   };
 
@@ -578,17 +579,17 @@ var Transformations = function () {
   // PI/(number of sides of central polygon)
 
 
-  Transformations.prototype.initPgonRotations = function initPgonRotations() {
+  HyperbolicTransformations.prototype.initPgonRotations = function initPgonRotations() {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
     for (var i = 0; i < this.p; i++) {
-      this.rotatePolygonCW[i] = new Transform(identityMatrix(3), 1);
+      this.rotatePolygonCW[i] = new HyperbolicTransform(identityMatrix(3), 1);
       this.rotatePolygonCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
       this.rotatePolygonCW[i].matrix[0][1] = -Math.sin(2 * i * Math.PI / this.p);
       this.rotatePolygonCW[i].matrix[1][0] = Math.sin(2 * i * Math.PI / this.p);
       this.rotatePolygonCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
 
-      this.rotatePolygonCCW[i] = new Transform(identityMatrix(3), 1);
+      this.rotatePolygonCCW[i] = new HyperbolicTransform(identityMatrix(3), 1);
       this.rotatePolygonCCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
       this.rotatePolygonCCW[i].matrix[0][1] = Math.sin(2 * i * Math.PI / this.p);
       this.rotatePolygonCCW[i].matrix[1][0] = -Math.sin(2 * i * Math.PI / this.p);
@@ -599,7 +600,7 @@ var Transformations = function () {
   //orientation: either reflection = -1 OR rotation = 1
 
 
-  Transformations.prototype.initEdges = function initEdges() {
+  HyperbolicTransformations.prototype.initEdges = function initEdges() {
     this.edges = [];
     for (var i = 0; i < this.p; i++) {
       this.edges.push({
@@ -609,7 +610,7 @@ var Transformations = function () {
     }
   };
 
-  Transformations.prototype.initEdgeTransforms = function initEdgeTransforms() {
+  HyperbolicTransformations.prototype.initEdgeTransforms = function initEdgeTransforms() {
     this.edgeTransforms = [];
 
     for (var i = 0; i < this.p; i++) {
@@ -618,13 +619,13 @@ var Transformations = function () {
       if (this.edges[i].orientation === -1) {
         var mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
         mat = multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-        this.edgeTransforms[i] = new Transform(mat);
+        this.edgeTransforms[i] = new HyperbolicTransform(mat);
       }
       //Case 2: rotation
       else if (this.edges[i].orientation === 1) {
           var _mat = multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
           _mat = multiplyMatrices(_mat, this.rotatePolygonCCW[adj].matrix);
-          this.edgeTransforms[i] = new Transform(_mat);
+          this.edgeTransforms[i] = new HyperbolicTransform(_mat);
         } else {
           console.error('initEdgeTransforms(): invalid orientation value');
           console.error(this.edges[i]);
@@ -634,7 +635,7 @@ var Transformations = function () {
     }
   };
 
-  Transformations.prototype.shiftTrans = function shiftTrans(transform, shift) {
+  HyperbolicTransformations.prototype.shiftTrans = function shiftTrans(transform, shift) {
     var newEdge = (transform.position + transform.orientation * shift + 2 * this.p) % this.p;
     if (newEdge < 0 || newEdge > this.p - 1) {
       console.error('Error: shiftTran newEdge out of range.');
@@ -642,7 +643,7 @@ var Transformations = function () {
     return transform.multiply(this.edgeTransforms[newEdge]);
   };
 
-  return Transformations;
+  return HyperbolicTransformations;
 }();
 
 // * ***********************************************************************
@@ -652,9 +653,9 @@ var Transformations = function () {
 // *  These are largely taken from the table on pg 19 of Ajit Dajar's thesis
 // *************************************************************************
 
-var Parameters = function () {
-  function Parameters(p, q) {
-    babelHelpers.classCallCheck(this, Parameters);
+var HyperbolicParameters = function () {
+  function HyperbolicParameters(p, q) {
+    babelHelpers.classCallCheck(this, HyperbolicParameters);
 
     this.p = p;
     this.q = q;
@@ -663,7 +664,7 @@ var Parameters = function () {
     this.maxExposure = q - 1;
   }
 
-  Parameters.prototype.exposure = function exposure(layer, vertexNum, pgonNum) {
+  HyperbolicParameters.prototype.exposure = function exposure(layer, vertexNum, pgonNum) {
     if (layer === 0) {
       if (pgonNum === 0) {
         //layer 0, pgon 0
@@ -684,7 +685,7 @@ var Parameters = function () {
     return this.maxExposure;
   };
 
-  Parameters.prototype.pSkip = function pSkip(exposure) {
+  HyperbolicParameters.prototype.pSkip = function pSkip(exposure) {
     if (exposure === this.minExposure) {
       if (this.q !== 3) return 1;
       return 3;
@@ -696,7 +697,7 @@ var Parameters = function () {
     return false;
   };
 
-  Parameters.prototype.qSkip = function qSkip(exposure, vertexNum) {
+  HyperbolicParameters.prototype.qSkip = function qSkip(exposure, vertexNum) {
     if (exposure === this.minExposure) {
       if (vertexNum === 0) {
         if (this.q !== 3) return -1;
@@ -715,7 +716,7 @@ var Parameters = function () {
     return false;
   };
 
-  Parameters.prototype.verticesToDo = function verticesToDo(exposure) {
+  HyperbolicParameters.prototype.verticesToDo = function verticesToDo(exposure) {
     if (this.p === 3) return 1;else if (exposure === this.minExposure) {
       if (this.q === 3) return this.p - 5;
       return this.p - 3;
@@ -727,7 +728,7 @@ var Parameters = function () {
     return false;
   };
 
-  Parameters.prototype.pgonsToDo = function pgonsToDo(exposure, vertexNum) {
+  HyperbolicParameters.prototype.pgonsToDo = function pgonsToDo(exposure, vertexNum) {
     if (this.q === 3) return 1;else if (vertexNum === 0) return this.q - 3;else if (exposure === this.minExposure) {
       if (this.p === 3) return this.q - 4;
       return this.q - 2;
@@ -739,7 +740,7 @@ var Parameters = function () {
     return false;
   };
 
-  return Parameters;
+  return HyperbolicParameters;
 }();
 
 // * ***********************************************************************
@@ -782,8 +783,8 @@ var RegularTesselation = function () {
 
     console.log('{', this.p, ', ', this.q, '} tiling.');
 
-    this.params = new Parameters(this.p, this.q);
-    this.transforms = new Transformations(this.p, this.q);
+    this.params = new HyperbolicParameters(this.p, this.q);
+    this.transforms = new HyperbolicTransformations(this.p, this.q);
 
     if (this.checkParams()) {
       return false;

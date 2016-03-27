@@ -1,7 +1,7 @@
 import {
   RegularTesselation,
 }
-from './regularTesselation';
+from './hyperbolic/regularTesselation';
 import {
   Drawing,
 }

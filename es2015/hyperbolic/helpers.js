@@ -1,12 +1,13 @@
-import * as E from './euclid';
+import * as E from '../euclid';
 
 //TODO Document these classes
 // * ***********************************************************************
 // *
 // *  TRANSFORM CLASS
+// *  Represents a transformation of a point in hyperbolic space
 // *
 // *************************************************************************
-export class Transform {
+export class HyperbolicTransform {
   constructor(matrix, orientation, position) {
     this.matrix = matrix || E.identityMatrix(3);
     this.orientation = orientation;
@@ -14,8 +15,8 @@ export class Transform {
   }
 
   multiply(transform) {
-    if (!transform instanceof Transform) {
-      console.error(`Error: ${transform} is not a Transform`);
+    if (!transform instanceof HyperbolicTransform) {
+      console.error(`Error: ${transform} is not a HyperbolicTransform`);
       return false;
     }
     const mat = E.multiplyMatrices(transform.matrix, this.matrix);
@@ -24,7 +25,7 @@ export class Transform {
     if (transform.orientation * this.orientation < 0) {
       orientation = -1;
     }
-    return new Transform(mat, orientation, position);
+    return new HyperbolicTransform(mat, orientation, position);
   }
 }
 
@@ -35,7 +36,7 @@ export class Transform {
 // *
 // *************************************************************************
 
-export class Transformations {
+export class HyperbolicTransformations {
   constructor(p, q) {
     this.p = p;
     this.q = q;
@@ -50,12 +51,12 @@ export class Transformations {
     this.initEdges();
     this.initEdgeTransforms();
 
-    this.identity = new Transform(E.identityMatrix(3));
+    this.identity = new HyperbolicTransform(E.identityMatrix(3));
   }
 
   //reflect across the hypotenuse of the fundamental region of a tesselation
   initHypotenuseReflection() {
-    this.hypReflection = new Transform(E.identityMatrix(3), -1);
+    this.hypReflection = new HyperbolicTransform(E.identityMatrix(3), -1);
     this.hypReflection.matrix[0][0] = Math.cos(2 * Math.PI / this.p);
     this.hypReflection.matrix[0][1] = Math.sin(2 * Math.PI / this.p);
     this.hypReflection.matrix[1][0] = Math.sin(2 * Math.PI / this.p);
@@ -78,7 +79,7 @@ export class Transformations {
     const sinh2q = 2 * sinhq * coshq;
     const num = 2;
     const den = 6;
-    this.edgeReflection = new Transform(E.identityMatrix(3), -1);
+    this.edgeReflection = new HyperbolicTransform(E.identityMatrix(3), -1);
     this.edgeReflection.matrix[0][0] = -cosh2q;
     this.edgeReflection.matrix[0][2] = sinh2q;
     this.edgeReflection.matrix[2][0] = -sinh2q;
@@ -86,7 +87,7 @@ export class Transformations {
   }
 
   initEdgeBisectorReflection() {
-    this.edgeBisectorReflection = new Transform(E.identityMatrix(3), -1);
+    this.edgeBisectorReflection = new HyperbolicTransform(E.identityMatrix(3), -1);
     this.edgeBisectorReflection.matrix[1][1] = -1;
   }
 
@@ -96,13 +97,13 @@ export class Transformations {
     this.rotatePolygonCW = [];
     this.rotatePolygonCCW = [];
     for (let i = 0; i < this.p; i++) {
-      this.rotatePolygonCW[i] = new Transform(E.identityMatrix(3), 1);
+      this.rotatePolygonCW[i] = new HyperbolicTransform(E.identityMatrix(3), 1);
       this.rotatePolygonCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
       this.rotatePolygonCW[i].matrix[0][1] = -Math.sin(2 * i * Math.PI / this.p);
       this.rotatePolygonCW[i].matrix[1][0] = Math.sin(2 * i * Math.PI / this.p);
       this.rotatePolygonCW[i].matrix[1][1] = Math.cos(2 * i * Math.PI / this.p);
 
-      this.rotatePolygonCCW[i] = new Transform(E.identityMatrix(3), 1);
+      this.rotatePolygonCCW[i] = new HyperbolicTransform(E.identityMatrix(3), 1);
       this.rotatePolygonCCW[i].matrix[0][0] = Math.cos(2 * i * Math.PI / this.p);
       this.rotatePolygonCCW[i].matrix[0][1] = Math.sin(2 * i * Math.PI / this.p);
       this.rotatePolygonCCW[i].matrix[1][0] = -Math.sin(2 * i * Math.PI / this.p);
@@ -130,13 +131,13 @@ export class Transformations {
       if (this.edges[i].orientation === -1) {
         let mat = E.multiplyMatrices(this.rotatePolygonCW[i].matrix, this.edgeReflection.matrix);
         mat = E.multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-        this.edgeTransforms[i] = new Transform(mat);
+        this.edgeTransforms[i] = new HyperbolicTransform(mat);
       }
       //Case 2: rotation
       else if (this.edges[i].orientation === 1) {
         let mat = E.multiplyMatrices(this.rotatePolygonCW[i].matrix, this.rot2);
         mat = E.multiplyMatrices(mat, this.rotatePolygonCCW[adj].matrix);
-        this.edgeTransforms[i] = new Transform(mat);
+        this.edgeTransforms[i] = new HyperbolicTransform(mat);
       }
       else {
         console.error('initEdgeTransforms(): invalid orientation value');
@@ -163,7 +164,7 @@ export class Transformations {
 // *  These are largely taken from the table on pg 19 of Ajit Dajar's thesis
 // *************************************************************************
 
-export class Parameters {
+export class HyperbolicParameters {
   constructor(p, q) {
     this.p = p;
     this.q = q;
