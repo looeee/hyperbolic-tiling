@@ -25,7 +25,7 @@
 
       <div id="tesselation-selector" class="flex-item full-width">
         <h3>Step 1: Select Tesselation Type</h3>
-        <button id="euclidean">Euclidean</button>
+        <button id="euclidean">Euclidean (not yet implemented)</button>
         <button id="hyperbolic">Hyperbolic</button>
       </div>
 

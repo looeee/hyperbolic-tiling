@@ -42,17 +42,19 @@ export class Controller {
     this.radiusSlider();
     this.tesselationTypeSelectButtons();
     this.generateTilingButton();
+    this.polygonSidesDropdown();
+    this.polygonPerVertexDropdown();
   }
 
   tesselationTypeSelectButtons() {
     const euclidean = document.querySelector('#euclidean');
     const hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = () => {
-      euclidean.classList.add('selected');
-      hyperbolic.classList.remove('selected');
-      this.layout.showElement('#euclidean-controls');
-      this.layout.hideElement('#hyperbolic-controls');
-      this.layout.showElement('#universal-controls');
+      //euclidean.classList.add('selected');
+      //hyperbolic.classList.remove('selected');
+      //this.layout.showElement('#euclidean-controls');
+      //this.layout.hideElement('#hyperbolic-controls');
+      //this.layout.showElement('#universal-controls');
     };
     hyperbolic.onclick = () => {
       hyperbolic.classList.add('selected');
@@ -64,8 +66,14 @@ export class Controller {
   }
 
   polygonSidesDropdown() {
-    document.querySelector('#p').onchange = () => {
-      console.log('obj');
+    const p = document.querySelector('#p');
+    p.onchange = () => {
+      this.throttledUpdateLowQualityTiling();
+    };
+  }
+
+  polygonPerVertexDropdown() {
+    document.querySelector('#q').onchange = () => {
       this.throttledUpdateLowQualityTiling();
     };
   }

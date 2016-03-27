@@ -1288,6 +1288,8 @@ var Controller = function () {
     this.radiusSlider();
     this.tesselationTypeSelectButtons();
     this.generateTilingButton();
+    this.polygonSidesDropdown();
+    this.polygonPerVertexDropdown();
   };
 
   Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
@@ -1296,11 +1298,11 @@ var Controller = function () {
     var euclidean = document.querySelector('#euclidean');
     var hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = function () {
-      euclidean.classList.add('selected');
-      hyperbolic.classList.remove('selected');
-      _this2.layout.showElement('#euclidean-controls');
-      _this2.layout.hideElement('#hyperbolic-controls');
-      _this2.layout.showElement('#universal-controls');
+      //euclidean.classList.add('selected');
+      //hyperbolic.classList.remove('selected');
+      //this.layout.showElement('#euclidean-controls');
+      //this.layout.hideElement('#hyperbolic-controls');
+      //this.layout.showElement('#universal-controls');
     };
     hyperbolic.onclick = function () {
       hyperbolic.classList.add('selected');
@@ -1314,14 +1316,22 @@ var Controller = function () {
   Controller.prototype.polygonSidesDropdown = function polygonSidesDropdown() {
     var _this3 = this;
 
-    document.querySelector('#p').onchange = function () {
-      console.log('obj');
+    var p = document.querySelector('#p');
+    p.onchange = function () {
       _this3.throttledUpdateLowQualityTiling();
     };
   };
 
-  Controller.prototype.radiusSlider = function radiusSlider() {
+  Controller.prototype.polygonPerVertexDropdown = function polygonPerVertexDropdown() {
     var _this4 = this;
+
+    document.querySelector('#q').onchange = function () {
+      _this4.throttledUpdateLowQualityTiling();
+    };
+  };
+
+  Controller.prototype.radiusSlider = function radiusSlider() {
+    var _this5 = this;
 
     var test = function () {
       console.log('test');
@@ -1331,8 +1341,8 @@ var Controller = function () {
     this.draw.radius = slider.value;
     slider.oninput = function () {
       selectedRadius.innerHTML = slider.value;
-      _this4.draw.radius = slider.value;
-      _this4.throttledUpdateLowQualityTiling();
+      _this5.draw.radius = slider.value;
+      _this5.throttledUpdateLowQualityTiling();
     };
   };
 
@@ -1360,10 +1370,10 @@ var Controller = function () {
   };
 
   Controller.prototype.generateTilingButton = function generateTilingButton() {
-    var _this5 = this;
+    var _this6 = this;
 
     document.querySelector('#generate-tiling').onclick = function () {
-      _this5.generateTiling('#final-image', false);
+      _this6.generateTiling('#final-image', false);
       //document.querySelector('#tiling-image').scrollIntoView();
     };
   };
@@ -1385,13 +1395,13 @@ var Controller = function () {
   };
 
   Controller.prototype.saveImageButtons = function saveImageButtons() {
-    var _this6 = this;
+    var _this7 = this;
 
     document.querySelector('#save-image').onclick = function () {
-      return _this6.draw.saveImage();
+      return _this7.draw.saveImage();
     };
     document.querySelector('#download-image').onclick = function () {
-      return _this6.draw.downloadImage();
+      return _this7.draw.downloadImage();
     };
   };
 
