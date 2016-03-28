@@ -196,6 +196,91 @@ var identityMatrix = function (n) {
 
 // * ***********************************************************************
 // *
+// *  (TRIANGULAR) POLYGON CLASS
+// *
+// *************************************************************************
+
+
+var EuclideanPolygon = function () {
+  function EuclideanPolygon(vertices) {
+    var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+    babelHelpers.classCallCheck(this, EuclideanPolygon);
+
+    this.materialIndex = materialIndex;
+    this.mesh = vertices;
+  }
+
+  EuclideanPolygon.prototype.addEdges = function addEdges() {
+    this.edges = [];
+    for (var i = 0; i < this.vertices.length; i++) {
+      this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
+    }
+  };
+
+  //Apply a Transform to the polygon
+
+
+  EuclideanPolygon.prototype.transform = function transform(_transform) {
+    var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
+
+    var newVertices = [];
+    for (var i = 0; i < this.vertices.length; i++) {
+      newVertices.push(this.vertices[i].transform(_transform));
+    }
+    return new EuclideanPolygon(newVertices, materialIndex);
+  };
+
+  return EuclideanPolygon;
+}();
+
+// * ***********************************************************************
+// *
+// *   EUCLIDEAN TESSELATION CLASS
+// *
+// *************************************************************************
+//TODO: refactor element classes to work as either hyperbolic or euclidean elenments
+var EuclideanTesselation = function () {
+  function EuclideanTesselation(spec) {
+    babelHelpers.classCallCheck(this, EuclideanTesselation);
+
+    this.wireframe = spec.wireframe || false;
+    this.textures = spec.textures;
+    this.p = spec.p || 4;
+    this.q = spec.q || 4;
+  }
+
+  EuclideanTesselation.prototype.generateTiling = function generateTiling() {
+    var p1 = new Point(0, 0);
+    var p2 = new Point(0.5, 0);
+    var p3 = new Point(0, 0.5);
+    var poly = new EuclideanPolygon([p1, p2, p3], 0);
+    var tiling = [poly];
+    return tiling;
+  };
+
+  //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
+  //either an elliptical or euclidean tesselation);
+
+
+  EuclideanTesselation.prototype.checkParams = function checkParams() {
+    if ((this.p - 2) * (this.q - 2) > 4) {
+      console.error('Euclidean tesselations require that (p-2)(q-2) <= 4!');
+      return true;
+    } else if (this.q < 3 || isNaN(this.q)) {
+      console.error('Tesselation error: at least 3 p-gons must meet at each vertex!');
+      return true;
+    } else if (this.p < 3 || isNaN(this.p)) {
+      console.error('Tesselation error: polygon needs at least 3 sides!');
+      return true;
+    }
+    return false;
+  };
+
+  return EuclideanTesselation;
+}();
+
+// * ***********************************************************************
+// *
 // *  HYPERBOLIC ARC CLASS
 // *  Represents a hyperbolic arc on the Poincare disk, which is a
 // *  Euclidean straight line if it goes through the origin
@@ -1145,7 +1230,7 @@ var Drawing = function () {
 // *
 // *  controls position/loading/hiding etc. Also controls ajax (fetch via polyfill)
 // *************************************************************************
-
+//TODO: memoize all calls to document.querySelector
 var Layout = function () {
   function Layout() {
     babelHelpers.classCallCheck(this, Layout);
@@ -1194,13 +1279,13 @@ var Controller = function () {
 
     this.layout = new Layout();
     this.draw = new Drawing();
-    //this.regularHyperbolicTiling();
     this.setupControls();
     this.layout = new Layout();
     this.updateLowQualityTiling();
     this.throttledUpdateLowQualityTiling = _.throttle(function () {
       _this.updateLowQualityTiling();
     }, 100);
+    this.selectedTilingType = null;
   }
 
   Controller.prototype.onResize = function onResize() {
@@ -1226,18 +1311,22 @@ var Controller = function () {
     var euclidean = document.querySelector('#euclidean');
     var hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = function () {
-      //euclidean.classList.add('selected');
-      //hyperbolic.classList.remove('selected');
-      //this.layout.showElement('#euclidean-controls');
-      //this.layout.hideElement('#hyperbolic-controls');
-      //this.layout.showElement('#universal-controls');
+      _this2.selectedTilingType = 'euclidean';
+      euclidean.classList.add('selected');
+      hyperbolic.classList.remove('selected');
+      _this2.layout.showElement('#euclidean-controls');
+      _this2.layout.hideElement('#hyperbolic-controls');
+      _this2.layout.showElement('#universal-controls');
+      _this2.throttledUpdateLowQualityTiling();
     };
     hyperbolic.onclick = function () {
+      _this2.selectedTilingType = 'hyperbolic';
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
       _this2.layout.showElement('#hyperbolic-controls');
       _this2.layout.hideElement('#euclidean-controls');
       _this2.layout.showElement('#universal-controls');
+      _this2.throttledUpdateLowQualityTiling();
     };
   };
 
@@ -1276,18 +1365,11 @@ var Controller = function () {
 
   Controller.prototype.updateLowQualityTiling = function updateLowQualityTiling() {
     document.querySelector('#low-quality-image').classList.remove('hide');
-    this.generateTiling('#low-quality-image', true);
-  };
-
-  Controller.prototype.generateTiling = function generateTiling(elem, designMode) {
-    this.draw.reset();
-    var spec = this.tilingSpec();
-    var regularTesselation = new RegularHyperbolicTesselation(spec);
-    var t0 = performance.now();
-    var tiling = regularTesselation.generateTiling(designMode);
-    var t1 = performance.now();
-    console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
-    this.addTilingImageToDom(spec, tiling, elem);
+    if (this.selectedTilingType === 'euclidean') {
+      this.generateEuclideanTiling('#low-quality-image', true);
+    } else if (this.selectedTilingType === 'hyperbolic') {
+      this.generateRegularHyperbolicTiling('#low-quality-image', true);
+    }
   };
 
   Controller.prototype.addTilingImageToDom = function addTilingImageToDom(spec, tiling, elem) {
@@ -1300,15 +1382,50 @@ var Controller = function () {
   Controller.prototype.generateTilingButton = function generateTilingButton() {
     var _this6 = this;
 
+    document.querySelector('#low-quality-image').classList.add('hide');
+    document.querySelector('#image-controls').classList.remove('hide');
     document.querySelector('#generate-tiling').onclick = function () {
-      _this6.generateTiling('#final-image', false);
-      document.querySelector('#low-quality-image').classList.add('hide');
-      document.querySelector('#image-controls').classList.remove('hide');
+      if (_this6.selectedTilingType === 'euclidean') {
+        _this6.generateEuclideanTiling('#final-image', false);
+      } else if (_this6.selectedTilingType === 'hyperbolic') {
+        _this6.generateRegularHyperbolicTiling('#final-image', false);
+      }
     };
   };
 
-  Controller.prototype.tilingSpec = function tilingSpec() {
-    var spec = {
+  Controller.prototype.generateEuclideanTiling = function generateEuclideanTiling(elem, designMode) {
+    console.log('obj');
+    this.draw.reset();
+    var spec = this.euclideanTilingSpec();
+    var tesselation = new EuclideanTesselation(spec);
+    var tiling = tesselation.generateTiling(designMode);
+
+    this.addTilingImageToDom(spec, tiling, elem);
+  };
+
+  Controller.prototype.euclideanTilingSpec = function euclideanTilingSpec() {
+    return {
+      wireframe: false,
+      p: 4,
+      q: 4,
+      textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png']
+    };
+  };
+
+  Controller.prototype.generateRegularHyperbolicTiling = function generateRegularHyperbolicTiling(elem, designMode) {
+    this.draw.reset();
+    var spec = this.regularHyperbolicTilingSpec();
+    var tesselation = new RegularHyperbolicTesselation(spec);
+    var t0 = performance.now();
+    var tiling = tesselation.generateTiling(designMode);
+    console.log(tiling);
+    var t1 = performance.now();
+    console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
+    this.addTilingImageToDom(spec, tiling, elem);
+  };
+
+  Controller.prototype.regularHyperbolicTilingSpec = function regularHyperbolicTilingSpec() {
+    return {
       wireframe: false,
       p: document.querySelector('#p').value,
       q: document.querySelector('#q').value,
@@ -1320,7 +1437,6 @@ var Controller = function () {
       [1, 3], [1, 2], [1, 1], [1, 0]],
       minPolygonSize: 0.05
     };
-    return spec;
   };
 
   Controller.prototype.saveImageButtons = function saveImageButtons() {

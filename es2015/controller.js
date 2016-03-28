@@ -1,7 +1,7 @@
 /* controller.js */
 
 import {
-  euclideanTesselation,
+  EuclideanTesselation,
 }
 from './euclidean/euclideanTesselation';
 import {
@@ -26,13 +26,13 @@ export class Controller {
   constructor() {
     this.layout = new Layout();
     this.draw = new Drawing();
-    //this.regularHyperbolicTiling();
     this.setupControls();
     this.layout = new Layout();
     this.updateLowQualityTiling();
     this.throttledUpdateLowQualityTiling = _.throttle(() => {
       this.updateLowQualityTiling();
     }, 100);
+    this.selectedTilingType = null;
   }
 
   onResize() {
@@ -56,18 +56,22 @@ export class Controller {
     const euclidean = document.querySelector('#euclidean');
     const hyperbolic = document.querySelector('#hyperbolic');
     euclidean.onclick = () => {
-      //euclidean.classList.add('selected');
-      //hyperbolic.classList.remove('selected');
-      //this.layout.showElement('#euclidean-controls');
-      //this.layout.hideElement('#hyperbolic-controls');
-      //this.layout.showElement('#universal-controls');
+      this.selectedTilingType = 'euclidean';
+      euclidean.classList.add('selected');
+      hyperbolic.classList.remove('selected');
+      this.layout.showElement('#euclidean-controls');
+      this.layout.hideElement('#hyperbolic-controls');
+      this.layout.showElement('#universal-controls');
+      this.throttledUpdateLowQualityTiling();
     };
     hyperbolic.onclick = () => {
+      this.selectedTilingType = 'hyperbolic';
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
       this.layout.showElement('#hyperbolic-controls');
       this.layout.hideElement('#euclidean-controls');
       this.layout.showElement('#universal-controls');
+      this.throttledUpdateLowQualityTiling();
     };
   }
 
@@ -98,18 +102,12 @@ export class Controller {
 
   updateLowQualityTiling() {
     document.querySelector('#low-quality-image').classList.remove('hide');
-    this.generateTiling('#low-quality-image', true);
-  }
-
-  generateTiling(elem, designMode) {
-    this.draw.reset();
-    const spec = this.tilingSpec();
-    const regularTesselation = new RegularHyperbolicTesselation(spec);
-    const t0 = performance.now();
-    const tiling = regularTesselation.generateTiling(designMode);
-    const t1 = performance.now();
-    console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
-    this.addTilingImageToDom(spec, tiling, elem);
+    if (this.selectedTilingType === 'euclidean') {
+      this.generateEuclideanTiling('#low-quality-image', true);
+    }
+    else if (this.selectedTilingType === 'hyperbolic') {
+      this.generateRegularHyperbolicTiling('#low-quality-image', true);
+    }
   }
 
   addTilingImageToDom(spec, tiling, elem) {
@@ -120,15 +118,51 @@ export class Controller {
   }
 
   generateTilingButton() {
+    document.querySelector('#low-quality-image').classList.add('hide');
+    document.querySelector('#image-controls').classList.remove('hide');
     document.querySelector('#generate-tiling').onclick = () => {
-      this.generateTiling('#final-image', false);
-      document.querySelector('#low-quality-image').classList.add('hide');
-      document.querySelector('#image-controls').classList.remove('hide');
+      if (this.selectedTilingType === 'euclidean') {
+        this.generateEuclideanTiling('#final-image', false);
+      }
+      else if (this.selectedTilingType === 'hyperbolic') {
+        this.generateRegularHyperbolicTiling('#final-image', false);
+      }
     };
   }
 
-  tilingSpec() {
-    const spec = {
+  generateEuclideanTiling(elem, designMode) {
+    console.log('obj');
+    this.draw.reset();
+    const spec = this.euclideanTilingSpec();
+    const tesselation = new EuclideanTesselation(spec);
+    const tiling = tesselation.generateTiling(designMode);
+
+    this.addTilingImageToDom(spec, tiling, elem);
+  }
+
+  euclideanTilingSpec() {
+    return {
+      wireframe: false,
+      p: 4,
+      q: 4,
+      textures: ['./images/textures/fish-black1.png', './images/textures/fish-white1-flipped.png'],
+    };
+  }
+
+  generateRegularHyperbolicTiling(elem, designMode) {
+    this.draw.reset();
+    const spec = this.regularHyperbolicTilingSpec();
+    const tesselation = new RegularHyperbolicTesselation(spec);
+    const t0 = performance.now();
+    const tiling = tesselation.generateTiling(designMode);
+    console.log(tiling);
+    const t1 = performance.now();
+    console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
+    this.addTilingImageToDom(spec, tiling, elem);
+  }
+
+  regularHyperbolicTilingSpec() {
+    return {
       wireframe: false,
       p: document.querySelector('#p').value,
       q: document.querySelector('#q').value,
@@ -141,7 +175,6 @@ export class Controller {
                       [1, 3], [1, 2], [1, 1], [1, 0]],
       minPolygonSize: 0.05,
     };
-    return spec;
   }
 
   saveImageButtons() {

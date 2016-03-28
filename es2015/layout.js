@@ -6,7 +6,7 @@
 // *
 // *  controls position/loading/hiding etc. Also controls ajax (fetch via polyfill)
 // *************************************************************************
-
+//TODO: memoize all calls to document.querySelector
 export class Layout {
   constructor() {
     this.setupLayout();

@@ -26,6 +26,15 @@ export class EuclideanTesselation {
     this.q = spec.q || 4;
   }
 
+  generateTiling() {
+    const p1 = new Point(0, 0);
+    const p2 = new Point(0.5, 0);
+    const p3 = new Point(0, 0.5);
+    const poly = new Polygon([p1, p2, p3], 0);
+    const tiling = [poly];
+    return tiling;
+  }
+
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
   checkParams() {
