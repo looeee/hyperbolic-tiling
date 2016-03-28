@@ -1,3 +1,5 @@
+/* euclideanTesselation.js */
+
 import * as E from '../universal/mathFunctions';
 
 import {

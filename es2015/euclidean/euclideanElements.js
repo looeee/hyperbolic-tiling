@@ -1,3 +1,5 @@
+/* euclideanElements.js */
+
 import * as E from '../universal/mathFunctions';
 
 // * ***********************************************************************

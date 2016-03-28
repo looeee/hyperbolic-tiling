@@ -1,3 +1,5 @@
+/* hyperbolic.js */
+
 import * as E from './euclid';
 import {
   Polygon, Arc, Circle, Point,

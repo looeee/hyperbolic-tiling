@@ -1,27 +1,19 @@
+/* hyperbolicELements.js */
+
 import * as E from '../universal/mathFunctions';
 import {
   Point, Circle,
 } from '../universal/universalElements';
 
 // * ***********************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
 // *
-// *   HYPERBOLIC SPECIFIC ELEMENT CLASSES
-// *
-// *************************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
-
-// * ***********************************************************************
-// *
-// *  ARC CLASS
+// *  HYPERBOLIC ARC CLASS
 // *  Represents a hyperbolic arc on the Poincare disk, which is a
 // *  Euclidean straight line if it goes through the origin
 // *
 // *************************************************************************
 
-export class Arc {
+class HyperbolicArc {
   constructor(startPoint, endPoint) {
     this.startPoint = startPoint;
     this.endPoint = endPoint;
@@ -40,7 +32,7 @@ export class Arc {
 
   //Calculate the arc using Dunham's method
   calculateArc() {
-    //calculate centre of arcCircle relative to unit disk
+    //calculate centre of the circle the arc lies on relative to unit disk
     const hp = this.hyperboloidCrossProduct(
       this.startPoint.poincareToHyperboloid(),
       this.endPoint.poincareToHyperboloid()
@@ -88,9 +80,9 @@ export class Arc {
 // *   Represents a hyperbolic polygon edge
 // *
 // *************************************************************************
-class Edge {
+class HyperbolicEdge {
   constructor(startPoint, endPoint) {
-    this.arc = new Arc(startPoint, endPoint);
+    this.arc = new HyperbolicArc(startPoint, endPoint);
   }
 
   //calculate the spacing for subdividing the edge into an even number of pieces.
@@ -104,7 +96,7 @@ class Edge {
                   ? this.arc.arcLength / 5 //approx maximum that hides all gaps
                   : 0.02;
 
-    //calculate the number of subdivisions required break the arc into an
+    //calculate the number of subdivisions required to break the arc into an
     //even number of pieces (or 1 in case of tiny polygons)
     const subdivisions = (this.arc.arcLength > 0.01)
                     ? 2 * Math.ceil((this.arc.arcLength / this.spacing) / 2)
@@ -116,6 +108,7 @@ class Edge {
     this.spacing = this.arc.arcLength / this.numDivisions;
   }
 
+  //Subdivide the edge into lengths calculated by calculateSpacing()
   subdivideEdge(numDivisions) {
     this.calculateSpacing(numDivisions);
     this.points = [this.arc.startPoint];
@@ -142,17 +135,14 @@ class Edge {
 
 // * ***********************************************************************
 // *
-// *  (TRIANGULAR) POLYGON CLASS
+// *  (TRIANGULAR) HYPERBOLIC POLYGON CLASS
 // *
 // *************************************************************************
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
-//@param vertices: array of Points
-//@param materialIndex: which material from THREE.Multimaterial to use
-//TODO: the subdivion mesh is calculated in the unit disk then mapped to screen coords
-//by ThreeJS class. This is very inefficient. Better to do the multiplication as the mesh is
-//being generated
-export class Polygon {
+//vertices: array of Points
+//materialIndex: which material from THREE.Multimaterial to use
+export class HyperbolicPolygon {
   constructor(vertices, materialIndex = 0) {
     this.materialIndex = materialIndex;
     this.vertices = vertices;
@@ -165,12 +155,12 @@ export class Polygon {
     this.edges = [];
     for (let i = 0; i < this.vertices.length; i++) {
       this.edges.push(
-        new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length])
+        new HyperbolicEdge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length])
       );
     }
   }
 
-  //The longest edge with radius > 0 should be used to calculate how the finely
+  //The longest edge with radius > 0 should be used to calculate how finely
   //the polygon gets subdivided
   findSubdivisionEdge() {
     const a = (this.edges[0].arc.curvature === 0)
@@ -197,6 +187,7 @@ export class Polygon {
     this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
   }
 
+  //create triangular subdivision mesh to fill the interior of the polygon
   subdivideMesh() {
     this.subdivideEdges();
     this.mesh = [].concat(this.edges[0].points);
@@ -212,9 +203,9 @@ export class Polygon {
   }
 
   //find the points along the arc between opposite subdivions of the second two
-  //edges of the polygon
+  //edges of the polygon. Each subsequent arc will have one less subdivision
   subdivideInteriorArc(startPoint, endPoint, arcIndex) {
-    const circle = new Arc(startPoint, endPoint).circle;
+    const circle = new HyperbolicArc(startPoint, endPoint).circle;
     this.mesh.push(startPoint);
 
     //for each arc, the number of divisions will be reduced by one
@@ -239,6 +230,6 @@ export class Polygon {
     for (let i = 0; i < this.vertices.length; i++) {
       newVertices.push(this.vertices[i].transform(transform));
     }
-    return new Polygon(newVertices, materialIndex);
+    return new HyperbolicPolygon(newVertices, materialIndex);
   }
 }

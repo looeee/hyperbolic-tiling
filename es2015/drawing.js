@@ -1,3 +1,5 @@
+/* drawing.js */
+
 import * as E from './universal/mathFunctions';
 import { Point } from './universal/universalElements';
 // * ***********************************************************************
@@ -9,7 +11,6 @@ import { Point } from './universal/universalElements';
 // *  are converted to screen space (which involves multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
-//TODO refactor create materials based on passed in textures array
 export class Drawing {
   constructor(radius) {
     this._radius = radius || 100;
@@ -30,10 +31,6 @@ export class Drawing {
     this.pattern = null; //reset materials;
     this.setCamera();
     this.setRenderer();
-  }
-
-  onresize() {
-
   }
 
   clearScene() {
@@ -99,7 +96,7 @@ export class Drawing {
     }
   }
 
-  //Note: polygons assumed to be triangular!
+  //Note: polygons assumed to be triangular
   polygon(polygon, color, textures, wireframe, elem) {
     const p = 1 / polygon.numDivisions;
     const divisions = polygon.numDivisions;
@@ -167,7 +164,7 @@ export class Drawing {
   }
 
   //NOTE: some polygons are inverted due to vertex order,
-  //solved this by making material doubles sided but this might cause problems with textures
+  //solved this by making material doubles sided
   createMesh(geometry, color, textures, materialIndex, wireframe, elem) {
     if (wireframe === undefined) wireframe = false;
     if (color === undefined) color = 0xffffff;

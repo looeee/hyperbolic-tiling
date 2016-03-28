@@ -1,19 +1,11 @@
-import * as E from './mathFunctions';
+/* universalElements.js */
 
-// * ***********************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
-// *
-// *   UNIVERSAL ELEMENT CLASSES
-// *
-// *************************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
+import * as E from './mathFunctions';
 
 // * ***********************************************************************
 // *
 // *   POINT CLASS
-// *   Represents a 2D or 3D point with functions to apply a transform and
+// *   Represents a 2D or 3D point with functions to apply transforms and
 // *   convert between hyperbolid space and the Poincare disk
 // *************************************************************************
 
@@ -32,7 +24,8 @@ export class Point {
     }
     const a = E.toFixed(this.x) === E.toFixed(otherPoint.x);
     const b = E.toFixed(this.y) === E.toFixed(otherPoint.y);
-    if (a && b) return true;
+    const c = E.toFixed(this.z) === E.toFixed(otherPoint.z);
+    if (a && b && c) return true;
     return false;
   }
 
@@ -44,8 +37,7 @@ export class Point {
     const x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
     const y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
     const z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
-    const q =  new Point(x, y);
-    q.z = z;
+    const q = new Point(x, y, z);
     return q.hyperboloidToPoincare();
   }
 

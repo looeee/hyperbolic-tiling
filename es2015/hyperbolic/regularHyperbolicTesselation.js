@@ -1,7 +1,9 @@
+/* regularHyperbolicTesselation.js */
+
 import * as E from '../universal/mathFunctions';
 
 import {
-  Polygon,
+  HyperbolicPolygon as Polygon,
 }
 from './hyperbolicElements';
 
@@ -19,7 +21,7 @@ from './hyperbolicHelpers';
 
 
 // * ***********************************************************************
-// *    TESSELATION CLASS
+// *    REGULAR HYPERBOLIC TESSELATION CLASS
 // *    Creates a regular Tesselation of the Poincare Disk using the techniques
 // *    created by Coxeter and Dunham
 // *
@@ -43,15 +45,15 @@ from './hyperbolicHelpers';
 // *
 // *************************************************************************
 
-export class RegularTesselation {
+export class RegularHyperbolicTesselation {
   constructor(spec) {
     this.wireframe = spec.wireframe || false;
     this.textures = spec.textures;
     this.p = spec.p || 4;
     this.q = spec.q || 6;
 
+    //Stop drawing when polygons reach this size (on unit disk)
     //a value of about 0.02 seems to be the minimum that webgl can handle easily.
-    //TODO test different tilings and work out value needed for each if different
     this.minPolygonSize = spec.minPolygonSize || 0.1;
 
     console.log('{', this.p, ', ', this.q, '} tiling.');

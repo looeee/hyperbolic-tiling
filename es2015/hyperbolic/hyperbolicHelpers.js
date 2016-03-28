@@ -1,3 +1,5 @@
+/* hyperbolicHelpers.js */
+
 import * as E from '../universal/mathFunctions';
 
 //TODO Document these classes
@@ -112,6 +114,7 @@ export class HyperbolicTransformations {
   }
 
   //orientation: either reflection = -1 OR rotation = 1
+  //NOTE: hard coded for Circle Limit I
   initEdges() {
     this.edges = [];
     for (let i = 0; i < this.p; i++) {
@@ -161,7 +164,7 @@ export class HyperbolicTransformations {
 // *
 // *  PARAMETERS CLASS
 // *
-// *  These are largely taken from the table on pg 19 of Ajit Dajar's thesis
+// *  Adapted from the table on pg 19 of Ajit Dajar's thesis (See Documents folder)
 // *************************************************************************
 
 export class HyperbolicParameters {

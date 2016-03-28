@@ -27,19 +27,9 @@ babelHelpers.createClass = function () {
 babelHelpers;
 
 // * ***********************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
-// *
-// *   UNIVERSAL ELEMENT CLASSES
-// *
-// *************************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
-
-// * ***********************************************************************
 // *
 // *   POINT CLASS
-// *   Represents a 2D or 3D point with functions to apply a transform and
+// *   Represents a 2D or 3D point with functions to apply transforms and
 // *   convert between hyperbolid space and the Poincare disk
 // *************************************************************************
 
@@ -63,7 +53,8 @@ var Point = function () {
     }
     var a = toFixed(this.x) === toFixed(otherPoint.x);
     var b = toFixed(this.y) === toFixed(otherPoint.y);
-    if (a && b) return true;
+    var c = toFixed(this.z) === toFixed(otherPoint.z);
+    if (a && b && c) return true;
     return false;
   };
 
@@ -77,8 +68,7 @@ var Point = function () {
     var x = p.x * mat[0][0] + p.y * mat[0][1] + p.z * mat[0][2];
     var y = p.x * mat[1][0] + p.y * mat[1][1] + p.z * mat[1][2];
     var z = p.x * mat[2][0] + p.y * mat[2][1] + p.z * mat[2][2];
-    var q = new Point(x, y);
-    q.z = z;
+    var q = new Point(x, y, z);
     return q.hyperboloidToPoincare();
   };
 
@@ -115,10 +105,7 @@ var Circle = function Circle(centreX, centreY, radius) {
 
 // * ***********************************************************************
 // *
-// *   EUCLIDEAN FUNCTIONS
-// *   a place to stash all the functions that are euclidean geometrical
-// *   operations
-// *   All functions are 2D unless otherwise specified!
+// *   MATH FUNCTIONS
 // *
 // *************************************************************************
 
@@ -136,12 +123,12 @@ var distance = function (point1, point2) {
 //does the line connecting p1, p2 go through the point (0,0)?
 var throughOrigin = function (point1, point2) {
   //vertical line through centre
-  if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
+  if (toFixed(point1.x) === toFixed(0) && toFixed(point2.x) === toFixed(0)) {
     return true;
   }
   var test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
 
-  if (toFixed(test) == 0) return true;
+  if (toFixed(test) === toFixed(0)) return true;
   return false;
 };
 
@@ -208,26 +195,16 @@ var identityMatrix = function (n) {
 };
 
 // * ***********************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
 // *
-// *   HYPERBOLIC SPECIFIC ELEMENT CLASSES
-// *
-// *************************************************************************
-// * ***********************************************************************
-// * ***********************************************************************
-
-// * ***********************************************************************
-// *
-// *  ARC CLASS
+// *  HYPERBOLIC ARC CLASS
 // *  Represents a hyperbolic arc on the Poincare disk, which is a
 // *  Euclidean straight line if it goes through the origin
 // *
 // *************************************************************************
 
-var Arc = function () {
-  function Arc(startPoint, endPoint) {
-    babelHelpers.classCallCheck(this, Arc);
+var HyperbolicArc = function () {
+  function HyperbolicArc(startPoint, endPoint) {
+    babelHelpers.classCallCheck(this, HyperbolicArc);
 
     this.startPoint = startPoint;
     this.endPoint = endPoint;
@@ -246,8 +223,8 @@ var Arc = function () {
   //Calculate the arc using Dunham's method
 
 
-  Arc.prototype.calculateArc = function calculateArc() {
-    //calculate centre of arcCircle relative to unit disk
+  HyperbolicArc.prototype.calculateArc = function calculateArc() {
+    //calculate centre of the circle the arc lies on relative to unit disk
     var hp = this.hyperboloidCrossProduct(this.startPoint.poincareToHyperboloid(), this.endPoint.poincareToHyperboloid());
 
     var arcCentre = new Point(hp.x / hp.z, hp.y / hp.z);
@@ -264,7 +241,7 @@ var Arc = function () {
     this.circle = new Circle(arcCentre.x, arcCentre.y, arcRadius);
   };
 
-  Arc.prototype.hyperboloidCrossProduct = function hyperboloidCrossProduct(point3D1, point3D2) {
+  HyperbolicArc.prototype.hyperboloidCrossProduct = function hyperboloidCrossProduct(point3D1, point3D2) {
     return {
       x: point3D1.y * point3D2.z - point3D1.z * point3D2.y,
       y: point3D1.z * point3D2.x - point3D1.x * point3D2.z,
@@ -272,7 +249,7 @@ var Arc = function () {
     };
   };
 
-  return Arc;
+  return HyperbolicArc;
 }();
 
 // * ***********************************************************************
@@ -282,11 +259,12 @@ var Arc = function () {
 // *
 // *************************************************************************
 
-var Edge$1 = function () {
-  function Edge(startPoint, endPoint) {
-    babelHelpers.classCallCheck(this, Edge);
 
-    this.arc = new Arc(startPoint, endPoint);
+var HyperbolicEdge = function () {
+  function HyperbolicEdge(startPoint, endPoint) {
+    babelHelpers.classCallCheck(this, HyperbolicEdge);
+
+    this.arc = new HyperbolicArc(startPoint, endPoint);
   }
 
   //calculate the spacing for subdividing the edge into an even number of pieces.
@@ -296,12 +274,12 @@ var Edge$1 = function () {
   // number of pieces)
 
 
-  Edge.prototype.calculateSpacing = function calculateSpacing(numDivisions) {
+  HyperbolicEdge.prototype.calculateSpacing = function calculateSpacing(numDivisions) {
     //subdivision spacing for edges
     this.spacing = this.arc.arcLength > 0.03 ? this.arc.arcLength / 5 //approx maximum that hides all gaps
     : 0.02;
 
-    //calculate the number of subdivisions required break the arc into an
+    //calculate the number of subdivisions required to break the arc into an
     //even number of pieces (or 1 in case of tiny polygons)
     var subdivisions = this.arc.arcLength > 0.01 ? 2 * Math.ceil(this.arc.arcLength / this.spacing / 2) : 1;
 
@@ -311,7 +289,10 @@ var Edge$1 = function () {
     this.spacing = this.arc.arcLength / this.numDivisions;
   };
 
-  Edge.prototype.subdivideEdge = function subdivideEdge(numDivisions) {
+  //Subdivide the edge into lengths calculated by calculateSpacing()
+
+
+  HyperbolicEdge.prototype.subdivideEdge = function subdivideEdge(numDivisions) {
     this.calculateSpacing(numDivisions);
     this.points = [this.arc.startPoint];
 
@@ -329,27 +310,24 @@ var Edge$1 = function () {
     this.points.push(this.arc.endPoint);
   };
 
-  return Edge;
+  return HyperbolicEdge;
 }();
 
 // * ***********************************************************************
 // *
-// *  (TRIANGULAR) POLYGON CLASS
+// *  (TRIANGULAR) HYPERBOLIC POLYGON CLASS
 // *
 // *************************************************************************
 //NOTE: sometimes polygons will be backwards facing. Solved with DoubleSide material
 //but may cause problems
-//@param vertices: array of Points
-//@param materialIndex: which material from THREE.Multimaterial to use
-//TODO: the subdivion mesh is calculated in the unit disk then mapped to screen coords
-//by ThreeJS class. This is very inefficient. Better to do the multiplication as the mesh is
-//being generated
+//vertices: array of Points
+//materialIndex: which material from THREE.Multimaterial to use
 
 
-var Polygon = function () {
-  function Polygon(vertices) {
+var HyperbolicPolygon = function () {
+  function HyperbolicPolygon(vertices) {
     var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
-    babelHelpers.classCallCheck(this, Polygon);
+    babelHelpers.classCallCheck(this, HyperbolicPolygon);
 
     this.materialIndex = materialIndex;
     this.vertices = vertices;
@@ -358,18 +336,18 @@ var Polygon = function () {
     this.subdivideMesh();
   }
 
-  Polygon.prototype.addEdges = function addEdges() {
+  HyperbolicPolygon.prototype.addEdges = function addEdges() {
     this.edges = [];
     for (var i = 0; i < this.vertices.length; i++) {
-      this.edges.push(new Edge$1(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
+      this.edges.push(new HyperbolicEdge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
     }
   };
 
-  //The longest edge with radius > 0 should be used to calculate how the finely
+  //The longest edge with radius > 0 should be used to calculate how finely
   //the polygon gets subdivided
 
 
-  Polygon.prototype.findSubdivisionEdge = function findSubdivisionEdge() {
+  HyperbolicPolygon.prototype.findSubdivisionEdge = function findSubdivisionEdge() {
     var a = this.edges[0].arc.curvature === 0 ? 0 : this.edges[0].arc.arcLength;
     var b = this.edges[1].arc.curvature === 0 ? 0 : this.edges[1].arc.arcLength;
     var c = this.edges[2].arc.curvature === 0 ? 0 : this.edges[2].arc.arcLength;
@@ -380,7 +358,7 @@ var Polygon = function () {
   //same number of points as the subdivision
 
 
-  Polygon.prototype.subdivideEdges = function subdivideEdges() {
+  HyperbolicPolygon.prototype.subdivideEdges = function subdivideEdges() {
     this.edges[this.subdivisionEdge].subdivideEdge();
     this.numDivisions = this.edges[this.subdivisionEdge].points.length - 1;
 
@@ -388,7 +366,10 @@ var Polygon = function () {
     this.edges[(this.subdivisionEdge + 2) % 3].subdivideEdge(this.numDivisions);
   };
 
-  Polygon.prototype.subdivideMesh = function subdivideMesh() {
+  //create triangular subdivision mesh to fill the interior of the polygon
+
+
+  HyperbolicPolygon.prototype.subdivideMesh = function subdivideMesh() {
     this.subdivideEdges();
     this.mesh = [].concat(this.edges[0].points);
 
@@ -403,11 +384,11 @@ var Polygon = function () {
   };
 
   //find the points along the arc between opposite subdivions of the second two
-  //edges of the polygon
+  //edges of the polygon. Each subsequent arc will have one less subdivision
 
 
-  Polygon.prototype.subdivideInteriorArc = function subdivideInteriorArc(startPoint, endPoint, arcIndex) {
-    var circle = new Arc(startPoint, endPoint).circle;
+  HyperbolicPolygon.prototype.subdivideInteriorArc = function subdivideInteriorArc(startPoint, endPoint, arcIndex) {
+    var circle = new HyperbolicArc(startPoint, endPoint).circle;
     this.mesh.push(startPoint);
 
     //for each arc, the number of divisions will be reduced by one
@@ -429,17 +410,17 @@ var Polygon = function () {
   //Apply a Transform to the polygon
 
 
-  Polygon.prototype.transform = function transform(_transform) {
+  HyperbolicPolygon.prototype.transform = function transform(_transform) {
     var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
 
     var newVertices = [];
     for (var i = 0; i < this.vertices.length; i++) {
       newVertices.push(this.vertices[i].transform(_transform));
     }
-    return new Polygon(newVertices, materialIndex);
+    return new HyperbolicPolygon(newVertices, materialIndex);
   };
 
-  return Polygon;
+  return HyperbolicPolygon;
 }();
 
 //TODO Document these classes
@@ -566,6 +547,7 @@ var HyperbolicTransformations = function () {
   };
 
   //orientation: either reflection = -1 OR rotation = 1
+  //NOTE: hard coded for Circle Limit I
 
 
   HyperbolicTransformations.prototype.initEdges = function initEdges() {
@@ -618,7 +600,7 @@ var HyperbolicTransformations = function () {
 // *
 // *  PARAMETERS CLASS
 // *
-// *  These are largely taken from the table on pg 19 of Ajit Dajar's thesis
+// *  Adapted from the table on pg 19 of Ajit Dajar's thesis (See Documents folder)
 // *************************************************************************
 
 var HyperbolicParameters = function () {
@@ -712,7 +694,7 @@ var HyperbolicParameters = function () {
 }();
 
 // * ***********************************************************************
-// *    TESSELATION CLASS
+// *    REGULAR HYPERBOLIC TESSELATION CLASS
 // *    Creates a regular Tesselation of the Poincare Disk using the techniques
 // *    created by Coxeter and Dunham
 // *
@@ -736,17 +718,17 @@ var HyperbolicParameters = function () {
 // *
 // *************************************************************************
 
-var RegularTesselation = function () {
-  function RegularTesselation(spec) {
-    babelHelpers.classCallCheck(this, RegularTesselation);
+var RegularHyperbolicTesselation = function () {
+  function RegularHyperbolicTesselation(spec) {
+    babelHelpers.classCallCheck(this, RegularHyperbolicTesselation);
 
     this.wireframe = spec.wireframe || false;
     this.textures = spec.textures;
     this.p = spec.p || 4;
     this.q = spec.q || 6;
 
+    //Stop drawing when polygons reach this size (on unit disk)
     //a value of about 0.02 seems to be the minimum that webgl can handle easily.
-    //TODO test different tilings and work out value needed for each if different
     this.minPolygonSize = spec.minPolygonSize || 0.1;
 
     console.log('{', this.p, ', ', this.q, '} tiling.');
@@ -765,7 +747,7 @@ var RegularTesselation = function () {
   //of the central polygon
 
 
-  RegularTesselation.prototype.fundamentalRegion = function fundamentalRegion() {
+  RegularHyperbolicTesselation.prototype.fundamentalRegion = function fundamentalRegion() {
     var cosh2 = Math.cot(Math.PI / this.p) * Math.cot(Math.PI / this.q);
 
     var sinh2 = Math.sqrt(cosh2 * cosh2 - 1);
@@ -786,7 +768,7 @@ var RegularTesselation = function () {
     var p3 = p1.transform(this.transforms.edgeBisectorReflection);
     var vertices = [new Point(0, 0), p1, p2];
 
-    return new Polygon(vertices, 0);
+    return new HyperbolicPolygon(vertices, 0);
   };
 
   //this is a kite shaped region consisting of two copies of the fundamental
@@ -795,7 +777,7 @@ var RegularTesselation = function () {
   //Limit I, other patterns will require different options
 
 
-  RegularTesselation.prototype.fundamentalPattern = function fundamentalPattern() {
+  RegularHyperbolicTesselation.prototype.fundamentalPattern = function fundamentalPattern() {
     var upper = this.fundamentalRegion();
     var lower = upper.transform(this.transforms.edgeBisectorReflection, 1);
     return [upper, lower];
@@ -805,7 +787,7 @@ var RegularTesselation = function () {
   //of the fundamental pattern
 
 
-  RegularTesselation.prototype.buildCentralPattern = function buildCentralPattern() {
+  RegularHyperbolicTesselation.prototype.buildCentralPattern = function buildCentralPattern() {
     //add the first two polygons to the central pattern
     var centralPattern = this.fundamentalPattern();
 
@@ -830,7 +812,7 @@ var RegularTesselation = function () {
   //TODO document this function
 
 
-  RegularTesselation.prototype.generateTiling = function generateTiling() {
+  RegularHyperbolicTesselation.prototype.generateTiling = function generateTiling() {
     var designMode = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
     var tiling = this.buildCentralPattern();
@@ -860,7 +842,7 @@ var RegularTesselation = function () {
   //TODO: better designMode
 
 
-  RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {
+  RegularHyperbolicTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {
     var designMode = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 
     this.addTransformedPattern(tiling, transform);
@@ -906,7 +888,7 @@ var RegularTesselation = function () {
   //The transform will be applied to these
 
 
-  RegularTesselation.prototype.addTransformedPattern = function addTransformedPattern(tiling, transform) {
+  RegularHyperbolicTesselation.prototype.addTransformedPattern = function addTransformedPattern(tiling, transform) {
     for (var i = 0; i < this.p * 2; i++) {
       tiling.push(tiling[i].transform(transform));
     }
@@ -916,7 +898,7 @@ var RegularTesselation = function () {
   //either an elliptical or euclidean tesselation);
 
 
-  RegularTesselation.prototype.checkParams = function checkParams() {
+  RegularHyperbolicTesselation.prototype.checkParams = function checkParams() {
     if ((this.p - 2) * (this.q - 2) <= 4) {
       console.error('Hyperbolic tesselations require that (p-2)(q-2) > 4!');
       return true;
@@ -930,7 +912,7 @@ var RegularTesselation = function () {
     return false;
   };
 
-  return RegularTesselation;
+  return RegularHyperbolicTesselation;
 }();
 
 // * ***********************************************************************
@@ -942,7 +924,6 @@ var RegularTesselation = function () {
 // *  are converted to screen space (which involves multiplying
 // *  by the radius ~ half screen resolution)
 // *************************************************************************
-//TODO refactor create materials based on passed in textures array
 
 var Drawing = function () {
   function Drawing(radius) {
@@ -964,8 +945,6 @@ var Drawing = function () {
     this.setCamera();
     this.setRenderer();
   };
-
-  Drawing.prototype.onresize = function onresize() {};
 
   Drawing.prototype.clearScene = function clearScene() {
     for (var i = this.scene.children.length - 1; i >= 0; i--) {
@@ -1032,7 +1011,7 @@ var Drawing = function () {
     }
   };
 
-  //Note: polygons assumed to be triangular!
+  //Note: polygons assumed to be triangular
 
 
   Drawing.prototype.polygon = function polygon(_polygon, color, textures, wireframe, elem) {
@@ -1070,7 +1049,7 @@ var Drawing = function () {
   };
 
   //NOTE: some polygons are inverted due to vertex order,
-  //solved this by making material doubles sided but this might cause problems with textures
+  //solved this by making material doubles sided
 
 
   Drawing.prototype.createMesh = function createMesh(geometry, color, textures, materialIndex, wireframe, elem) {
@@ -1158,19 +1137,7 @@ var Drawing = function () {
   return Drawing;
 }();
 
-fetchAndAppendHTMLToElement = function (url, elem, promise) {
-  fetch(url).then(function (response) {
-    return response.text();
-  }).then(function (returnedValue) {
-    elem.innerHTML = returnedValue;
-    if (promise) {
-      console.log(promise);
-      promise.resolve();
-    }
-  }).catch(function (err) {
-    console.error(err);
-  });
-};
+/* layout.js */
 
 // * ***********************************************************************
 // *
@@ -1315,7 +1282,7 @@ var Controller = function () {
   Controller.prototype.generateTiling = function generateTiling(elem, designMode) {
     this.draw.reset();
     var spec = this.tilingSpec();
-    var regularTesselation = new RegularTesselation(spec);
+    var regularTesselation = new RegularHyperbolicTesselation(spec);
     var t0 = performance.now();
     var tiling = regularTesselation.generateTiling(designMode);
     var t1 = performance.now();

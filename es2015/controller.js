@@ -1,11 +1,13 @@
+/* controller.js */
+
 import {
   euclideanTesselation,
 }
 from './euclidean/euclideanTesselation';
 import {
-  RegularTesselation,
+  RegularHyperbolicTesselation,
 }
-from './hyperbolic/regularTesselation';
+from './hyperbolic/regularHyperbolicTesselation';
 import {
   Drawing,
 }
@@ -102,7 +104,7 @@ export class Controller {
   generateTiling(elem, designMode) {
     this.draw.reset();
     const spec = this.tilingSpec();
-    const regularTesselation = new RegularTesselation(spec);
+    const regularTesselation = new RegularHyperbolicTesselation(spec);
     const t0 = performance.now();
     const tiling = regularTesselation.generateTiling(designMode);
     const t1 = performance.now();
