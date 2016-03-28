@@ -1100,8 +1100,8 @@ var Drawing = function () {
 
 
   Drawing.prototype.polygon = function polygon(_polygon, color, textures, wireframe, elem) {
-    var p = 1 / _polygon.numDivisions;
-    var divisions = _polygon.numDivisions;
+    var divisions = _polygon.numDivisions || 1;
+    var p = 1 / divisions;
     var geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
@@ -1115,7 +1115,6 @@ var Drawing = function () {
       //edge divisions reduce by one for each interior edge
       var m = divisions - _i + 1;
       geometry.faces.push(new THREE.Face3(edgeStartingVertex, edgeStartingVertex + m, edgeStartingVertex + 1));
-
       geometry.faceVertexUvs[0].push([new Point(_i * p, 0), new Point((_i + 1) * p, 0), new Point((_i + 1) * p, p)]);
 
       //range m-2 because we are ignoring the edges first vertex which was
@@ -1128,7 +1127,6 @@ var Drawing = function () {
       }
       edgeStartingVertex += m;
     }
-
     var mesh = this.createMesh(geometry, color, textures, _polygon.materialIndex, wireframe, elem);
     this.scene.add(mesh);
   };
@@ -1394,12 +1392,10 @@ var Controller = function () {
   };
 
   Controller.prototype.generateEuclideanTiling = function generateEuclideanTiling(elem, designMode) {
-    console.log('obj');
     this.draw.reset();
     var spec = this.euclideanTilingSpec();
     var tesselation = new EuclideanTesselation(spec);
     var tiling = tesselation.generateTiling(designMode);
-
     this.addTilingImageToDom(spec, tiling, elem);
   };
 
@@ -1418,7 +1414,6 @@ var Controller = function () {
     var tesselation = new RegularHyperbolicTesselation(spec);
     var t0 = performance.now();
     var tiling = tesselation.generateTiling(designMode);
-    console.log(tiling);
     var t1 = performance.now();
     console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
     this.addTilingImageToDom(spec, tiling, elem);

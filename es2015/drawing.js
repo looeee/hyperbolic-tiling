@@ -98,8 +98,8 @@ export class Drawing {
 
   //Note: polygons assumed to be triangular
   polygon(polygon, color, textures, wireframe, elem) {
-    const p = 1 / polygon.numDivisions;
-    const divisions = polygon.numDivisions;
+    const divisions = polygon.numDivisions || 1;
+    const p = 1 / divisions;
     const geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
@@ -120,7 +120,6 @@ export class Drawing {
           edgeStartingVertex + m,
           edgeStartingVertex + 1
         ));
-
       geometry.faceVertexUvs[0].push(
         [
           new Point(i * p, 0),
@@ -158,7 +157,6 @@ export class Drawing {
       }
       edgeStartingVertex += m;
     }
-
     const mesh = this.createMesh(geometry, color, textures, polygon.materialIndex, wireframe, elem);
     this.scene.add(mesh);
   }

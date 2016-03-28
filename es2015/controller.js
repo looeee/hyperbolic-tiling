@@ -131,12 +131,10 @@ export class Controller {
   }
 
   generateEuclideanTiling(elem, designMode) {
-    console.log('obj');
     this.draw.reset();
     const spec = this.euclideanTilingSpec();
     const tesselation = new EuclideanTesselation(spec);
     const tiling = tesselation.generateTiling(designMode);
-
     this.addTilingImageToDom(spec, tiling, elem);
   }
 
@@ -155,7 +153,6 @@ export class Controller {
     const tesselation = new RegularHyperbolicTesselation(spec);
     const t0 = performance.now();
     const tiling = tesselation.generateTiling(designMode);
-    console.log(tiling);
     const t1 = performance.now();
     console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
     this.addTilingImageToDom(spec, tiling, elem);
