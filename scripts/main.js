@@ -282,7 +282,7 @@ var Arc = function () {
 // *
 // *************************************************************************
 
-var Edge = function () {
+var Edge$1 = function () {
   function Edge(startPoint, endPoint) {
     babelHelpers.classCallCheck(this, Edge);
 
@@ -309,46 +309,6 @@ var Edge = function () {
 
     //recalculate spacing based on number of points
     this.spacing = this.arc.arcLength / this.numDivisions;
-  };
-
-  //calculate the spacing for subdividing the edge into an even number of pieces.
-  //For the first ( longest ) edge this will be calculated based on spacing
-  //then for the rest of the edges it will be calculated based on the number of
-  //subdivisions of the first edge ( so that all edges are divided into an equal
-  // number of pieces)
-
-
-  Edge.prototype.calculateExpandedSpacing = function calculateExpandedSpacing(numDivisions) {
-    //subdivision spacing for edges
-    this.expandedSpacing = this.arc.arcLength > 0.03 * radius ? this.arc.arcLength / 5 //approx maximum that hides all gaps
-    : 0.02 * radius;
-
-    //calculate the number of subdivisions required break the arc into an
-    //even number of pieces (or 1 in case of tiny polygons)
-    var subdivisions = this.arc.arcLength > 0.01 * radius ? 2 * Math.ceil(this.arc.arcLength / this.expandedSpacing / 2) : 1;
-
-    this.numDivisions = numDivisions || subdivisions;
-
-    //recalculate spacing based on number of points
-    this.expandedSpacing = this.arc.arcLength / this.numDivisions;
-  };
-
-  Edge.prototype.subdivideExpandedEdge = function subdivideExpandedEdge(numDivisions) {
-    this.calculateExpandedSpacing(numDivisions);
-    this.points = [this.arc.startPoint];
-
-    //tiny pgons near the edges of the disk don't need to be subdivided
-    if (this.arc.arcLength > this.expandedSpacing) {
-      var p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
-      this.points.push(p);
-
-      for (var i = 0; i < this.numDivisions - 2; i++) {
-        p = !this.arc.straightLine ? directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing) : directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
-        this.points.push(p);
-      }
-    }
-    //push the final vertex
-    this.points.push(this.arc.endPoint);
   };
 
   Edge.prototype.subdivideEdge = function subdivideEdge(numDivisions) {
@@ -401,7 +361,7 @@ var Polygon = function () {
   Polygon.prototype.addEdges = function addEdges() {
     this.edges = [];
     for (var i = 0; i < this.vertices.length; i++) {
-      this.edges.push(new Edge(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
+      this.edges.push(new Edge$1(this.vertices[i], this.vertices[(i + 1) % this.vertices.length]));
     }
   };
 
@@ -896,7 +856,8 @@ var RegularTesselation = function () {
   };
 
   //calculate the polygons in each layer and add them to this.tiling[]
-  //TODO document this function
+  //TODO: document this function
+  //TODO: better designMode
 
 
   RegularTesselation.prototype.layerRecursion = function layerRecursion(exposure, layer, transform, tiling) {

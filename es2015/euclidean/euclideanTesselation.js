@@ -1,5 +1,15 @@
 import * as E from '../universal/mathFunctions';
 
+import {
+  Point,
+}
+from '../universal/universalElements';
+
+import {
+  EuclideanPolygon as Polygon,
+}
+from './euclideanElements';
+
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN TESSELATION CLASS

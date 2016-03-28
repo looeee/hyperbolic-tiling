@@ -153,7 +153,8 @@ export class RegularTesselation {
   }
 
   //calculate the polygons in each layer and add them to this.tiling[]
-  //TODO document this function
+  //TODO: document this function
+  //TODO: better designMode
   layerRecursion(exposure, layer, transform, tiling, designMode = false) {
     this.addTransformedPattern(tiling, transform);
     //stop if the current pattern has reached the minimum size

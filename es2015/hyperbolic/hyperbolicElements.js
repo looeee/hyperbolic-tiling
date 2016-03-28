@@ -116,52 +116,6 @@ class Edge {
     this.spacing = this.arc.arcLength / this.numDivisions;
   }
 
-  //calculate the spacing for subdividing the edge into an even number of pieces.
-  //For the first ( longest ) edge this will be calculated based on spacing
-  //then for the rest of the edges it will be calculated based on the number of
-  //subdivisions of the first edge ( so that all edges are divided into an equal
-  // number of pieces)
-  calculateExpandedSpacing(numDivisions) {
-    //subdivision spacing for edges
-    this.expandedSpacing = (this.arc.arcLength > 0.03 * radius)
-                  ? this.arc.arcLength / 5 //approx maximum that hides all gaps
-                  : 0.02 * radius;
-
-    //calculate the number of subdivisions required break the arc into an
-    //even number of pieces (or 1 in case of tiny polygons)
-    const subdivisions = (this.arc.arcLength > 0.01 * radius)
-                    ? 2 * Math.ceil((this.arc.arcLength / this.expandedSpacing) / 2)
-                    : 1;
-
-    this.numDivisions = numDivisions || subdivisions;
-
-    //recalculate spacing based on number of points
-    this.expandedSpacing = this.arc.arcLength / this.numDivisions;
-  }
-
-  subdivideExpandedEdge(numDivisions) {
-    this.calculateExpandedSpacing(numDivisions);
-    this.points = [this.arc.startPoint];
-
-    //tiny pgons near the edges of the disk don't need to be subdivided
-    if (this.arc.arcLength > this.expandedSpacing) {
-      let p = (!this.arc.straightLine)
-        ? E.directedSpacedPointOnArc(
-          this.arc.circle, this.arc.startPoint, this.arc.endPoint, this.expandedSpacing)
-        : E.directedSpacedPointOnLine(this.arc.startPoint, this.arc.endPoint, this.expandedSpacing);
-      this.points.push(p);
-
-      for (let i = 0; i < this.numDivisions - 2; i++) {
-        p = (!this.arc.straightLine)
-          ? E.directedSpacedPointOnArc(this.arc.circle, p, this.arc.endPoint, this.expandedSpacing)
-          : E.directedSpacedPointOnLine(p, this.arc.endPoint, this.expandedSpacing);
-        this.points.push(p);
-      }
-    }
-    //push the final vertex
-    this.points.push(this.arc.endPoint);
-  }
-
   subdivideEdge(numDivisions) {
     this.calculateSpacing(numDivisions);
     this.points = [this.arc.startPoint];
