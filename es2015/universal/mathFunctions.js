@@ -1,7 +1,7 @@
 import {
-  Arc, Circle, Point,
+  Circle, Point,
 }
-from './elements';
+from './universalElements';
 // * ***********************************************************************
 // *
 // *   EUCLIDEAN FUNCTIONS

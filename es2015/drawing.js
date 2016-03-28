@@ -1,5 +1,5 @@
-import * as E from './euclid';
-import { Point } from './elements';
+import * as E from './universal/mathFunctions';
+import { Point } from './universal/universalElements';
 // * ***********************************************************************
 // *
 // *  DRAWING CLASS

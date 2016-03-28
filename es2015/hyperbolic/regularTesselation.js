@@ -1,16 +1,21 @@
-import * as E from '../euclid';
+import * as E from '../universal/mathFunctions';
 
 import {
-  Polygon, Point,
+  Polygon,
 }
-from '../elements';
+from './hyperbolicElements';
+
+import {
+  Point,
+}
+from '../universal/universalElements';
 
 import {
   HyperbolicTransform as Transform,
   HyperbolicTransformations as Transformations,
   HyperbolicParameters as Parameters,
 }
-from './helpers';
+from './hyperbolicHelpers';
 
 
 // * ***********************************************************************
@@ -197,12 +202,6 @@ export class RegularTesselation {
     for (let i = 0; i < this.p * 2; i++) {
       tiling.push(tiling[i].transform(transform));
     }
-  }
-
-  //pass the generated array of polygons (which lie on the unit disk)
-  //to the drawing class for expansion, texturing and rendering
-  drawTiling(tiling) {
-    this.disk.draw.polygonArray(tiling, this.textures);
   }
 
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is

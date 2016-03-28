@@ -1,4 +1,4 @@
-import * as E from '../euclid';
+import * as E from '../universal/mathFunctions';
 
 //TODO Document these classes
 // * ***********************************************************************

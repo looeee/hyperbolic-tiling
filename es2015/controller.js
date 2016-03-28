@@ -1,4 +1,8 @@
 import {
+  euclideanTesselation,
+}
+from './euclidean/euclideanTesselation';
+import {
   RegularTesselation,
 }
 from './hyperbolic/regularTesselation';
@@ -43,7 +47,7 @@ export class Controller {
     this.tesselationTypeSelectButtons();
     this.generateTilingButton();
     this.polygonSidesDropdown();
-    this.polygonPerVertexDropdown();
+    this.polygonsPerVertexDropdown();
   }
 
   tesselationTypeSelectButtons() {
@@ -72,7 +76,7 @@ export class Controller {
     };
   }
 
-  polygonPerVertexDropdown() {
+  polygonsPerVertexDropdown() {
     document.querySelector('#q').onchange = () => {
       this.throttledUpdateLowQualityTiling();
     };
@@ -91,6 +95,7 @@ export class Controller {
   }
 
   updateLowQualityTiling() {
+    document.querySelector('#low-quality-image').classList.remove('hide');
     this.generateTiling('#low-quality-image', true);
   }
 
@@ -103,7 +108,6 @@ export class Controller {
     const t1 = performance.now();
     console.log(`generateTiling took ${(t1 - t0)} milliseconds.`);
     this.addTilingImageToDom(spec, tiling, elem);
-    document.querySelector('#image-controls').classList.remove('hide');
   }
 
   addTilingImageToDom(spec, tiling, elem) {
@@ -116,7 +120,8 @@ export class Controller {
   generateTilingButton() {
     document.querySelector('#generate-tiling').onclick = () => {
       this.generateTiling('#final-image', false);
-      //document.querySelector('#tiling-image').scrollIntoView();
+      document.querySelector('#low-quality-image').classList.add('hide');
+      document.querySelector('#image-controls').classList.remove('hide');
     };
   }
 

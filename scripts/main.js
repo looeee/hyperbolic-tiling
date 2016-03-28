@@ -30,7 +30,7 @@ babelHelpers;
 // * ***********************************************************************
 // * ***********************************************************************
 // *
-// *   HYPERBOLIC ELEMENT CLASSES
+// *   UNIVERSAL ELEMENT CLASSES
 // *
 // *************************************************************************
 // * ***********************************************************************
@@ -39,20 +39,18 @@ babelHelpers;
 // * ***********************************************************************
 // *
 // *   POINT CLASS
-// *   Represents a point either in the Poincare Disk (2D)
-// *   or Hyperboloid (Weierstrass) Space (3D)
-// *   Default is in Poincare form with z = 0;
-// *   NOTE: cannot be consrtucted in Hyperbolid form, only transformed using
-// *   built in function
+// *   Represents a 2D or 3D point with functions to apply a transform and
+// *   convert between hyperbolid space and the Poincare disk
 // *************************************************************************
 
 var Point = function () {
   function Point(x, y) {
+    var z = arguments.length <= 2 || arguments[2] === undefined ? 0 : arguments[2];
     babelHelpers.classCallCheck(this, Point);
 
     this.x = x;
     this.y = y;
-    this.z = 0;
+    this.z = z;
   }
 
   //compare two points taking rounding errors into account
@@ -114,6 +112,110 @@ var Circle = function Circle(centreX, centreY, radius) {
   this.centre = new Point(centreX, centreY);
   this.radius = radius;
 };
+
+// * ***********************************************************************
+// *
+// *   EUCLIDEAN FUNCTIONS
+// *   a place to stash all the functions that are euclidean geometrical
+// *   operations
+// *   All functions are 2D unless otherwise specified!
+// *
+// *************************************************************************
+
+//.toFixed returns a string for some no doubt very good reason.
+//apply to fixed with default value of 10 and return as a float
+var toFixed = function (number) {
+  var places = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
+  return parseFloat(number.toFixed(places));
+};
+
+var distance = function (point1, point2) {
+  return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+};
+
+//does the line connecting p1, p2 go through the point (0,0)?
+var throughOrigin = function (point1, point2) {
+  //vertical line through centre
+  if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
+    return true;
+  }
+  var test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
+
+  if (toFixed(test) == 0) return true;
+  return false;
+};
+
+//Find the length of the smaller arc between two angles on a given circle
+var arcLength = function (circle, startAngle, endAngle) {
+  return Math.abs(startAngle - endAngle) > Math.PI ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle)) : circle.radius * Math.abs(startAngle - endAngle);
+};
+
+//find the two points a distance from a point on the circumference of a circle
+//in the direction of point2
+var directedSpacedPointOnArc = function (circle, point1, point2, spacing) {
+  var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
+  var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
+  var sinThetaNeg = -sinThetaPos;
+
+  var xPos = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaPos * (point1.y - circle.centre.y);
+  var xNeg = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaNeg * (point1.y - circle.centre.y);
+  var yPos = circle.centre.y + sinThetaPos * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
+  var yNeg = circle.centre.y + sinThetaNeg * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
+
+  var p1 = new Point(xPos, yPos);
+  var p2 = new Point(xNeg, yNeg);
+
+  var a = distance(p1, point2);
+  var b = distance(p2, point2);
+  return a < b ? p1 : p2;
+};
+
+//calculate the normal vector given 2 points
+var normalVector = function (p1, p2) {
+  var d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  return new Point((p2.x - p1.x) / d, (p2.y - p1.y) / d);
+};
+
+//find the point at a distance from point1 along line defined by point1, point2,
+//in the direction of point2
+var directedSpacedPointOnLine = function (point1, point2, spacing) {
+  var dv = normalVector(point1, point2);
+  return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
+};
+
+var multiplyMatrices = function (m1, m2) {
+  var result = [];
+  for (var i = 0; i < m1.length; i++) {
+    result[i] = [];
+    for (var j = 0; j < m2[0].length; j++) {
+      var sum = 0;
+      for (var k = 0; k < m1[0].length; k++) {
+        sum += m1[i][k] * m2[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+};
+
+//create nxn identityMatrix
+var identityMatrix = function (n) {
+  return Array.apply(null, new Array(n)).map(function (x, i, a) {
+    return a.map(function (y, k) {
+      return i === k ? 1 : 0;
+    });
+  });
+};
+
+// * ***********************************************************************
+// * ***********************************************************************
+// * ***********************************************************************
+// *
+// *   HYPERBOLIC SPECIFIC ELEMENT CLASSES
+// *
+// *************************************************************************
+// * ***********************************************************************
+// * ***********************************************************************
 
 // * ***********************************************************************
 // *
@@ -367,112 +469,18 @@ var Polygon = function () {
   //Apply a Transform to the polygon
 
 
-  Polygon.prototype.transform = function transform(_transform2) {
+  Polygon.prototype.transform = function transform(_transform) {
     var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? this.materialIndex : arguments[1];
 
     var newVertices = [];
     for (var i = 0; i < this.vertices.length; i++) {
-      newVertices.push(this.vertices[i].transform(_transform2));
+      newVertices.push(this.vertices[i].transform(_transform));
     }
     return new Polygon(newVertices, materialIndex);
   };
 
   return Polygon;
 }();
-
-// * ***********************************************************************
-// *
-// *   EUCLIDEAN FUNCTIONS
-// *   a place to stash all the functions that are euclidean geometrical
-// *   operations
-// *   All functions are 2D unless otherwise specified!
-// *
-// *************************************************************************
-
-//.toFixed returns a string for some no doubt very good reason.
-//apply to fixed with default value of 10 and return as a float
-var toFixed = function (number) {
-  var places = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
-  return parseFloat(number.toFixed(places));
-};
-
-var distance = function (point1, point2) {
-  return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
-};
-
-//does the line connecting p1, p2 go through the point (0,0)?
-var throughOrigin = function (point1, point2) {
-  //vertical line through centre
-  if (toFixed(point1.x) == 0 && toFixed(point2.x) === 0) {
-    return true;
-  }
-  var test = (-point1.x * point2.y + point1.x * point1.y) / (point2.x - point1.x) + point1.y;
-
-  if (toFixed(test) == 0) return true;
-  return false;
-};
-
-//Find the length of the smaller arc between two angles on a given circle
-var arcLength = function (circle, startAngle, endAngle) {
-  return Math.abs(startAngle - endAngle) > Math.PI ? circle.radius * (2 * Math.PI - Math.abs(startAngle - endAngle)) : circle.radius * Math.abs(startAngle - endAngle);
-};
-
-//find the two points a distance from a point on the circumference of a circle
-//in the direction of point2
-var directedSpacedPointOnArc = function (circle, point1, point2, spacing) {
-  var cosTheta = -(spacing * spacing / (2 * circle.radius * circle.radius) - 1);
-  var sinThetaPos = Math.sqrt(1 - Math.pow(cosTheta, 2));
-  var sinThetaNeg = -sinThetaPos;
-
-  var xPos = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaPos * (point1.y - circle.centre.y);
-  var xNeg = circle.centre.x + cosTheta * (point1.x - circle.centre.x) - sinThetaNeg * (point1.y - circle.centre.y);
-  var yPos = circle.centre.y + sinThetaPos * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
-  var yNeg = circle.centre.y + sinThetaNeg * (point1.x - circle.centre.x) + cosTheta * (point1.y - circle.centre.y);
-
-  var p1 = new Point(xPos, yPos);
-  var p2 = new Point(xNeg, yNeg);
-
-  var a = distance(p1, point2);
-  var b = distance(p2, point2);
-  return a < b ? p1 : p2;
-};
-
-//calculate the normal vector given 2 points
-var normalVector = function (p1, p2) {
-  var d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-  return new Point((p2.x - p1.x) / d, (p2.y - p1.y) / d);
-};
-
-//find the point at a distance from point1 along line defined by point1, point2,
-//in the direction of point2
-var directedSpacedPointOnLine = function (point1, point2, spacing) {
-  var dv = normalVector(point1, point2);
-  return new Point(point1.x + spacing * dv.x, point1.y + spacing * dv.y);
-};
-
-var multiplyMatrices = function (m1, m2) {
-  var result = [];
-  for (var i = 0; i < m1.length; i++) {
-    result[i] = [];
-    for (var j = 0; j < m2[0].length; j++) {
-      var sum = 0;
-      for (var k = 0; k < m1[0].length; k++) {
-        sum += m1[i][k] * m2[k][j];
-      }
-      result[i][j] = sum;
-    }
-  }
-  return result;
-};
-
-//create nxn identityMatrix
-var identityMatrix = function (n) {
-  return Array.apply(null, new Array(n)).map(function (x, i, a) {
-    return a.map(function (y, k) {
-      return i === k ? 1 : 0;
-    });
-  });
-};
 
 //TODO Document these classes
 // * ***********************************************************************
@@ -943,14 +951,6 @@ var RegularTesselation = function () {
     }
   };
 
-  //pass the generated array of polygons (which lie on the unit disk)
-  //to the drawing class for expansion, texturing and rendering
-
-
-  RegularTesselation.prototype.drawTiling = function drawTiling(tiling) {
-    this.disk.draw.polygonArray(tiling, this.textures);
-  };
-
   //The tesselation requires that (p-2)(q-2) > 4 to work (otherwise it is
   //either an elliptical or euclidean tesselation);
 
@@ -1289,7 +1289,7 @@ var Controller = function () {
     this.tesselationTypeSelectButtons();
     this.generateTilingButton();
     this.polygonSidesDropdown();
-    this.polygonPerVertexDropdown();
+    this.polygonsPerVertexDropdown();
   };
 
   Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
@@ -1322,7 +1322,7 @@ var Controller = function () {
     };
   };
 
-  Controller.prototype.polygonPerVertexDropdown = function polygonPerVertexDropdown() {
+  Controller.prototype.polygonsPerVertexDropdown = function polygonsPerVertexDropdown() {
     var _this4 = this;
 
     document.querySelector('#q').onchange = function () {
@@ -1347,6 +1347,7 @@ var Controller = function () {
   };
 
   Controller.prototype.updateLowQualityTiling = function updateLowQualityTiling() {
+    document.querySelector('#low-quality-image').classList.remove('hide');
     this.generateTiling('#low-quality-image', true);
   };
 
@@ -1359,7 +1360,6 @@ var Controller = function () {
     var t1 = performance.now();
     console.log('generateTiling took ' + (t1 - t0) + ' milliseconds.');
     this.addTilingImageToDom(spec, tiling, elem);
-    document.querySelector('#image-controls').classList.remove('hide');
   };
 
   Controller.prototype.addTilingImageToDom = function addTilingImageToDom(spec, tiling, elem) {
@@ -1374,7 +1374,8 @@ var Controller = function () {
 
     document.querySelector('#generate-tiling').onclick = function () {
       _this6.generateTiling('#final-image', false);
-      //document.querySelector('#tiling-image').scrollIntoView();
+      document.querySelector('#low-quality-image').classList.add('hide');
+      document.querySelector('#image-controls').classList.remove('hide');
     };
   };
 
