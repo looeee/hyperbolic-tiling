@@ -13,7 +13,7 @@ import {
 }
 from './drawing';
 import {
-  Layout,
+  LayoutController as Layout,
 }
 from './layout';
 
@@ -54,27 +54,31 @@ export class Controller {
   tesselationTypeSelectButtons() {
     const euclidean = document.querySelector('#select-euclidean');
     const hyperbolic = document.querySelector('#select-hyperbolic');
+    const controls = () => {
+      this.layout.hideElements('#image-controls');
+      this.layout.topPanel.expand();
+      this.throttledUpdateLowQualityTiling();
+    };
     euclidean.onclick = () => {
+      controls();
       this.selectedTilingType = 'euclidean';
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
       this.layout.showElements('#euclidean-controls', '#universal-controls');
       this.layout.hideElements('#hyperbolic-controls', '#title');
-      this.throttledUpdateLowQualityTiling();
     };
     hyperbolic.onclick = () => {
+      controls();
       this.selectedTilingType = 'hyperbolic';
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
       this.layout.showElements('#hyperbolic-controls', '#universal-controls');
       this.layout.hideElements('#euclidean-controls', '#title');
-      this.throttledUpdateLowQualityTiling();
     };
   }
 
   polygonSidesDropdown() {
-    const p = document.querySelector('#p');
-    p.onchange = () => {
+    document.querySelector('#p').onchange = () => {
       this.throttledUpdateLowQualityTiling();
     };
   }
@@ -86,7 +90,6 @@ export class Controller {
   }
 
   radiusSlider() {
-    const test = () => { console.log('test');};
     const slider = document.querySelector('#tiling-radius');
     const selectedRadius = document.querySelector('#selected-radius');
     this.draw.radius = slider.value;
@@ -98,7 +101,6 @@ export class Controller {
   }
 
   updateLowQualityTiling() {
-    //document.querySelector('#tiling-image').classList.remove('hide');
     if (this.selectedTilingType === 'euclidean') {
       this.generateEuclideanTiling('#tiling-image', true);
     }
@@ -116,7 +118,8 @@ export class Controller {
 
   generateTilingButton() {
     document.querySelector('#generate-tiling').onclick = () => {
-      document.querySelector('#image-controls').classList.remove('hide');
+      this.layout.showElements('#image-controls');
+      this.layout.hideElements('#euclidean-controls', '#hyperbolic-controls');
       if (this.selectedTilingType === 'euclidean') {
         this.generateEuclideanTiling('#tiling-image', false);
       }

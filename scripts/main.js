@@ -1071,7 +1071,7 @@ var Drawing = function () {
   };
 
   Drawing.prototype.setRenderer = function setRenderer() {
-    this.renderer.setClearColor(0x000000, 1.0);
+    this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   };
 
@@ -1227,46 +1227,71 @@ var Drawing = function () {
   return Drawing;
 }();
 
-/* layout.js */
+var TopPanel = function () {
+  function TopPanel() {
+    babelHelpers.classCallCheck(this, TopPanel);
+
+    this.panel = document.querySelector('#top-panel');
+    this.panelLeft = document.querySelector('#top-panel-left');
+    this.panelCentre = document.querySelector('#top-panel-centre');
+    this.panelRight = document.querySelector('#top-panel-right');
+
+    this.init();
+  }
+
+  TopPanel.prototype.init = function init() {
+    var centrePanelWidth = window.innerWidth / 100 * 96 - this.panelLeft.offsetWidth - this.panelRight.offsetWidth;
+
+    this.panelCentreTween = new TweenMax(this.panelCentre, 1, { width: centrePanelWidth });
+    this.panelRightTween = new TweenMax(this.panelRight, 1, {
+      left: centrePanelWidth + this.panelLeft.offsetWidth });
+
+    this.expandTimeline = new TimelineMax({ paused: true });
+    this.expandTimeline.add(this.panelCentreTween, 0).add(this.panelRightTween, 0);
+  };
+
+  TopPanel.prototype.expand = function expand() {
+    this.expandTimeline.play();
+  };
+
+  TopPanel.prototype.contract = function contract() {
+    this.expandTimeline.reverse(0);
+  };
+
+  return TopPanel;
+}();
 
 // * ***********************************************************************
 // *
-// *  LAYOUT CLASS
+// *  LAYOUT CONTROLLER CLASS
 // *
-// *  controls position/loading/hiding etc. Also controls ajax (fetch via polyfill)
+// *  controls position/loading/hiding etc.
 // *************************************************************************
-//TODO: memoize all calls to document.querySelector
-var Layout = function () {
-  function Layout() {
-    babelHelpers.classCallCheck(this, Layout);
 
+
+var LayoutController = function () {
+  function LayoutController() {
+    babelHelpers.classCallCheck(this, LayoutController);
+
+    this.topPanel = new TopPanel();
     this.setupLayout();
   }
 
-  Layout.prototype.setupLayout = function setupLayout() {
+  LayoutController.prototype.setupLayout = function setupLayout() {
+    //this.topPanel();
+    this.radiusSlider();
+  };
+
+  LayoutController.prototype.onResize = function onResize() {
     this.topPanel();
     this.radiusSlider();
   };
 
-  Layout.prototype.onResize = function onResize() {
-    this.topPanel();
-    this.radiusSlider();
-  };
-
-  Layout.prototype.topPanel = function topPanel() {
-    var panel = document.querySelector('#top-panel');
-    var panelLeft = document.querySelector('#top-panel-left');
-    var panelCentre = document.querySelector('#top-panel-centre');
-    var panelRight = document.querySelector('#top-panel-right');
-    panelCentre.style.width = panel.offsetWidth - panelLeft.offsetWidth - panelRight.offsetWidth + 'px';
-    //panel.classList.remove('hide');
-  };
-
-  Layout.prototype.bottomPanel = function bottomPanel() {
+  LayoutController.prototype.bottomPanel = function bottomPanel() {
     var panel = document.querySelector('#bottom-panel');
   };
 
-  Layout.prototype.radiusSlider = function radiusSlider() {
+  LayoutController.prototype.radiusSlider = function radiusSlider() {
     var slider = document.querySelector('#tiling-radius');
     var maxRadius = window.innerWidth < window.innerHeight ? window.innerWidth / 2 - 5 : window.innerHeight / 2 - 5;
 
@@ -1275,7 +1300,7 @@ var Layout = function () {
     document.querySelector('#selected-radius').innerHTML = slider.value;
   };
 
-  Layout.prototype.hideElements = function hideElements() {
+  LayoutController.prototype.hideElements = function hideElements() {
     for (var _len = arguments.length, elements = Array(_len), _key = 0; _key < _len; _key++) {
       elements[_key] = arguments[_key];
     }
@@ -1298,7 +1323,7 @@ var Layout = function () {
     }
   };
 
-  Layout.prototype.showElements = function showElements() {
+  LayoutController.prototype.showElements = function showElements() {
     for (var _len2 = arguments.length, elements = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
       elements[_key2] = arguments[_key2];
     }
@@ -1321,7 +1346,7 @@ var Layout = function () {
     }
   };
 
-  return Layout;
+  return LayoutController;
 }();
 
 // * ***********************************************************************
@@ -1335,7 +1360,7 @@ var Controller = function () {
 
     babelHelpers.classCallCheck(this, Controller);
 
-    this.layout = new Layout();
+    this.layout = new LayoutController();
     this.draw = new Drawing();
     this.setupControls();
     this.updateLowQualityTiling();
@@ -1367,29 +1392,33 @@ var Controller = function () {
 
     var euclidean = document.querySelector('#select-euclidean');
     var hyperbolic = document.querySelector('#select-hyperbolic');
+    var controls = function () {
+      _this2.layout.hideElements('#image-controls');
+      _this2.layout.topPanel.expand();
+      _this2.throttledUpdateLowQualityTiling();
+    };
     euclidean.onclick = function () {
+      controls();
       _this2.selectedTilingType = 'euclidean';
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
       _this2.layout.showElements('#euclidean-controls', '#universal-controls');
       _this2.layout.hideElements('#hyperbolic-controls', '#title');
-      _this2.throttledUpdateLowQualityTiling();
     };
     hyperbolic.onclick = function () {
+      controls();
       _this2.selectedTilingType = 'hyperbolic';
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
       _this2.layout.showElements('#hyperbolic-controls', '#universal-controls');
       _this2.layout.hideElements('#euclidean-controls', '#title');
-      _this2.throttledUpdateLowQualityTiling();
     };
   };
 
   Controller.prototype.polygonSidesDropdown = function polygonSidesDropdown() {
     var _this3 = this;
 
-    var p = document.querySelector('#p');
-    p.onchange = function () {
+    document.querySelector('#p').onchange = function () {
       _this3.throttledUpdateLowQualityTiling();
     };
   };
@@ -1405,9 +1434,6 @@ var Controller = function () {
   Controller.prototype.radiusSlider = function radiusSlider() {
     var _this5 = this;
 
-    var test = function () {
-      console.log('test');
-    };
     var slider = document.querySelector('#tiling-radius');
     var selectedRadius = document.querySelector('#selected-radius');
     this.draw.radius = slider.value;
@@ -1419,7 +1445,6 @@ var Controller = function () {
   };
 
   Controller.prototype.updateLowQualityTiling = function updateLowQualityTiling() {
-    //document.querySelector('#tiling-image').classList.remove('hide');
     if (this.selectedTilingType === 'euclidean') {
       this.generateEuclideanTiling('#tiling-image', true);
     } else if (this.selectedTilingType === 'hyperbolic') {
@@ -1438,7 +1463,8 @@ var Controller = function () {
     var _this6 = this;
 
     document.querySelector('#generate-tiling').onclick = function () {
-      document.querySelector('#image-controls').classList.remove('hide');
+      _this6.layout.showElements('#image-controls');
+      _this6.layout.hideElements('#euclidean-controls', '#hyperbolic-controls');
       if (_this6.selectedTilingType === 'euclidean') {
         _this6.generateEuclideanTiling('#tiling-image', false);
       } else if (_this6.selectedTilingType === 'hyperbolic') {

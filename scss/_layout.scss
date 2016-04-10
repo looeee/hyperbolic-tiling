@@ -1,8 +1,14 @@
+#title{
+  position: absolute;
+  top: 25px;
+  left: 300px;
+}
+
 #top-panel{
   position: absolute;
   top: 2%;
   left: 2%;
-  width: 96%;
+  //width: auto;
   height: 100px;
 
   button{
@@ -16,29 +22,26 @@
   top: 0;
   left: 0;
   height: 100%;
-  width: 150px;
+  width: 120px;
 }
 
 #top-panel-right{
   position: absolute;
   top: 0;
-  right: 0;
+  left: 120px;
   height: 100%;
-  width: 150px;
+  width: 120px;
 }
 
 #top-panel-centre{
   position: absolute;
   top: 0;
-  left: 150px;
+  left: 120px;
   min-height: 98px;
   height: auto;
-  //width: 100%;
+  width: 0;
+  background-color: white;
   border: 1px solid black;
-}
-
-#title{
-
 }
 
 #select-euclidean{

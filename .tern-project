@@ -4,8 +4,11 @@
     "browser"
   ],
   "loadEagerly": [
-    "var/www/html/es2015/**/*.js"
+    "var/www/html/hyperbolic_tiling/es2015/**/*.js"
   ],
+  "dontLoad": [
+   "var/www/html/hyperbolic_tiling/node_modules/**/*.js"
+ ],
   "plugins": {
     "complete_strings": {},
     "node": {},

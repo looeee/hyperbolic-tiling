@@ -1,35 +1,62 @@
 /* layout.js */
+class Title {
+  constructor() {
+    this.title = document.querySelector('#title');
+  }
+}
+
+
+class TopPanel {
+  constructor() {
+    this.panel = document.querySelector('#top-panel');
+    this.panelLeft = document.querySelector('#top-panel-left');
+    this.panelCentre = document.querySelector('#top-panel-centre');
+    this.panelRight = document.querySelector('#top-panel-right');
+
+    this.init();
+  }
+
+  init() {
+    const centrePanelWidth = (window.innerWidth / 100) * 96
+      - this.panelLeft.offsetWidth - this.panelRight.offsetWidth;
+
+    this.panelCentreTween = new TweenMax(this.panelCentre, 1, { width: centrePanelWidth });
+    this.panelRightTween = new TweenMax(this.panelRight, 1, {
+      left: centrePanelWidth + this.panelLeft.offsetWidth });
+
+    this.expandTimeline = new TimelineMax({ paused: true });
+    this.expandTimeline.add(this.panelCentreTween, 0).add(this.panelRightTween, 0);
+  }
+
+  expand() {
+    this.expandTimeline.play();
+  }
+
+  contract() {
+    this.expandTimeline.reverse(0);
+  }
+}
 
 // * ***********************************************************************
 // *
-// *  LAYOUT CLASS
+// *  LAYOUT CONTROLLER CLASS
 // *
-// *  controls position/loading/hiding etc. Also controls ajax (fetch via polyfill)
+// *  controls position/loading/hiding etc.
 // *************************************************************************
-//TODO: memoize all calls to document.querySelector
-export class Layout {
+export class LayoutController {
   constructor() {
+    this.topPanel = new TopPanel();
     this.setupLayout();
   }
 
   setupLayout() {
-    this.topPanel();
+    //this.topPanel();
     this.radiusSlider();
   }
 
   onResize() {
     this.topPanel();
     this.radiusSlider();
-  }
-
-  topPanel() {
-    const panel = document.querySelector('#top-panel');
-    const panelLeft = document.querySelector('#top-panel-left');
-    const panelCentre = document.querySelector('#top-panel-centre');
-    const panelRight = document.querySelector('#top-panel-right');
-    panelCentre.style.width =
-      `${panel.offsetWidth - panelLeft.offsetWidth - panelRight.offsetWidth}px`;
-    //panel.classList.remove('hide');
   }
 
   bottomPanel() {

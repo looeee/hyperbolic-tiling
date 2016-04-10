@@ -70,7 +70,7 @@ export class Drawing {
   }
 
   setRenderer() {
-    this.renderer.setClearColor(0x000000, 1.0);
+    this.renderer.setClearColor(0xffffff, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
