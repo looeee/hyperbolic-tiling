@@ -27,7 +27,6 @@ export class Controller {
     this.layout = new Layout();
     this.draw = new Drawing();
     this.setupControls();
-    this.layout = new Layout();
     this.updateLowQualityTiling();
     this.throttledUpdateLowQualityTiling = _.throttle(() => {
       this.updateLowQualityTiling();
@@ -53,24 +52,22 @@ export class Controller {
   }
 
   tesselationTypeSelectButtons() {
-    const euclidean = document.querySelector('#euclidean');
-    const hyperbolic = document.querySelector('#hyperbolic');
+    const euclidean = document.querySelector('#select-euclidean');
+    const hyperbolic = document.querySelector('#select-hyperbolic');
     euclidean.onclick = () => {
       this.selectedTilingType = 'euclidean';
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      this.layout.showElement('#euclidean-controls');
-      this.layout.hideElement('#hyperbolic-controls');
-      this.layout.showElement('#universal-controls');
+      this.layout.showElements('#euclidean-controls', '#universal-controls');
+      this.layout.hideElements('#hyperbolic-controls', '#title');
       this.throttledUpdateLowQualityTiling();
     };
     hyperbolic.onclick = () => {
       this.selectedTilingType = 'hyperbolic';
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      this.layout.showElement('#hyperbolic-controls');
-      this.layout.hideElement('#euclidean-controls');
-      this.layout.showElement('#universal-controls');
+      this.layout.showElements('#hyperbolic-controls', '#universal-controls');
+      this.layout.hideElements('#euclidean-controls', '#title');
       this.throttledUpdateLowQualityTiling();
     };
   }
@@ -101,12 +98,12 @@ export class Controller {
   }
 
   updateLowQualityTiling() {
-    document.querySelector('#low-quality-image').classList.remove('hide');
+    //document.querySelector('#tiling-image').classList.remove('hide');
     if (this.selectedTilingType === 'euclidean') {
-      this.generateEuclideanTiling('#low-quality-image', true);
+      this.generateEuclideanTiling('#tiling-image', true);
     }
     else if (this.selectedTilingType === 'hyperbolic') {
-      this.generateRegularHyperbolicTiling('#low-quality-image', true);
+      this.generateRegularHyperbolicTiling('#tiling-image', true);
     }
   }
 
@@ -118,14 +115,13 @@ export class Controller {
   }
 
   generateTilingButton() {
-    document.querySelector('#low-quality-image').classList.add('hide');
-    document.querySelector('#image-controls').classList.remove('hide');
     document.querySelector('#generate-tiling').onclick = () => {
+      document.querySelector('#image-controls').classList.remove('hide');
       if (this.selectedTilingType === 'euclidean') {
-        this.generateEuclideanTiling('#final-image', false);
+        this.generateEuclideanTiling('#tiling-image', false);
       }
       else if (this.selectedTilingType === 'hyperbolic') {
-        this.generateRegularHyperbolicTiling('#final-image', false);
+        this.generateRegularHyperbolicTiling('#tiling-image', false);
       }
     };
   }

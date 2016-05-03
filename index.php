@@ -12,41 +12,53 @@
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,700,900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="styles/main.css" />
     <script src="//cdn.jsdelivr.net/lodash/4.6.1/lodash.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/gsap/1.18.2/TimelineMax.min.js"></script>
     <script src="node_modules/three/three.js"></script>
-    <script src="node_modules/whatwg-fetch/fetch.js"></script>
+    <!--<script src="node_modules/whatwg-fetch/fetch.js"></script>-->
 
   </head>
 
   <body>
 
-    <h1 id="title" class="full-width">Hyperbolic Tiling</h1>
-
-    <div id="controls" class="flex-container">
-
-      <div id="tesselation-selector" class="flex-item full-width">
-        <h3>Step 1: Select Tesselation Type</h3>
-        <button id="euclidean">Euclidean (not yet implemented)</button>
-        <button id="hyperbolic">Hyperbolic</button>
+    <div id="top-panel">
+      <div id="top-panel-left">
+        <button id="select-euclidean" class="unavailable">Euclidean</button>
+        <button id="select-hyperbolic">Hyperbolic</button>
       </div>
 
-      <div id="hyperbolic-controls" class="flex-item full-width hide">
-        <?php require_once('html_components/hyperbolic_controls.html'); ?>
-      </div>
-      <div id="euclidean-controls" class="flex-item full-width hide">
-        <?php require_once('html_components/euclidean_controls.html'); ?>
+      <div id="top-panel-centre">
+        <div >
+          <h1 id="title">Tesselation Generator</h1>
+        </div>
+        <div id="hyperbolic-controls" class="hide">
+          <?php require_once('html_components/hyperbolic_controls.html'); ?>
+        </div>
+        <div id="euclidean-controls" class="hide">
+          <?php require_once('html_components/euclidean_controls.html'); ?>
+        </div>
+        <div id="universal-controls" class="hide">
+          <?php require_once('html_components/universal_controls.html'); ?>
+        </div>
       </div>
 
-      <div id="universal-controls" class="flex-item full-width hide">
-        <?php require_once('html_components/universal_controls.html'); ?>
+      <div id="top-panel-right">
+        <button id="generate-tiling">Generate Tiling</button>
       </div>
 
     </div>
 
-    <div class="flex-container">
-      <div class="flex-item">
-        <img id="final-image" class="tiling-image" ></img>
+    <div id="full-page-centered">
+      <img id="tiling-image"></img>
+    </div>
+
+    <div id="bottom-panel">
+      <div id="textures">
+        <h3 id="texture-title">Select Textures</h3>
+        <img id="texture1" class="texture" src="./images/textures/fish-black1.png" />
+        <img id="texture2" class="texture" src="./images/textures/fish-white1-flipped.png" />
       </div>
     </div>
+
   </body>
 
   <script src="scripts/main.js"></script>

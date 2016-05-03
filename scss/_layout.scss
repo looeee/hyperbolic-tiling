@@ -1,3 +1,81 @@
+#top-panel{
+  position: absolute;
+  top: 2%;
+  left: 2%;
+  width: 96%;
+  height: 100px;
+
+  button{
+    background-color: white;
+    position: relative;
+  }
+}
+
+#top-panel-left{
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 150px;
+}
+
+#top-panel-right{
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 150px;
+}
+
+#top-panel-centre{
+  position: absolute;
+  top: 0;
+  left: 150px;
+  min-height: 98px;
+  height: auto;
+  //width: 100%;
+  border: 1px solid black;
+}
+
+#title{
+
+}
+
+#select-euclidean{
+  top: 0;
+  left: 0;
+  height: 50%;
+  width: 100%;
+  border-top-left-radius: 9999px;
+}
+
+#select-hyperbolic{
+  //top: 50%;
+  left: 0;
+  height: 50%;
+  width: 100%;
+  border-bottom-left-radius: 9999px;
+}
+
+#generate-tiling{
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  border-top-right-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+#bottom-panel{
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 150px;
+  border-top: 3px solid black;
+}
+
+
 @mixin n-columns($min-width, $gutter, $last-equal: false, $max-cols: 5) {
   .flex-container {
     display: flex;
@@ -40,9 +118,6 @@
 
 .full-width{
   min-width: 100%;
-}
-
-#title{
 }
 
 #controls{

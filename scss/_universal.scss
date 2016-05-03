@@ -9,15 +9,6 @@ body{
   overflow-x: hidden;
 }
 
-/*
-canvas{
-	position: absolute;
-	top: 0;
-	left: 0;
-	margin: auto;
-	z-index: -1;
-}
-*/
 h1{
 	font-weight: 900;
   color: darkgrey;
@@ -57,6 +48,10 @@ button:hover {
 
 button.selected {
   background-image: linear-gradient(to bottom, #6fb3c6, #ffffff);
+}
+
+button.unavailable {
+  //background-image: linear-gradient(to bottom, #000000, #757575);
 }
 
 ::-webkit-scrollbar {

@@ -70,7 +70,7 @@ export class Drawing {
   }
 
   setRenderer() {
-    this.renderer.setClearColor(0xffffff, 1.0);
+    this.renderer.setClearColor(0x000000, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
@@ -103,11 +103,17 @@ export class Drawing {
     const geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
-    for (let i = 0; i < polygon.mesh.length; i++) {
-      geometry.vertices.push(
-        new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius)
-      );
+    if (polygon.needsResizing) {
+      for (let i = 0; i < polygon.mesh.length; i++) {
+        geometry.vertices.push(
+          new Point(polygon.mesh[i].x * this.radius, polygon.mesh[i].y * this.radius)
+        );
+      }
     }
+    else {
+      geometry.vertices = polygon.mesh;
+    }
+
 
     let edgeStartingVertex = 0;
     //loop over each interior edge of the polygon's subdivion mesh

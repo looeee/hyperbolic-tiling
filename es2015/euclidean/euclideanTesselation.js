@@ -28,9 +28,9 @@ export class EuclideanTesselation {
 
   generateTiling() {
     const p1 = new Point(0, 0);
-    const p2 = new Point(0.5, 0);
-    const p3 = new Point(0, 0.5);
-    const poly = new Polygon([p1, p2, p3], 0);
+    const p2 = new Point(-150, 0);
+    const p3 = new Point(0, 150);
+    const poly = new Polygon([p2, p3, p1], 0);
     const tiling = [poly];
     return tiling;
   }
@@ -39,7 +39,7 @@ export class EuclideanTesselation {
   //either an elliptical or euclidean tesselation);
   checkParams() {
     if ((this.p - 2) * (this.q - 2) > 4) {
-      console.error('Euclidean tesselations require that (p-2)(q-2) <= 4!');
+      console.error('Euclidean tesselations require that (p-2)(q-2) = 4!');
       return true;
     }
     else if (this.q < 3 || isNaN(this.q)) {

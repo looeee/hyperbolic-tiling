@@ -1,24 +1,9 @@
-<div id="textures" class="flex-container">
-  <h3 id="texture-title" class="flex-item full-width">Step 3: Select Textures</h3>
-  <img id="texture1" class="texture flex-item" src="./images/textures/fish-black1.png" />
-  <img id="texture2" class="texture flex-item" src="./images/textures/fish-white1-flipped.png" />
-</div>
-<div id="image-specs" class="flex-item full-width">
-  <h3>Step 4: Generate Tiling</h3>
-  <span>Radius of Tiling: </span>
-  <div id="selected-radius"></div>
-  <input type="range" id="tiling-radius"  min="16" max="300"/>
 
-  <button id="generate-tiling">Generate High Quality Image</button>
-  <div id="image-controls" class="hide">
-    <button id="save-image">Save to Server</button>
-    <a id="download-image"><button>Download Image</button></a>
-  </div>
-  
-  <div class="flex-container">
-    <div class="flex-item">
-      <img id="low-quality-image" class="tiling-image" ></img>
-    </div>
-  </div>
+<span>Radius of Tiling: <div id="selected-radius"></div></span>
 
+<input type="range" id="tiling-radius"  min="16" max="300"/>
+
+<div id="image-controls" class="hide">
+  <button id="save-image">Save to Server</button>
+  <a id="download-image"><button>Download Image</button></a>
 </div>

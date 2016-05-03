@@ -57,7 +57,8 @@ gulp.task('js', () => {
 });
 
 gulp.task('reload', () => {
-  gulp.src('./*.html', { read: false })
+  console.log('obj');
+  gulp.src(['./**/*.html', './**/*.php', '!node_modules/**/*.*'], { read: false })
   .pipe(livereload());
 });
 

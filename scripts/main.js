@@ -251,9 +251,9 @@ var EuclideanTesselation = function () {
 
   EuclideanTesselation.prototype.generateTiling = function generateTiling() {
     var p1 = new Point(0, 0);
-    var p2 = new Point(0.5, 0);
-    var p3 = new Point(0, 0.5);
-    var poly = new EuclideanPolygon([p1, p2, p3], 0);
+    var p2 = new Point(-150, 0);
+    var p3 = new Point(0, 150);
+    var poly = new EuclideanPolygon([p2, p3, p1], 0);
     var tiling = [poly];
     return tiling;
   };
@@ -264,7 +264,7 @@ var EuclideanTesselation = function () {
 
   EuclideanTesselation.prototype.checkParams = function checkParams() {
     if ((this.p - 2) * (this.q - 2) > 4) {
-      console.error('Euclidean tesselations require that (p-2)(q-2) <= 4!');
+      console.error('Euclidean tesselations require that (p-2)(q-2) = 4!');
       return true;
     } else if (this.q < 3 || isNaN(this.q)) {
       console.error('Tesselation error: at least 3 p-gons must meet at each vertex!');
@@ -414,6 +414,9 @@ var HyperbolicPolygon = function () {
     var materialIndex = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
     babelHelpers.classCallCheck(this, HyperbolicPolygon);
 
+    //hyperbolic elenments are calculated on the unit Pointcare so they will
+    //need to be resized before drawing
+    this.needsResizing = true;
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
@@ -1068,7 +1071,7 @@ var Drawing = function () {
   };
 
   Drawing.prototype.setRenderer = function setRenderer() {
-    this.renderer.setClearColor(0xffffff, 1.0);
+    this.renderer.setClearColor(0x000000, 1.0);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
   };
 
@@ -1105,8 +1108,12 @@ var Drawing = function () {
     var geometry = new THREE.Geometry();
     geometry.faceVertexUvs[0] = [];
 
-    for (var i = 0; i < _polygon.mesh.length; i++) {
-      geometry.vertices.push(new Point(_polygon.mesh[i].x * this.radius, _polygon.mesh[i].y * this.radius));
+    if (_polygon.needsResizing) {
+      for (var i = 0; i < _polygon.mesh.length; i++) {
+        geometry.vertices.push(new Point(_polygon.mesh[i].x * this.radius, _polygon.mesh[i].y * this.radius));
+      }
+    } else {
+      geometry.vertices = _polygon.mesh;
     }
 
     var edgeStartingVertex = 0;
@@ -1237,11 +1244,26 @@ var Layout = function () {
   }
 
   Layout.prototype.setupLayout = function setupLayout() {
+    this.topPanel();
     this.radiusSlider();
   };
 
   Layout.prototype.onResize = function onResize() {
+    this.topPanel();
     this.radiusSlider();
+  };
+
+  Layout.prototype.topPanel = function topPanel() {
+    var panel = document.querySelector('#top-panel');
+    var panelLeft = document.querySelector('#top-panel-left');
+    var panelCentre = document.querySelector('#top-panel-centre');
+    var panelRight = document.querySelector('#top-panel-right');
+    panelCentre.style.width = panel.offsetWidth - panelLeft.offsetWidth - panelRight.offsetWidth + 'px';
+    //panel.classList.remove('hide');
+  };
+
+  Layout.prototype.bottomPanel = function bottomPanel() {
+    var panel = document.querySelector('#bottom-panel');
   };
 
   Layout.prototype.radiusSlider = function radiusSlider() {
@@ -1253,12 +1275,50 @@ var Layout = function () {
     document.querySelector('#selected-radius').innerHTML = slider.value;
   };
 
-  Layout.prototype.hideElement = function hideElement(element) {
-    document.querySelector(element).classList.add('hide');
+  Layout.prototype.hideElements = function hideElements() {
+    for (var _len = arguments.length, elements = Array(_len), _key = 0; _key < _len; _key++) {
+      elements[_key] = arguments[_key];
+    }
+
+    for (var _iterator = elements, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      var _ref;
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
+      }
+
+      var element = _ref;
+
+      document.querySelector(element).classList.add('hide');
+    }
   };
 
-  Layout.prototype.showElement = function showElement(element) {
-    document.querySelector(element).classList.remove('hide');
+  Layout.prototype.showElements = function showElements() {
+    for (var _len2 = arguments.length, elements = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      elements[_key2] = arguments[_key2];
+    }
+
+    for (var _iterator2 = elements, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+      var _ref2;
+
+      if (_isArray2) {
+        if (_i2 >= _iterator2.length) break;
+        _ref2 = _iterator2[_i2++];
+      } else {
+        _i2 = _iterator2.next();
+        if (_i2.done) break;
+        _ref2 = _i2.value;
+      }
+
+      var element = _ref2;
+
+      document.querySelector(element).classList.remove('hide');
+    }
   };
 
   return Layout;
@@ -1278,7 +1338,6 @@ var Controller = function () {
     this.layout = new Layout();
     this.draw = new Drawing();
     this.setupControls();
-    this.layout = new Layout();
     this.updateLowQualityTiling();
     this.throttledUpdateLowQualityTiling = _.throttle(function () {
       _this.updateLowQualityTiling();
@@ -1306,24 +1365,22 @@ var Controller = function () {
   Controller.prototype.tesselationTypeSelectButtons = function tesselationTypeSelectButtons() {
     var _this2 = this;
 
-    var euclidean = document.querySelector('#euclidean');
-    var hyperbolic = document.querySelector('#hyperbolic');
+    var euclidean = document.querySelector('#select-euclidean');
+    var hyperbolic = document.querySelector('#select-hyperbolic');
     euclidean.onclick = function () {
       _this2.selectedTilingType = 'euclidean';
       euclidean.classList.add('selected');
       hyperbolic.classList.remove('selected');
-      _this2.layout.showElement('#euclidean-controls');
-      _this2.layout.hideElement('#hyperbolic-controls');
-      _this2.layout.showElement('#universal-controls');
+      _this2.layout.showElements('#euclidean-controls', '#universal-controls');
+      _this2.layout.hideElements('#hyperbolic-controls', '#title');
       _this2.throttledUpdateLowQualityTiling();
     };
     hyperbolic.onclick = function () {
       _this2.selectedTilingType = 'hyperbolic';
       hyperbolic.classList.add('selected');
       euclidean.classList.remove('selected');
-      _this2.layout.showElement('#hyperbolic-controls');
-      _this2.layout.hideElement('#euclidean-controls');
-      _this2.layout.showElement('#universal-controls');
+      _this2.layout.showElements('#hyperbolic-controls', '#universal-controls');
+      _this2.layout.hideElements('#euclidean-controls', '#title');
       _this2.throttledUpdateLowQualityTiling();
     };
   };
@@ -1362,11 +1419,11 @@ var Controller = function () {
   };
 
   Controller.prototype.updateLowQualityTiling = function updateLowQualityTiling() {
-    document.querySelector('#low-quality-image').classList.remove('hide');
+    //document.querySelector('#tiling-image').classList.remove('hide');
     if (this.selectedTilingType === 'euclidean') {
-      this.generateEuclideanTiling('#low-quality-image', true);
+      this.generateEuclideanTiling('#tiling-image', true);
     } else if (this.selectedTilingType === 'hyperbolic') {
-      this.generateRegularHyperbolicTiling('#low-quality-image', true);
+      this.generateRegularHyperbolicTiling('#tiling-image', true);
     }
   };
 
@@ -1380,13 +1437,12 @@ var Controller = function () {
   Controller.prototype.generateTilingButton = function generateTilingButton() {
     var _this6 = this;
 
-    document.querySelector('#low-quality-image').classList.add('hide');
-    document.querySelector('#image-controls').classList.remove('hide');
     document.querySelector('#generate-tiling').onclick = function () {
+      document.querySelector('#image-controls').classList.remove('hide');
       if (_this6.selectedTilingType === 'euclidean') {
-        _this6.generateEuclideanTiling('#final-image', false);
+        _this6.generateEuclideanTiling('#tiling-image', false);
       } else if (_this6.selectedTilingType === 'hyperbolic') {
-        _this6.generateRegularHyperbolicTiling('#final-image', false);
+        _this6.generateRegularHyperbolicTiling('#tiling-image', false);
       }
     };
   };

@@ -144,6 +144,9 @@ class HyperbolicEdge {
 //materialIndex: which material from THREE.Multimaterial to use
 export class HyperbolicPolygon {
   constructor(vertices, materialIndex = 0) {
+    //hyperbolic elenments are calculated on the unit Pointcare so they will
+    //need to be resized before drawing
+    this.needsResizing = true;
     this.materialIndex = materialIndex;
     this.vertices = vertices;
     this.addEdges();
