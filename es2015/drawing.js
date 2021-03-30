@@ -33,7 +33,7 @@ export class Drawing {
     this.setRenderer();
   }
 
-  clearScene() {
+  resetScene() {
     for (let i = this.scene.children.length - 1; i >= 0; i--) {
       const object = this.scene.children[i];
       if (object.type === 'Mesh') {
@@ -200,7 +200,7 @@ export class Drawing {
         });
 
       material.map = texture;
-      this.pattern.materials.push(material);
+      this.pattern.materials.push( material );
     }
   }
 
