@@ -28,8 +28,8 @@ The following figure is a {4, 5} tiling - that means 4 sided polygons, with 5 me
 
 ![uniform-hyperbolic-tiling](https://raw.githubusercontent.com/looeee/hyperbolic-tiling/main/assets/uniform-hyperbolic-tiling-45.png)
 
-The algorithm used was first described by Douglas Dunham (https://www.d.umn.edu/~ddunham/) and as far as I can tell first implemented in software by his PHD student Ajit Datar.
+The algorithm used was first described by [Douglas Dunham](https://www.d.umn.edu/~ddunham/) and as far as I can tell first implemented in software by his PHD student Ajit Datar.
 
 However, this was probably the first implementation using JavaScript and WebGL when I first created it in 2015.
 
-If you are interested in reading more about hyperbolic tesselation, check out the Dr. Dunham’s homepage linked above, or for a slightly gentler introduction, try this page [https://mathcs.clarku.edu/~djoyce/poincare/poincare.html] by Prof. Joyce at Clare university, as well the wikpedia page [https://en.wikipedia.org/wiki/Uniform_tilings_in_hyperbolic_plane].
+If you are interested in reading more about hyperbolic tesselation, check out the Dr. Dunham’s homepage linked above, or for a slightly gentler introduction, try [this page by Prof. Joyce](https://mathcs.clarku.edu/~djoyce/poincare/poincare.html) at Clare university, as well the [wikpedia page](https://en.wikipedia.org/wiki/Uniform_tilings_in_hyperbolic_plane).
