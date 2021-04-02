@@ -15,9 +15,14 @@ Currently it can create images similar to Escher’s Circle Limit I. These are r
 
 The tiling is created out out of two Euclidean triangular pieces, one representing half a white fish, the other half a black fish.
 
-{fish.png goes here}
+![fish](https://raw.githubusercontent.com/looeee/hyperbolic-tiling/main/assets/fish.png)
 
- I had originally planned to extend this to include irregular tilings of several colors, which would allow the creation of the rest as a teaching tool where students could create their own tiles.
+The final result will look something like this (this one is a {6,6} tiling):
+
+![tiling result](https://raw.githubusercontent.com/looeee/hyperbolic-tiling/main/assets/hyperbolic-tiling-main-1024.jpg)
+
+
+I had originally planned to extend this to include irregular tilings of several colors, which would allow the creation of the rest as a teaching tool where students could create their own tiles.
 
 Unfortunately, creating the tiles so that they match evenly turned out to be more difficult than I expected. It’s quite unintuitive since the Euclidean triangles get stretched to map onto hyperbolic triangles, and the lines of opposing edges don’t match up where you would expect. Since the intention was to create a simple educational tool where students could quickly create their own designs, this was a bit of a showstopper, and I halted development.
 
@@ -29,7 +34,7 @@ This way this works by mapping the two triangular images to hyperbolic triangles
 
 The following figure is a {4, 5} tiling - that means 4 sided polygons, with 5 meeting at each vertex.
 
-{uniform-hyperbolic-tiling.png goes here}
+![uniform-hyperbolic-tiling](https://raw.githubusercontent.com/looeee/hyperbolic-tiling/main/assets/uniform-hyperbolic-tiling-45.png)
 
  The algorithm used was first described by Douglas Dunham (https://www.d.umn.edu/~ddunham/) and as far as I can tell first implemented in software by his PHD student Ajit Datar.
 
