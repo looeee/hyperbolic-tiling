@@ -1,13 +1,6 @@
-Date: Around 2015 - 2016? The repo dates to 2016, but I think that was a refactor
+# Eschersketch: Hyperbolic Tiling Generator
 
-Repo: https://github.com/looeee/hyperbolic-tiling
-Note: there are some errors in the repo that stop it from working
-
-TODO: update and create live example separate from blackthread
-
-## Details
-
-This is a prototype of an automatic hyperbolic art generator and educational tool. It creates a regular edge to edge tiling of the hyperbolic plane represented as a Poincaré disk, also known as a hyperbolic tesselation.
+First created in 2015 (last updated 2021), this is a prototype of an automatic hyperbolic art generator and educational tool. It creates a regular edge to edge tiling of the hyperbolic plane represented as a Poincaré disk, also known as a hyperbolic tesselation.
 
 These were originally described by H. S. M. Coxeter, but were made famous by M.C. Escher in his series of Circle Limit woodcuts, back in the era when people were known only by their initials and surnames.
 
