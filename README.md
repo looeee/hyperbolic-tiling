@@ -33,3 +33,12 @@ The algorithm used was first described by [Douglas Dunham](https://www.d.umn.edu
 However, this was probably the first implementation using JavaScript and WebGL when I first created it in 2015.
 
 If you are interested in reading more about hyperbolic tesselation, check out the Dr. Dunham’s homepage linked above, or for a slightly gentler introduction, try [this page by Prof. Joyce](https://mathcs.clarku.edu/~djoyce/poincare/poincare.html) at Clare university, as well the [wikpedia page](https://en.wikipedia.org/wiki/Uniform_tilings_in_hyperbolic_plane).
+
+## Build Instructions
+
+Prerequisites: Node.js
+
+1. Clone or download the repo
+2. Open a terminal and run `npm install`
+3. Once all packages have installed, run `npm start`
+4. Open a web browser and navigate to http://localhost:8080 or one of the other addresses logged in the terminal

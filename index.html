@@ -13,6 +13,8 @@
       href="https://discoverthreejs.com/favicon.ico"
       type="image/x-icon"
     />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
     <link type="text/css" rel="stylesheet" href="main.css" />
 
     <script type="module" src="./dist/main.js"></script>
@@ -92,23 +94,17 @@
         <div id="controls">
           <div id="p-selection">
             <span>Central polygon sides: </span>
-            <a href="#" id="p-down">
-              <strong aria-hidden="true">←</strong>
-            </a>
+            <button href="#" id="p-down">←</button>
             <span id="p-value">6</span>
-            <a href="#" id="p-up">
-              <strong aria-hidden="true">→</strong>
-            </a>
-          </div><br/>
+            <button href="#" id="p-up">→</button>
+          </div>
+          <br><br>
+
           <div id="q-selection">
             <span>Polygons meeting at each vertex: </span>
-            <a href="#" id="q-down">
-              <strong aria-hidden="true">←</strong>
-            </a>
+            <button href="#" id="q-down">←</button>
             <span id="q-value">6</span>
-            <a href="#" id="q-up">
-              <strong aria-hidden="true">→</strong>
-            </a>
+            <button href="#" id="q-up">→</button>
           </div>
         </div>
 
