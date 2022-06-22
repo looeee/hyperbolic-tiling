@@ -121,7 +121,7 @@ class Main {
   }
 
   initSpec() {
-    const imagesPath = "/assets/tiles/";
+    const imagesPath = "assets/tiles/";
 
     this.spec = {
       wireframe: false,
