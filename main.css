@@ -30,3 +30,21 @@ a:hover {
   width: 85vmin;
   height: 85vmin;
 }
+
+.tile {
+  width: 364px;
+  height: 364px;
+}
+
+.figure-small {
+  margin: 0px;
+}
+
+#drop-area {
+  width: 800px;
+  font-size: 0px;
+}
+
+#white-tile {
+  float: right;
+}
