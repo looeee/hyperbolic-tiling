@@ -108,7 +108,7 @@ class Main {
       });
 
       tile.addEventListener('drop',(e) => {
-        if (!e.target.id in idToTexture) return;
+        if (!(e.target.id in idToTexture)) return;
 
         e.preventDefault();
         if (e.dataTransfer.items) {
@@ -161,7 +161,7 @@ class Main {
   }
 
   initSpec() {
-    const imagesPath = "/assets/tiles/";
+    const imagesPath = "assets/tiles/";
 
     this.spec = {
       wireframe: false,
