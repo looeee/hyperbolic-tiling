@@ -30,6 +30,8 @@ class Main {
 
     self.initDragDropControls();
 
+    self.initImageDownloader();
+
     self.initSpec();
 
     self.initMaterials();
@@ -129,6 +131,19 @@ class Main {
           console.warn( 'DataTransferItemList interface unavailable' );
         }
       });
+    });
+  }
+
+  initImageDownloader() {
+    const self = this;
+
+    document.querySelector('#canvas').addEventListener('click', (e) => {
+      e.preventDefault();
+
+      const a = document.createElement('a');
+      a.href = self.app.takeScreenshot(1024, 1024).src;
+      a.download = `hyperbolic-tiling-p${ self.spec.p }-q${ self.spec.q }.png`;
+      a.click();
     });
   }
 

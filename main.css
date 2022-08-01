@@ -27,8 +27,9 @@ a:hover {
 }
 
 #canvas {
-  width: 85vmin;
-  height: 85vmin;
+  width: 755px;
+  height: 755px;
+  cursor: pointer;
 }
 
 .tile {
