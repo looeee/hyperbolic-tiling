@@ -28,6 +28,8 @@ class Main {
 
     self.initPQControls();
 
+    self.initDragDropControls();
+
     self.initSpec();
 
     self.initMaterials();
@@ -92,6 +94,44 @@ class Main {
     observer.observe(q, { childList: true });
   }
 
+  initDragDropControls() {
+    const self = this;
+
+    const idToTexture = {
+      'black-tile': 0,
+      'white-tile': 1,
+    };
+
+    document.querySelectorAll('img.tile').forEach((tile) => {
+      tile.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+
+      tile.addEventListener('drop',(e) => {
+        if (!(e.target.id in idToTexture)) return;
+
+        e.preventDefault();
+        if (e.dataTransfer.items) {
+          for (const item of e.dataTransfer.items) {
+            if (item.kind === 'file' && item.type.match( '^image/(gif|jpeg|png|webp)$')) {
+              const fileData = item.getAsFile();
+              e.target.src = URL.createObjectURL(fileData);
+
+              self.spec.textures[idToTexture[e.target.id]] = e.target.src;
+              self.initMaterials();
+              self.buildTiling();
+
+              break;
+            }
+          }
+          e.dataTransfer.items.clear();
+        } else {
+          console.warn( 'DataTransferItemList interface unavailable' );
+        }
+      });
+    });
+  }
+
   buildTiling() {
     this.clearTiling();
 
@@ -121,7 +161,7 @@ class Main {
   }
 
   initSpec() {
-    const imagesPath = "/assets/tiles/";
+    const imagesPath = "assets/tiles/";
 
     this.spec = {
       wireframe: false,
