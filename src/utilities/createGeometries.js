@@ -31,9 +31,10 @@ function subdivideHyperbolicArc( arc, numDivisions ) {
   // calculate the number of subdivisions required to break the arc into an
   // even number of pieces (or 1 in case of tiny polygons)
 
-  numDivisions = numDivisions || ( arc.arcLength > 0.001 )
-    ? 2 * Math.ceil( arc.arcLength ) // currently always = 2
-    : 1;
+  // numDivisions = numDivisions || ( arc.arcLength > 0.001 )
+  //   ? 2 * Math.ceil( arc.arcLength ) // currently always = 2
+  //   : 1;
+  numDivisions = 3;
 
   // calculate spacing based on number of points
   const spacing = arc.arcLength / numDivisions;
@@ -129,7 +130,7 @@ function subdivideHyperbolicPolygon( polygon ) {
     const startPoint = subdividedEdges[2][( numDivisions - i )];
     const endPoint = subdividedEdges[1][i];
     // this.subdivideInteriorArc( startPoint, endPoint, i );
-    const newPoints = subdivideLine( startPoint, endPoint, i );
+    const newPoints = subdivideLine( startPoint, endPoint, numDivisions, i );
 
     // for ( let j = 0; j < newPoints.length; j++) {
     //   flatPoints.push(
@@ -256,30 +257,13 @@ export default function createGeometries( tiling ) {
         edgeStartingVertex += m;
       }
 
+      return [ positionIndex, uvIndex ];
     }
 
     if ( polygon.materialIndex === 0 ) {
-      addPositionsAndUvs( positionsA, positionAIndex, uvsA, uvAIndex );
-      if ( divisions === 1 ) {
-        positionAIndex += 9;
-        uvAIndex += 6;
-      } else if ( divisions === 2 ) {
-        positionAIndex += 36;
-        uvAIndex += 24;
-      } else {
-        console.error( 'Too many divisions!!' );
-      }
+      [ positionAIndex, uvAIndex ] = addPositionsAndUvs( positionsA, positionAIndex, uvsA, uvAIndex );
     } else {
-      addPositionsAndUvs( positionsB, positionBIndex, uvsB, uvBIndex );
-      if ( divisions === 1 ) {
-        positionBIndex += 9;
-        uvBIndex += 6;
-      } else if ( divisions === 2 ) {
-        positionBIndex += 36;
-        uvBIndex += 24;
-      } else {
-        console.error( 'Too many divisions!!' );
-      }
+      [ positionBIndex, uvBIndex ] = addPositionsAndUvs( positionsB, positionBIndex, uvsB, uvBIndex );
     }
 
   }
