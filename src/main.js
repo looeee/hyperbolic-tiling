@@ -152,7 +152,7 @@ class Main {
 
     console.time("Generate Tiling");
     const tiling = new RegularHyperbolicTesselation(this.spec).generateTiling(
-      false
+      true
     );
     console.timeEnd("Generate Tiling");
 
