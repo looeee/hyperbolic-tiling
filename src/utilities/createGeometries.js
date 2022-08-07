@@ -31,10 +31,9 @@ function subdivideHyperbolicArc( arc, numDivisions ) {
   // calculate the number of subdivisions required to break the arc into an
   // even number of pieces (or 1 in case of tiny polygons)
 
-  // numDivisions = numDivisions || ( arc.arcLength > 0.001 )
-  //   ? 2 * Math.ceil( arc.arcLength ) // currently always = 2
-  //   : 1;
-  numDivisions = 3;
+  numDivisions = numDivisions || ( arc.arcLength > 0.001
+    ? 2 * Math.ceil( arc.arcLength ) // currently always = 2
+    : 1 );
 
   // calculate spacing based on number of points
   const spacing = arc.arcLength / numDivisions;
@@ -66,7 +65,8 @@ function subdivideHyperbolicArc( arc, numDivisions ) {
 function subdivideHyperbolicPolygonEdges( polygon ) {
   const subdivisionEdge = findSubdivisionEdge( polygon );
 
-  const edge1Points = subdivideHyperbolicArc( polygon.edges[subdivisionEdge] );
+  const forceDivisions = 3;
+  const edge1Points = subdivideHyperbolicArc( polygon.edges[subdivisionEdge], forceDivisions );
 
   const numDivisions = edge1Points.length - 1;
 
